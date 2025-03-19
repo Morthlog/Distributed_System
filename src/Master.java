@@ -27,8 +27,6 @@ public class Master implements Runnable {
                 String msg = server.receiveMessage();
                 if (!"".equals(msg)) {
                     System.out.println("Got message: " + msg);
-                    server.sendMessage("Give me your name " + port);
-//                    out.println("Success");
                 }
                 else {
                     System.out.println("unrecognised greeting");
@@ -46,7 +44,8 @@ public class Master implements Runnable {
     private void startForClient(int port) {
         try
         {
-            String msg = server.receiveMessage();
+            System.out.println("Wait for request");
+            String msg = server.in.readUTF();
             System.out.println("Client asked for: " + msg);
             server.sendMessage("Here it is: " + msg);
         }
@@ -177,7 +176,7 @@ public class Master implements Runnable {
             // Under normal circumstances, each user will have his own IP address
             // causing no issues when connecting on the same port
             System.out.println("Starting user #" + "...");
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 15; i++)
             {
                 ProcessBuilder pb = new ProcessBuilder(
                         "cmd", "/c", "start", "cmd", "/k", "java stubUser User-" + i);

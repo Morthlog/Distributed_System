@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 
@@ -10,8 +7,8 @@ import static java.lang.Thread.sleep;
 public class stubUser implements User {
     int counter = 0;
     String name;
-    private PrintWriter out;
-    private BufferedReader in;
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
     private Socket clientSocket;
 
     public stubUser(String name) {
@@ -20,7 +17,13 @@ public class stubUser implements User {
 
     @Override
     public void sendMessage(String msg) {
-        out.println(msg);
+        try
+        {
+            out.writeUTF(msg);
+            out.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -33,8 +36,8 @@ public class stubUser implements User {
     public void startConnection(String ip, int port) {
         try {
             clientSocket = new Socket(ip, port);
-            out = new PrintWriter(clientSocket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            out = new ObjectOutputStream(clientSocket.getOutputStream());
+            in = new ObjectInputStream(clientSocket.getInputStream());
         }
         catch (IOException e) {
             System.err.printf("Could not connect to server with ip: %s and port: %d", ip, port);
@@ -56,11 +59,11 @@ public class stubUser implements User {
         stubUser stub = new stubUser(args[0]);
         for (int i = 0; i < 5; i++) {
             try{
-                sleep(10);
+                sleep(1000);
                 String ip = InetAddress.getLocalHost().getHostAddress();
                 stub.startConnection(ip, TCPServer.basePort - 1000);
                 stub.sendMessage(stub.receiveMessage());
-                System.out.println(stub.in.readLine());
+                System.out.println(stub.in.readUTF());
                 stub.stopConnection();
             } catch (Exception e) {
                 System.err.printf("Could not connect to server with ip: %s", e.getMessage());

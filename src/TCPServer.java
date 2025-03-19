@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -9,8 +6,8 @@ public class TCPServer {
     public static final int basePort = 8000;
     public ServerSocket serverSocket;
     public Socket clientSocket;
-    private PrintWriter out;
-    private BufferedReader in;
+    private ObjectOutputStream out = null;
+    public ObjectInputStream in = null;
     public int port = basePort;
     public Connection type;
 
@@ -29,15 +26,23 @@ public class TCPServer {
 
     public void startConnection() throws IOException {
         clientSocket = serverSocket.accept();
-        out = new PrintWriter(clientSocket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        out = new ObjectOutputStream(clientSocket.getOutputStream());
+        in = new ObjectInputStream(clientSocket.getInputStream());
+
+
     }
 
     public void sendMessage(String msg) {
-        out.println(msg);
+        try
+        {
+            out.writeUTF(msg);
+            out.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String receiveMessage() throws IOException {
-        return in.readLine();
+        return in.readUTF();
     }
 }

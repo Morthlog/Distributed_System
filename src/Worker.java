@@ -2,18 +2,20 @@
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
+
 import static java.lang.Thread.sleep;
 
 public class Worker {
     private Socket clientSocket;
-    private PrintWriter out;
-    private BufferedReader in;
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
 
     public void startConnection(String ip, int port) {
         try {
             clientSocket = new Socket(ip, port);
-            out = new PrintWriter(clientSocket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            out = new ObjectOutputStream(clientSocket.getOutputStream());
+            in = new ObjectInputStream(clientSocket.getInputStream());
         }
         catch (IOException e) {
             System.err.printf("Could not connect to server with ip: %s and port: %d", ip, port);
@@ -23,12 +25,14 @@ public class Worker {
 
     public void sendMessage(String msg) {
         try{
-            in.readLine();
+            System.out.println("Request: " + in.readUTF());
+            out.writeUTF(msg);
+            out.flush();
         }
         catch (IOException e) {
             System.err.printf("Could not send message (%s): %s", msg, e.getMessage());
         }
-        out.println(msg);
+
     }
 
     public void stopConnection() {
@@ -45,8 +49,7 @@ public class Worker {
     public static void connect(String msg, Worker client, int port)
     {
         try{
-            String ip = InetAddress.getLocalHost().getHostAddress();
-            client.startConnection(ip, TCPServer.basePort + port);
+
             client.sendMessage(msg);
             client.stopConnection();
         } catch (Exception e) {
@@ -57,31 +60,27 @@ public class Worker {
         System.out.printf("Worker %s has started\n", args[0]);
         System.out.println("Update 1 worked");
         Worker client = new Worker();
-
-//        while(true){
-//            System.out.println("Waiting for request...");
-//
-//        }
-
-        // each Worker should be listening for Master requests
-        Thread t = new Thread(() -> connect("hello server from worker " + args[0], client, Integer.parseInt(args[0])));
-        t.start();
-        try{
-            sleep(200);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        int i = 1;
+        while(true){
+            System.out.println("Waiting for request...");
+            String msg = "hello server from worker #" + args[0] + " round " + i;
+            String ip;
+            try
+            {
+                ip = InetAddress.getLocalHost().getHostAddress();
+            } catch (UnknownHostException e) {
+                throw new RuntimeException(e);
+            }
+            client.startConnection(ip, TCPServer.basePort + Integer.parseInt(args[0]));
+            Thread t = new Thread(() -> connect(msg, client, Integer.parseInt(args[0])));
+            t.start();
+            try{
+                sleep(500);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            i++;
         }
-        System.out.println("Second Thread");
-        Thread t2 = new Thread(() -> connect("hello server from worker " + args[0] +" round 2", client, Integer.parseInt(args[0])));
-        t2.start();
-        try{
-            sleep(200);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        System.out.println("Third Thread");
-        Thread t3 = new Thread(() -> connect("hello server from worker " + args[0] +" round 3", client, Integer.parseInt(args[0])));
-        t3.start();
 
     }
 
