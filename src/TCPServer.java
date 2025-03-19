@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class TCPServer {
+public class TCPServer extends Thread {
     public static final int basePort = 8000;
     public ServerSocket serverSocket;
     public Socket clientSocket;
@@ -11,8 +11,31 @@ public class TCPServer {
     public int port = basePort;
     public Connection type;
 
+    public TCPServer(Socket connection, Connection type) {
+        clientSocket = connection;
+        this.type = type;
+        if (type == Connection.Broker)
+            port = 8001;
+        try {
+            out = new ObjectOutputStream(connection.getOutputStream());
+            in = new ObjectInputStream(connection.getInputStream());
 
-    public void stop() {
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public TCPServer(int port, Connection type) {
+        this.port = port;
+        this.type = type;
+        try{
+            serverSocket = new ServerSocket(port);
+        }catch(IOException e){
+
+        }
+    }
+
+    public void stopConnection() {
         try{
             in.close();
             out.close();
@@ -28,8 +51,6 @@ public class TCPServer {
         clientSocket = serverSocket.accept();
         out = new ObjectOutputStream(clientSocket.getOutputStream());
         in = new ObjectInputStream(clientSocket.getInputStream());
-
-
     }
 
     public void sendMessage(String msg) {
@@ -43,6 +64,18 @@ public class TCPServer {
     }
 
     public String receiveMessage() throws IOException {
+        System.out.println("About to get message");
         return in.readUTF();
     }
+
+
+    public void run() {
+        manageRequest();
+    }
+
+    public void manageRequest()
+    {
+
+    }
+
 }

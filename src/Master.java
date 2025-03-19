@@ -1,5 +1,7 @@
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 // import json-simple in project structure
@@ -11,43 +13,50 @@ import java.net.*;
 
 import static java.lang.Thread.sleep;
 
-public class Master implements Runnable {
-    TCPServer server = new TCPServer();
+public class Master extends Thread {
+    TCPServer serverClient = null;
+    List<TCPServer> serverWorker = new ArrayList<>();
 
-    public void startForBroker(int port) {
+    public Master(Socket connection, Connection type, List<TCPServer> workers){
+        if (type == Connection.Client)
+            serverClient = new TCPServerClient(connection, type);
+        this.serverWorker = workers;
+    }
+
+    public Master(){}
+
+    public String startForBroker(String msg) {
+        String response = "";
         try{
-            server.serverSocket = new ServerSocket(port);
-
-            int i = 0;
-            while (i++< 3){
-                // request from Master
-                System.out.println("Waiting for connection..." + port);
-                server.startConnection();
-                server.sendMessage("Give me your name " + port);
-                String msg = server.receiveMessage();
-                if (!"".equals(msg)) {
-                    System.out.println("Got message: " + msg);
-                }
-                else {
-                    System.out.println("unrecognised greeting");
-                }
+            // request from Master
+            System.out.println("Waiting for connection...");
+            serverWorker.get(0).startConnection();
+            serverWorker.get(0).sendMessage("Client asked: " + msg);
+            System.out.println("Worker was asked");
+            response = serverWorker.get(0).receiveMessage();
+            System.out.println("Got message right after");
+            if (!"".equals(response)) {
+                System.out.println("Got message: " + response);
             }
-
-
+            else {
+                System.out.println("unrecognised greeting");
+            }
         }
         catch(IOException e){
-            System.err.println("Couldn't start server");
+            System.err.println("Couldn't start server: " + e.getMessage());
         }
+        return response;
 
     }
 
-    private void startForClient(int port) {
+    private void startForClient() {
         try
         {
             System.out.println("Wait for request");
-            String msg = server.in.readUTF();
+            String msg = serverClient.in.readUTF();
             System.out.println("Client asked for: " + msg);
-            server.sendMessage("Here it is: " + msg);
+            String response = startForBroker(msg);
+            serverClient.sendMessage("Here it is: " + response);
         }
         catch (IOException e)
         {
@@ -55,16 +64,12 @@ public class Master implements Runnable {
         }
     }
 
-    public void stop() {
-        server.stop();
-    }
+//    public void stop() {
+//        server.stopConnection();
+//    }
     public void run() {
-        if (server.type == Connection.Broker)
-            this.startForBroker(server.port);
-        else
-            this.startForClient(server.port);
+        this.startForClient();
     }
-
 
 
     public static void compile(){
@@ -82,32 +87,15 @@ public class Master implements Runnable {
         }
     }
 
-    // different port for each Worker to work on local machine
-    public static void connectWorkers(Master[] workers){
-        for (int i = 0; i < workers.length; i++)
+    // different port for each Worker
+    public void connectWorkers(int size){
+        for (int i = 0; i < size; i++)
         {
-            workers[i] = new Master();
-            workers[i].server.type = Connection.Broker;
-            workers[i].server.port = workers[i].server.port + i;
-            System.out.println(workers[i].server.port);
-            Thread t = new Thread(workers[i]);
-            t.start();
+            serverWorker.add(new TCPServer(TCPServer.basePort + i + 1, Connection.Broker));
+            System.out.println(TCPServer.basePort + i + 1);
         }
     }
 
-    public static void connectClients(Master serverClients){
-        try {
-            while (true)
-            {
-                serverClients.server.startConnection();
-                Thread t = new Thread(serverClients);
-                t.start();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
 
     public static void main(String[] args){
 
@@ -120,9 +108,9 @@ public class Master implements Runnable {
         final Scanner on = new Scanner(System.in);
         Process[] workers = new Process[n_workers];
 
-        Master[] serversWorkers = new Master[n_workers];
         // a server for each Worker
-        connectWorkers(serversWorkers);
+        Master server = new Master();
+        server.connectWorkers(n_workers);
 
         // Initialize workers
         for (int i = 0; i < n_workers; i++)
@@ -165,10 +153,14 @@ public class Master implements Runnable {
         }
 
         // Loop and wait for TCP call
-        Master serverClients = new Master();
 
-        serverClients.server.port = TCPServer.basePort - 1000;
-        serverClients.server.type = Connection.Client;
+        ServerSocket serverClient;
+
+        try{
+            serverClient = new ServerSocket(TCPServer.basePort);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         try
         {
@@ -182,11 +174,19 @@ public class Master implements Runnable {
                         "cmd", "/c", "start", "cmd", "/k", "java stubUser User-" + i);
                 pb.start();
             }
-            //===========================================
-            serverClients.server.serverSocket = new ServerSocket(serverClients.server.port);
+//            //===========================================
 
-            Thread t = new Thread(()    ->  connectClients(serverClients));
-            t.start();
+            while (true)
+            {
+                Socket serverSocket = serverClient.accept();
+                Thread t = new Master(serverSocket, Connection.Client, server.serverWorker);
+                t.start();
+                //send request
+                sleep(0);
+                //
+                if (false)
+                    break;
+            }
 
             System.out.println("Would you like to exit?");
             String answer = on.nextLine();
@@ -198,6 +198,8 @@ public class Master implements Runnable {
         }
         catch (IOException e)
         {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
 

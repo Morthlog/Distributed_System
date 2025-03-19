@@ -25,7 +25,6 @@ public class Worker {
 
     public void sendMessage(String msg) {
         try{
-            System.out.println("Request: " + in.readUTF());
             out.writeUTF(msg);
             out.flush();
         }
@@ -46,10 +45,10 @@ public class Worker {
         }
     }
 
-    public static void connect(String msg, Worker client, int port)
+    public static void ManageRequest(String msg, Worker client)
     {
         try{
-
+            msg += " changed";
             client.sendMessage(msg);
             client.stopConnection();
         } catch (Exception e) {
@@ -59,27 +58,39 @@ public class Worker {
     public static void main(String[] args){
         System.out.printf("Worker %s has started\n", args[0]);
         System.out.println("Update 1 worked");
-        Worker client = new Worker();
-        int i = 1;
+        Worker client;
+        String ip;
+        try
+        {
+            ip = InetAddress.getLocalHost().getHostAddress();
+        }
+        catch (UnknownHostException e)
+        {
+            throw new RuntimeException(e);
+        }
+
         while(true){
+            client = new Worker();
             System.out.println("Waiting for request...");
-            String msg = "hello server from worker #" + args[0] + " round " + i;
-            String ip;
-            try
+//            String msg = "hello server from worker #" + args[0] + " round " + i;
+            String request;
+            client.startConnection(ip, TCPServer.basePort + 1);
+            try{
+                request = client.in.readUTF();
+            }
+            catch (IOException e)
             {
-                ip = InetAddress.getLocalHost().getHostAddress();
-            } catch (UnknownHostException e) {
                 throw new RuntimeException(e);
             }
-            client.startConnection(ip, TCPServer.basePort + Integer.parseInt(args[0]));
-            Thread t = new Thread(() -> connect(msg, client, Integer.parseInt(args[0])));
+            //ManageRequest(msg, client);
+            Worker finalClient = client;
+            Thread t = new Thread(() -> ManageRequest(request, finalClient));
             t.start();
             try{
-                sleep(500);
+                sleep(0);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            i++;
         }
 
     }

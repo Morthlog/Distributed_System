@@ -61,7 +61,7 @@ public class stubUser implements User {
             try{
                 sleep(1000);
                 String ip = InetAddress.getLocalHost().getHostAddress();
-                stub.startConnection(ip, TCPServer.basePort - 1000);
+                stub.startConnection(ip, TCPServer.basePort);
                 stub.sendMessage(stub.receiveMessage());
                 System.out.println(stub.in.readUTF());
                 stub.stopConnection();
