@@ -107,7 +107,9 @@ public class Master extends Thread {
         final String DATA_PATH = "./Data/Stores.json";
         final Scanner on = new Scanner(System.in);
         Process[] workers = new Process[n_workers];
-
+        
+        System.out.println("Working Directory = " + System.getProperty("user.dir"));
+        
         // a server for each Worker
         Master server = new Master();
         server.connectWorkers(n_workers);
