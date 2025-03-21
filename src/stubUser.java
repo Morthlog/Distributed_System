@@ -7,8 +7,8 @@ import static java.lang.Thread.sleep;
 public class stubUser implements User {
     int counter = 0;
     String name;
-    private ObjectOutputStream out;
-    private ObjectInputStream in;
+    protected ObjectOutputStream out;
+    protected ObjectInputStream in;
     private Socket clientSocket;
 
     public stubUser(String name) {
@@ -54,20 +54,20 @@ public class stubUser implements User {
             System.err.printf("Could not close socket: %s", e.getMessage());
         }
     }
-    public static void main(String[] args) {
-        System.out.println("I am stub user #" + args[0]);
-        stubUser stub = new stubUser(args[0]);
-        for (int i = 0; i < 5; i++) {
-            try{
-                sleep(1000);
-                String ip = InetAddress.getLocalHost().getHostAddress();
-                stub.startConnection(ip, TCPServer.basePort);
-                stub.sendMessage(stub.receiveMessage());
-                System.out.println(stub.in.readUTF());
-                stub.stopConnection();
-            } catch (Exception e) {
-                System.err.printf("Could not connect to server with ip: %s", e.getMessage());
-            }
-        }
-    }
+//    public static void main(String[] args) {
+//        System.out.println("I am stub user #" + args[0]);
+//        stubUser stub = new stubUser(args[0]);
+//        for (int i = 0; i < 5; i++) {
+//            try{
+//                sleep(1000);
+//                String ip = InetAddress.getLocalHost().getHostAddress();
+//                stub.startConnection(ip, TCPServer.basePort);
+//                stub.sendMessage(stub.receiveMessage());
+//                System.out.println(stub.in.readUTF());
+//                stub.stopConnection();
+//            } catch (Exception e) {
+//                System.err.printf("Could not connect to server with ip: %s", e.getMessage());
+//            }
+//        }
+//    }
 }

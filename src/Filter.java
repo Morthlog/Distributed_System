@@ -1,35 +1,30 @@
 
-import java.util.Set;
+import java.io.Serializable;
 
-public class Filter
+public class Filter implements Serializable
 {
-	int stars;
-	String price;
-	Set<FoodCategory> categories;
+	private static final long serialVersionUID = 1L;
 
-	enum FoodCategory
-	{
-		COFFEE, SOUVLAKIA, PIZZA, BURGERS, PASTRY;
+	double latitude;
+	double longitude;
+	private int stars;
+	private String price;
+	private FoodCategory [] categories;
 
-		@Override
-		public String toString()
-		{
-			return this.name().charAt(0) + this.name().substring(1).toLowerCase();
-		}
-	}
+
 
 	String[] availablePrices = { "$", "$$", "$$$" };
 
 	int[] availableStars = { 1, 2, 3, 4, 5 };
 
-	public String[] getAvailablePrices()
-	{
-		return availablePrices.clone();
-	}
-
 	public FoodCategory[] getAvailableFoodCategories()
 	{
 		return FoodCategory.values();
+	}
+	
+	public String[] getAvailablePrices()
+	{
+		return availablePrices.clone();
 	}
 
 	public int[] getAvailableStars()
@@ -42,25 +37,41 @@ public class Filter
 		this.stars = stars;
 	}
 
-	public void setPrices(String price)
+	public void setPrice(String price)
 	{
 		this.price = price;
 	}
 
-	public void setCategories(Set<FoodCategory> categories)
+	public void setCategories(FoodCategory[] categories)
 	{
 		this.categories = categories;
 	}
 
-	public class Main
+	public int getStars()
 	{
-		public static void main(String[] args)
-		{
-			FoodCategory category = FoodCategory.SOUVLAKIA;
+		return stars;
+	}
 
-			
-			System.out.println(category.name()); //  SOUVLAKIA
-			System.out.println(category.toString()); //Souvlakia
-		}
+	public String getPrice() {
+		return price;
+	}
+
+	public FoodCategory[] getCategories() {
+		return categories.clone();
+	}
+
+	@Override
+	public String toString()
+	{
+		return "Filter [Stars=" + stars +
+				", Price=" + price +
+				", Categories=" + (categories != null ? java.util.Arrays.toString(categories) : "None") + "]";
+	}
+
+	public void setCoordinates(double latitude, double longitude)
+	{
+		this.latitude=latitude;
+		this.longitude=longitude;
 	}
 }
+

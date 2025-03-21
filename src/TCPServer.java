@@ -6,7 +6,7 @@ public class TCPServer extends Thread {
     public static final int basePort = 8000;
     public ServerSocket serverSocket;
     public Socket clientSocket;
-    private ObjectOutputStream out = null;
+    ObjectOutputStream out = null;
     public ObjectInputStream in = null;
     public int port = basePort;
     public Connection type;
