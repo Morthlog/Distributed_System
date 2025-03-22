@@ -14,32 +14,35 @@ import java.net.*;
 import static java.lang.Thread.sleep;
 
 public class Master extends Thread {
-    TCPServer serverClient = null;
-    List<TCPServer> serverWorker = new ArrayList<>();
+    private static Integer id = 0;
+    private TCPServer serverClient = null;
+    private List<TCPServer> serverWorker = new ArrayList<>();
 
     public Master(Socket connection, Connection type, List<TCPServer> workers){
         if (type == Connection.Client)
-            serverClient = new TCPServerClient(connection, type);
+            serverClient = new TCPServer(connection, type);
         this.serverWorker = workers;
     }
 
     public Master(){}
 
-    public String startForBroker(String msg) {
-        String response = "";
+    public <T> Message<T> startForBroker(Message<T> msg) {
+        Message<T> response = null;
         try{
             // request from Master
             System.out.println("Waiting for connection...");
             serverWorker.get(0).startConnection();
-            serverWorker.get(0).sendMessage("Client asked: " + msg);
+            serverWorker.get(0).sendMessage(new Message<>(msg.getValue(), msg.getId()));
             System.out.println("Worker was asked");
             response = serverWorker.get(0).receiveMessage();
             System.out.println("Got message right after");
-            if (!"".equals(response)) {
-                System.out.println("Got message: " + response);
+
+            //debug messages
+            if (response.getValue().getClass() == String.class) {
+                System.out.println("Got message: " + response.getValue());
             }
             else {
-                System.out.println("unrecognised greeting");
+                System.out.println("Got number: " + response.getValue());
             }
         }
         catch(IOException e){
@@ -49,19 +52,21 @@ public class Master extends Thread {
 
     }
 
-    private void startForClient() {
-        try
-        {
-            System.out.println("Wait for request");
-            String msg = serverClient.in.readUTF();
-            System.out.println("Client asked for: " + msg);
-            String response = startForBroker(msg);
-            serverClient.sendMessage("Here it is: " + response);
-        }
-        catch (IOException e)
-        {
+    private <T> void startForClient() {
+        Message<T> response = null;
+        try {
+            Message<T> msg = serverClient.receiveMessage();
+            synchronized (id)
+            {
+                msg.setId(++id);
+            }
+            System.out.println("Client asked for: " + msg.getValue());
+            response = startForBroker(msg);
+            serverClient.sendMessage(new Message<>(response.getValue()));
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
     }
 
 //    public void stop() {
@@ -168,7 +173,7 @@ public class Master extends Thread {
             // Under normal circumstances, each user will have his own IP address
             // causing no issues when connecting on the same port
             System.out.println("Starting user #" + "...");
-            for (int i = 0; i < 15; i++)
+            for (int i = 0; i < 5; i++)
             {
                 ProcessBuilder pb = new ProcessBuilder(
                         "cmd", "/c", "start", "cmd", "/k", "java stubUser User-" + i);
@@ -181,9 +186,7 @@ public class Master extends Thread {
                 Socket serverSocket = serverClient.accept();
                 Thread t = new Master(serverSocket, Connection.Client, server.serverWorker);
                 t.start();
-                //send request
-                sleep(0);
-                //
+
                 if (false)
                     break;
             }
@@ -196,10 +199,9 @@ public class Master extends Thread {
                 // stop all connections on threads
             }
         }
-        catch (IOException e)
+        catch (Exception e)
         {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
+            System.err.println("Couldn't start server: " + e.getMessage() );
             throw new RuntimeException(e);
         }
 
