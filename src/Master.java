@@ -77,21 +77,6 @@ public class Master extends Thread {
     }
 
 
-    public static void compile(){
-        try
-        {
-            System.out.println("Compile Worker...");
-            ProcessBuilder pb = new ProcessBuilder(
-                    "cmd.exe", "/c", "del Worker.class && javac Worker.java && javac stubUser.java");
-            Process p = pb.start();
-            p.waitFor();
-        }
-        catch(Exception e)
-        {
-            System.err.println("Could not compile Worker");
-        }
-    }
-
     // different port for each Worker
     public void connectWorkers(int size){
         for (int i = 0; i < size; i++)
@@ -104,12 +89,9 @@ public class Master extends Thread {
 
     public static void main(String[] args){
 
-        // Compile Worker and then continue
-        compile();
-
 
         final int n_workers = Integer.parseInt(args[0]);
-        final String DATA_PATH = "./Data/Stores.json";
+        final String DATA_PATH = "./src/Data/Stores.json";
         final Scanner on = new Scanner(System.in);
         Process[] workers = new Process[n_workers];
 
@@ -126,7 +108,7 @@ public class Master extends Thread {
                 // during use, every worker will be on the same system with the same IP
                 // using a different port should stop all connectivity issues
                 ProcessBuilder pb = new ProcessBuilder(
-                        "cmd", "/c", "start", "cmd", "/k", "java Worker " + i);
+                        "cmd", "/c", "start", "cmd", "/k", "cd ./src && java Worker " + i);
                 workers[i] = pb.start();
             }
             catch(IOException e)
@@ -169,20 +151,9 @@ public class Master extends Thread {
 
         try
         {
-            //===========================================
-            // Under normal circumstances, each user will have his own IP address
-            // causing no issues when connecting on the same port
-            System.out.println("Starting user #" + "...");
-            for (int i = 0; i < 5; i++)
-            {
-                ProcessBuilder pb = new ProcessBuilder(
-                        "cmd", "/c", "start", "cmd", "/k", "java stubUser User-" + i);
-                pb.start();
-            }
-//            //===========================================
-
             while (true)
             {
+                System.out.println("Waiting for request...");
                 Socket serverSocket = serverClient.accept();
                 Thread t = new Master(serverSocket, Connection.Client, server.serverWorker);
                 t.start();

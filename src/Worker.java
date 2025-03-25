@@ -47,7 +47,7 @@ public class Worker extends Communication {
             System.out.println("Waiting for request...");
 //            String msg = "hello server from worker #" + args[0] + " round " + i;
             Message<T> request;
-            client.startConnection(ip, TCPServer.basePort + 1);
+            client.startConnection(ip, TCPServer.basePort + 1 + Integer.parseInt(args[0]));
             try{
                 request = client.receiveMessage();
             }
