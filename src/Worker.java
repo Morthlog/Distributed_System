@@ -9,6 +9,43 @@ import static java.lang.Thread.sleep;
 
 public class Worker extends Communication {
 
+    /**
+     * actionTable for every way the {@link Worker} should respond
+     * current actions are not permanent
+     */
+    private static <T> T actionTable(Message<T> msg) {
+        Client client = msg.getClient();
+        int code = msg.getRequest();
+        T val = msg.getValue();
+        return switch (client) {
+            case Customer -> switch (code) {
+                case 1 -> sendString(val);
+                case 2 -> sendNum(val);
+                default -> {
+                    System.err.println("Unknown customer code: " + code);
+                    throw new RuntimeException();
+                }
+            };
+            case Manager -> switch (code) {
+                case 1 -> null;
+                case 2 -> null;
+                default -> {
+                    System.err.println("Unknown manager code: " + code);
+                    throw new RuntimeException();
+                }
+            };
+        };
+
+    }
+
+    private static <T> T sendString(T val){
+        return (T) (val + " changed");
+    }
+
+    private static <T> T sendNum(T val){
+        return (T) Integer.valueOf((Integer) val + 100);
+    }
+
 
     /**
      * Take the appropriate action based on the msg's value's type
@@ -17,12 +54,10 @@ public class Worker extends Communication {
     public static <T> void ManageRequest(Message<T> msg, Worker client)
     {
         try{
-            Message<?> response = null;
-            if (msg.getValue() instanceof String)
-                response = new Message<>(msg.getValue() + " changed", msg.getId());
-            else if (msg.getValue() instanceof Integer)
-                response = new Message<>((Integer)msg.getValue() + 100, msg.getId());
-            client.sendMessage(response);
+            T value = actionTable(msg);
+            msg.setValue(value);
+
+            client.sendMessage(msg);
             client.stopConnection();
         } catch (Exception e) {
             System.err.printf("Could not connect to server with ip: %s", e.getMessage());

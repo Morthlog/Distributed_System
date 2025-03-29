@@ -32,10 +32,9 @@ public class Master extends Thread {
             // request from Master
             System.out.println("Waiting for connection...");
             serverWorker.get(0).startConnection();
-            serverWorker.get(0).sendMessage(new Message<>(msg.getValue(), msg.getId()));
+            serverWorker.get(0).sendMessage(msg);
             System.out.println("Worker was asked");
             response = serverWorker.get(0).receiveMessage();
-            System.out.println("Got message right after");
 
             //debug messages
             if (response.getValue().getClass() == String.class) {
@@ -62,7 +61,7 @@ public class Master extends Thread {
             }
             System.out.println("Client asked for: " + msg.getValue());
             response = startForBroker(msg);
-            serverClient.sendMessage(new Message<>(response.getValue()));
+            serverClient.sendMessage(response);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
