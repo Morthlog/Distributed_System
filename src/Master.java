@@ -1,8 +1,6 @@
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 // import json-simple in project structure
 import org.json.simple.JSONArray;
@@ -15,40 +13,100 @@ import static java.lang.Thread.sleep;
 
 public class Master extends Thread {
     private static Integer id = 0;
-    private TCPServer serverClient = null;
-    private List<TCPServer> serverWorker = new ArrayList<>();
+    private static Map<Integer, List<Object>> mapReduce = new HashMap<>();
+    private static int n_workers;
 
-    public Master(Socket connection, Connection type, List<TCPServer> workers){
-        if (type == Connection.Client)
-            serverClient = new TCPServer(connection, type);
-        this.serverWorker = workers;
+    private TCPServer serverClient = null;
+    private static List<TCPServer> serverWorker = new ArrayList<>();
+
+    public Master(Socket connection){
+        serverClient = new TCPServer(connection);
     }
 
     public Master(){}
 
-    public <T> Message<T> startForBroker(Message<T> msg) {
-        Message<T> response = null;
-        try{
-            // request from Master
-            System.out.println("Waiting for connection...");
-            serverWorker.get(0).startConnection();
-            serverWorker.get(0).sendMessage(msg);
-            System.out.println("Worker was asked");
-            response = serverWorker.get(0).receiveMessage();
+    private static <T> void broadcast(Message<T> msg){
+        List<Thread> threads = new ArrayList<>();
+        for (int i = 0; i < n_workers; i++){
+            final int workerId = i;
+            Thread thread = new Thread(() -> singleWorker(msg, workerId));
+            threads.add(thread);
+            thread.start();
+        }
 
-            //debug messages
-            if (response.getValue().getClass() == String.class) {
-                System.out.println("Got message: " + response.getValue());
+        for (Thread thread : threads){
+            try
+            {
+                thread.join();
+            } catch (InterruptedException e)
+            {
+                System.err.println(e.getMessage());
             }
-            else {
-                System.out.println("Got number: " + response.getValue());
+        }
+        List<Object> list = new ArrayList<>();
+        list.add(Reducer.reduce(msg, mapReduce.get(msg.getId())));
+        mapReduce.replace(msg.getId(), list);
+
+    }
+
+    private static <T> void singleWorker(Message<T> msg, int worker){
+        try{
+            TCPServer server = serverWorker.get(worker);
+
+            TCPServer currentConnection = new TCPServer(server.serverSocket.accept());
+            currentConnection.sendMessage(msg);
+            Message<T> response = currentConnection.receiveMessage();
+
+            List<Object> list = mapReduce.get(msg.getId());
+            synchronized (list)
+            {
+                list.add(response.getValue());
             }
+            currentConnection.stopConnection();
         }
         catch(IOException e){
             System.err.println("Couldn't start server: " + e.getMessage());
         }
-        return response;
+    }
 
+
+    /**
+     * Current values are temporary
+     */
+    private <T> void callAppropriateWorker(Message<T> msg){
+        Client client = msg.getClient();
+        int code = msg.getRequest();
+        int workerId = 0;
+        // =========
+          // if msg.val is Store, set workerId to the correct worker
+        // =========
+        switch (client) {
+            case Customer:
+                switch (code) { // replace with appropriate cases
+                    case 1 -> singleWorker(msg, workerId);
+                    case 2 -> broadcast(msg);
+                    default -> {
+                        System.err.println("Unknown customer code: " + code);
+                        throw new RuntimeException();
+                    }
+                }
+                break;
+            case Manager:
+                switch (code) { // replace with appropriate cases
+                    case 1, 2 -> singleWorker(msg, workerId);
+                    default -> {
+                        System.err.println("Unknown manager code: " + code);
+                        throw new RuntimeException();
+                    }
+                }
+                break;
+        }
+    }
+
+    public <T> Message<T> startForBroker(Message<T> msg) {
+        callAppropriateWorker(msg);
+        msg.setValue((T) mapReduce.get(msg.getId()).get(0));
+        return msg;
     }
 
     private <T> void startForClient() {
@@ -60,8 +118,18 @@ public class Master extends Thread {
                 msg.setId(++id);
             }
             System.out.println("Client asked for: " + msg.getValue());
+            synchronized (mapReduce)
+            {
+                mapReduce.put(msg.getId(), new ArrayList<>());
+            }
             response = startForBroker(msg);
             serverClient.sendMessage(response);
+
+            synchronized (mapReduce)
+            {
+                mapReduce.remove(msg.getId()); // reduce memory overhead
+            }
+            serverClient.stopConnection();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -80,7 +148,7 @@ public class Master extends Thread {
     public void connectWorkers(int size){
         for (int i = 0; i < size; i++)
         {
-            serverWorker.add(new TCPServer(TCPServer.basePort + i + 1, Connection.Broker));
+            serverWorker.add(new TCPServer(TCPServer.basePort + i + 1));
             System.out.println(TCPServer.basePort + i + 1);
         }
     }
@@ -88,8 +156,7 @@ public class Master extends Thread {
 
     public static void main(String[] args){
 
-
-        final int n_workers = Integer.parseInt(args[0]);
+        n_workers = Integer.parseInt(args[0]);
         final String DATA_PATH = "./src/Data/Stores.json";
         final Scanner on = new Scanner(System.in);
         Process[] workers = new Process[n_workers];
@@ -154,7 +221,7 @@ public class Master extends Thread {
             {
                 System.out.println("Waiting for request...");
                 Socket serverSocket = serverClient.accept();
-                Thread t = new Master(serverSocket, Connection.Client, server.serverWorker);
+                Thread t = new Master(serverSocket);
                 t.start();
 
                 if (false)

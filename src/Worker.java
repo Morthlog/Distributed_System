@@ -9,6 +9,7 @@ import static java.lang.Thread.sleep;
 
 public class Worker extends Communication {
 
+    // Hashmap<String, Store> for memory and backup
     /**
      * actionTable for every way the {@link Worker} should respond
      * current actions are not permanent

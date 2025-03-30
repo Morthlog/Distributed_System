@@ -6,26 +6,19 @@ public class TCPServer extends Communication {
     public static final int basePort = 8000;
     public ServerSocket serverSocket;
     public int port = basePort;
-    public Connection type;
 
-    public TCPServer(Socket connection, Connection type) {
+    public TCPServer(Socket connection) {
         socket = connection;
-
-        this.type = type;
-        if (type == Connection.Broker)
-            port = 8001;
         try {
             out = new ObjectOutputStream(connection.getOutputStream());
             in = new ObjectInputStream(connection.getInputStream());
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public TCPServer(int port, Connection type) {
+    public TCPServer(int port) {
         this.port = port;
-        this.type = type;
         try{
             serverSocket = new ServerSocket(port);
         }catch(IOException e){
@@ -33,8 +26,8 @@ public class TCPServer extends Communication {
         }
     }
 
-    @Override
-    public void stopConnection() {
+
+    public void stopServer() {
         try{
             in.close();
             out.close();
@@ -45,7 +38,7 @@ public class TCPServer extends Communication {
             System.err.println("Couldn't close server");
         }
     }
-
+    
 
     /** Accept a connection request coming to the server
      *
@@ -56,15 +49,5 @@ public class TCPServer extends Communication {
         in = new ObjectInputStream(socket.getInputStream());
     }
 
-
-
-    public void run() {
-        manageRequest();
-    }
-
-    public void manageRequest()
-    {
-
-    }
 
 }
