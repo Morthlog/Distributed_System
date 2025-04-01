@@ -1,19 +1,22 @@
+
 import java.util.ArrayList;
 import java.util.List;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
-
-class Store {
-    private String storeName;
-    private double latitude;
-    private double longitude;
-    private String foodCategory;
-    private int stars;
-    private int noOfVotes;
-    private String storeLogo;
-    private List<Product> products;
+class Store  {
+    final String storeName;
+    final double latitude;
+    final double longitude;
+    final String foodCategory;
+    final int stars;
+    final int noOfVotes;
+    final String storeLogo;
     private String priceCategory;
+    private List<Product> products;
 
-    public Store(String storeName, double latitude, double longitude, String foodCategory, int stars, int noOfVotes, String storeLogo, List<Product> products) {
+    public Store(String storeName, double latitude, double longitude, String foodCategory,
+                 int stars, int noOfVotes, String storeLogo, List<Product> products) {
         this.storeName = storeName;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -22,44 +25,55 @@ class Store {
         this.noOfVotes = noOfVotes;
         this.storeLogo = storeLogo;
         this.products = products;
-
         calculatePriceCategory();
     }
 
-    public String getStoreName() { return storeName; }
-    public double getLatitude() { return latitude; }
-    public double getLongitude() { return longitude; }
-    public String getFoodCategory() { return foodCategory; }
-    public int getStars() { return stars; }
-    public int getNoOfVotes() { return noOfVotes; }
-    public String getStoreLogo() { return storeLogo; }
-    public List<Product> getProducts() {return products;}
-    public String getPriceCategory() {return priceCategory;}
+    public Store(JSONObject jsonObject) {
+        this.storeName = (String) jsonObject.get("StoreName");
+        this.latitude = ((Number) jsonObject.get("Latitude")).doubleValue();
+        this.longitude = ((Number) jsonObject.get("Longitude")).doubleValue();
+        this.foodCategory = (String) jsonObject.get("FoodCategory");
+        this.stars = ((Number) jsonObject.get("Stars")).intValue();
+        this.noOfVotes = ((Number) jsonObject.get("NoOfVotes")).intValue();
+        this.storeLogo = (String) jsonObject.get("StoreLogo");
 
-    public void calculatePriceCategory() {
-        if (products.isEmpty()) {
-            priceCategory = "N/A";
-            return;
+        this.products = new ArrayList<>();
+        JSONArray productsArray = (JSONArray) jsonObject.get("Products");
+        if (productsArray != null) {
+            for (Object productObj : productsArray) {
+                JSONObject productJson = (JSONObject) productObj;
+                Product product = new Product(
+                        (String) productJson.get("ProductName"),
+                        (String) productJson.get("ProductType"),
+                        ((Number) productJson.get("Available Amount")).intValue(),
+                        ((Number) productJson.get("Price")).doubleValue()
+                );
+                this.products.add(product);
+            }
         }
+    }
 
+    private void calculatePriceCategory() {
         double sum = 0;
         for (Product product : products) {
             sum += product.getPrice();
         }
-        double average = sum / products.size();
-
-        if (average <= 5) {
-            priceCategory = "$";
-        } else if (average <= 15) {
-            priceCategory = "$$";
+        double avgPrice = sum / products.size();
+        if (avgPrice <= 5) {
+            this.priceCategory = "$";
+        } else if (avgPrice <= 15) {
+            this.priceCategory = "$$";
         } else {
-            priceCategory = "$$$";
+            this.priceCategory = "$$$";
         }
     }
 
     public void addProduct(Product product) {
+        if (products == null) {
+            products = new ArrayList<>();
+        }
         products.add(product);
-        calculatePriceCategory(); // Επαναϋπολογισμός κατηγορίας τιμής
+        calculatePriceCategory();
     }
 
     public void removeProduct(String productName) {
@@ -71,7 +85,47 @@ class Store {
         }
         calculatePriceCategory();
     }
+    
+    public boolean manageStock(String productName, int newAmount) {
+        if (products == null) {
+            return false;
+        }
+        for (Product product : products) {
+            if (product.getProductName().equals(productName)) {
+                product.setAvailableAmount(newAmount);
+                return true;
+            }
+        }
+        return false;
+    }
 
+    public JSONObject toJSONObject() {
+        JSONObject json = new JSONObject();
+        json.put("StoreName", storeName);
+        json.put("Latitude", latitude);
+        json.put("Longitude", longitude);
+        json.put("FoodCategory", foodCategory);
+        json.put("Stars", stars);
+        json.put("NoOfVotes", noOfVotes);
+        json.put("StoreLogo", storeLogo);
+        json.put("PriceCategory", priceCategory);
+
+        JSONArray productsArray = new JSONArray();
+        for (Product product : products) {
+            productsArray.add(product.toJSONObject());
+        }
+        json.put("Products", productsArray);
+
+        return json;
+    }
+
+    public String getStoreName() {
+        return storeName;
+    }
+
+    public List<Product> getProducts() {
+        return products;
+    }
     @Override
     public String toString() {
         String result = "{"
@@ -97,7 +151,6 @@ class Store {
                 result += ", ";
             }
         }
-
         result += "]}";
         return result;
     }
