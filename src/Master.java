@@ -13,7 +13,7 @@ import static java.lang.Thread.sleep;
 
 public class Master extends Thread {
     private static Integer id = 0;
-    private static Map<Integer, List<Object>> mapReduce = new HashMap<>();
+
     private static int n_workers;
 
     private TCPServer serverClient = null;
@@ -25,7 +25,7 @@ public class Master extends Thread {
 
     public Master(){}
 
-    private static <T> void broadcast(Message<T> msg){
+    private static <T,T1> T1 broadcast(Message<T> msg){
         List<Thread> threads = new ArrayList<>();
         for (int i = 0; i < n_workers; i++){
             final int workerId = i;
@@ -43,70 +43,89 @@ public class Master extends Thread {
                 System.err.println(e.getMessage());
             }
         }
-        List<Object> list = new ArrayList<>();
-        list.add(Reducer.reduce(msg, mapReduce.get(msg.getId())));
-        mapReduce.replace(msg.getId(), list);
 
+        return Reducer.reduce(msg);
     }
 
-    private static <T> void singleWorker(Message<T> msg, int worker){
+    private static <T,T1> T1 singleWorker(Message<T> msg, int worker){
+        Message<T1> response;
         try{
             TCPServer server = serverWorker.get(worker);
+            TCPServer currentConnection;
+            synchronized (server){
+                currentConnection = new TCPServer(server.serverSocket.accept());
+            }
 
-            TCPServer currentConnection = new TCPServer(server.serverSocket.accept());
             currentConnection.sendMessage(msg);
-            Message<T> response = currentConnection.receiveMessage();
+            response = currentConnection.receiveMessage();
 
-            List<Object> list = mapReduce.get(msg.getId());
+            List<Object> list = Reducer.map.get(msg.getId());
             synchronized (list)
             {
                 list.add(response.getValue());
             }
             currentConnection.stopConnection();
+            return response.getValue(); // only used on non-broadcast calls
         }
         catch(IOException e){
             System.err.println("Couldn't start server: " + e.getMessage());
         }
+        return null;
     }
 
 
     /**
      * Current values are temporary
      */
-    private <T> void callAppropriateWorker(Message<T> msg){
+    private <T,T1> T1 callAppropriateWorker(Message<T> msg){
         Client client = msg.getClient();
         int code = msg.getRequest();
         int workerId = 0;
         // =========
           // if msg.val is Store, set workerId to the correct worker
         // =========
-        switch (client) {
-            case Customer:
-                switch (code) { // replace with appropriate cases
-                    case 1 -> singleWorker(msg, workerId);
-                    case 2 -> broadcast(msg);
-                    default -> {
-                        System.err.println("Unknown customer code: " + code);
-                        throw new RuntimeException();
-                    }
+        return switch (client) {
+            case Customer -> switch (code) { // replace with appropriate cases
+                case 1 -> singleWorker(msg, workerId);
+                case 2 -> broadcast(msg);
+                default -> {
+                    System.err.println("Unknown customer code: " + code);
+                    throw new RuntimeException();
                 }
-                break;
-            case Manager:
-                switch (code) { // replace with appropriate cases
-                    case 1, 2 -> singleWorker(msg, workerId);
-                    default -> {
-                        System.err.println("Unknown manager code: " + code);
-                        throw new RuntimeException();
-                    }
+            };
+            case Manager -> switch (code) { // replace with appropriate cases
+                case 1, 2 -> singleWorker(msg, workerId);
+                default -> {
+                    System.err.println("Unknown manager code: " + code);
+                    throw new RuntimeException();
                 }
-                break;
+            };
+        };
+    }
+
+    public <T,T1> Message<T1> startForBroker(Message<T> msg) {
+        T1 reduced = callAppropriateWorker(msg);
+        Message<T1> response = new Message<>(reduced);
+
+        response.setId(msg.getId());
+        response.setClient(msg.getClient());
+        response.setRequest(msg.getRequest());
+
+        return response;
+    }
+
+    private void initMapReduce(int id){
+        synchronized (Reducer.map)
+        {
+            Reducer.map.put(id, new ArrayList<>());
         }
     }
 
-    public <T> Message<T> startForBroker(Message<T> msg) {
-        callAppropriateWorker(msg);
-        msg.setValue((T) mapReduce.get(msg.getId()).get(0));
-        return msg;
+    private void clearMapReduce(int id){
+        synchronized (Reducer.map)
+        {
+            Reducer.map.remove(id);
+        }
     }
 
     private <T> void startForClient() {
@@ -118,17 +137,13 @@ public class Master extends Thread {
                 msg.setId(++id);
             }
             System.out.println("Client asked for: " + msg.getValue());
-            synchronized (mapReduce)
-            {
-                mapReduce.put(msg.getId(), new ArrayList<>());
-            }
+            initMapReduce(msg.getId());
+
             response = startForBroker(msg);
             serverClient.sendMessage(response);
 
-            synchronized (mapReduce)
-            {
-                mapReduce.remove(msg.getId()); // reduce memory overhead
-            }
+            clearMapReduce(msg.getId());
+
             serverClient.stopConnection();
         } catch (Exception e) {
             throw new RuntimeException(e);

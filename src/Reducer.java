@@ -1,11 +1,16 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Reducer {
 
-    public static <T> Object reduce(Message<T> msg, List<Object> list){
+    public static Map<Integer, List<Object>> map = new HashMap<>();
+
+    public static <T,T1> T1 reduce(Message<T> msg){
         Client client = msg.getClient();
         int code = msg.getRequest();
+        List<Object> list = map.get(msg.getId());
         return switch (client) { // only add cases where broadcast is being used
             case Customer -> switch (code) {
                 case 1 -> null;
@@ -29,13 +34,13 @@ public class Reducer {
     /**
      * Temporary for stubUser
      */
-    private static Object makeNum(List<Object> list) {
+    private static <T> T makeNum(List<Object> list) {
         Integer total = 0;
         for (Object o : list)
         {
             System.out.println(o);
             total += (Integer)o + 1000;
         }
-        return total;
+        return (T)total;
     }
 }
