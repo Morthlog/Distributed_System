@@ -4,7 +4,7 @@ import java.util.List;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-class Store  {
+public class Store  {
     final String storeName;
     final double latitude;
     final double longitude;
