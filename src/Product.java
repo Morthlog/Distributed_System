@@ -1,7 +1,7 @@
 
 import org.json.simple.JSONObject;
 
-class Product {
+public class Product {
     private String productName;
     private String productType;
     private int availableAmount;
