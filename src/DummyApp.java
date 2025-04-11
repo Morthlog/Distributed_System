@@ -30,7 +30,7 @@ public class DummyApp
         System.out.println("Products in " + store.getStoreName() + ":");
         for (int i = 0; i < products.size(); i++)
         {
-            System.out.println(i + ": " + products.get(i).getName() + ". Price: " + products.get(i).getPrice());
+            System.out.println(i + ": " + products.get(i).getProductName() + ". Price: " + products.get(i).getPrice());
         }
     }
 
@@ -120,7 +120,7 @@ public class DummyApp
                 for (String part : parts)
                 {
                     int productIndex = Integer.parseInt(part);
-                    String productName = products.get(productIndex).getName();
+                    String productName = products.get(productIndex).getProductName();
                     customer.addToCart(productName);
                     System.out.println("Product '" + productName + "' added to cart.");
                 }
