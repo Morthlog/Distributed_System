@@ -1,6 +1,7 @@
 import java.io.*;
 import java.math.BigDecimal;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -9,90 +10,64 @@ import java.util.List;
 
 import static java.lang.Thread.sleep;
 
-public class Worker
-{
-    private Socket clientSocket;
-    private ObjectOutputStream out;
-    private ObjectInputStream in;
+public class Worker extends Communication {
 
-    public void startConnection(String ip, int port)
-    {
-        try
-        {
-            clientSocket = new Socket(ip, port);
-            out = new ObjectOutputStream(clientSocket.getOutputStream());
-            in = new ObjectInputStream(clientSocket.getInputStream());
-        }
-        catch (IOException e)
-        {
-            System.err.printf("Could not connect to server with ip: %s and port: %d", ip, port);
-        }
+    // Hashmap<String, Store> for memory and backup
+    /**
+     * actionTable for every way the {@link Worker} should respond
+     * current actions are not permanent
+     */
+    private static <T> T actionTable(Message<T> msg) {
+        Client client = msg.getClient();
+        int code = msg.getRequest();
+        T val = msg.getValue();
+        return switch (client) {
+            case Customer -> switch (code) {
+                case 1 -> sendString(val);
+                case 2 -> sendNum(val);
+                default -> {
+                    System.err.println("Unknown customer code: " + code);
+                    throw new RuntimeException();
+                }
+            };
+            case Manager -> switch (code) {
+                case 1 -> null;
+                case 2 -> null;
+                default -> {
+                    System.err.println("Unknown manager code: " + code);
+                    throw new RuntimeException();
+                }
+            };
+        };
+
     }
 
-    public void sendMessage(String msg)
-    {
-        try
-        {
-            out.writeUTF(msg);
-            out.flush();
-        }
-        catch (IOException e)
-        {
-            System.err.printf("Could not send message (%s): %s", msg, e.getMessage());
-        }
+    private static <T> T sendString(T val){
+        return (T) (val + " changed");
     }
 
-    public void stopConnection()
-    {
-        try
-        {
-            in.close();
-            out.close();
-            clientSocket.close();
-        }
-        catch (IOException e)
-        {
-            System.err.printf("Could not close socket: %s", e.getMessage());
-        }
+    private static <T> T sendNum(T val){
+        return (T) Integer.valueOf((Integer) val + 100);
     }
 
-    public static void ManageRequest(Object request, Worker client)
+
+    /**
+     * Take the appropriate action based on the msg's value's type
+     * @param msg {@link Message} containing client's request
+     */
+    public static <T> void ManageRequest(Message<T> msg, Worker client)
     {
-        try
-        {
-            if (request instanceof Filter)
-            {
-                Filter filter = (Filter) request;
-                java.util.List<Store> stores = processFilter(filter);
-                client.out.writeObject(stores);
-            }
-            else if (request instanceof java.util.Set)
-            {
-                client.out.writeObject("Purchase successful");
-            }
-            client.out.flush();
+        try{
+            T value = actionTable(msg);
+            msg.setValue(value);
+
+            client.sendMessage(msg);
             client.stopConnection();
-        }
-        catch (Exception e)
-        {
-            System.err.printf("Could not process request: %s", e.getMessage());
+        } catch (Exception e) {
+            System.err.printf("Could not connect to server with ip: %s", e.getMessage());
         }
     }
-
-    private static List<Store> processFilter(Filter filter)
-    {
-        List<Store> stores = new ArrayList<>();
-        Store dummyStore = new Store("Dummy Store", FoodCategory.PIZZA, 5);
-        dummyStore.setProducts(Arrays.asList(
-                new Product("Margherita", new BigDecimal("8.5")),
-                new Product("Pepperoni", new BigDecimal("9.5"))
-        ));
-        stores.add(dummyStore);
-        return stores;
-    }
-
-    public static void main(String[] args)
-    {
+    public static <T> void main(String[] args){
         System.out.printf("Worker %s has started\n", args[0]);
         String ip;
         try
@@ -108,14 +83,16 @@ public class Worker
         {
             client = new Worker();
             System.out.println("Waiting for request...");
-            Object request;
-            client.startConnection(ip, TCPServer.basePort + 1);
-            try
-            {
-                request = client.in.readObject();
+//            String msg = "hello server from worker #" + args[0] + " round " + i;
+            Message<T> request;
+            client.startConnection(ip, TCPServer.basePort + 1 + Integer.parseInt(args[0]));
+            try{
+                request = client.receiveMessage();
             }
-            catch (IOException | ClassNotFoundException e)
+            catch (Exception e)
             {
+//                continue;
+                System.err.printf("Could not receive request from %s.\n", e.getMessage());
                 throw new RuntimeException(e);
             }
             Worker finalClient = client;
