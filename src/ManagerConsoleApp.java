@@ -1,7 +1,5 @@
 import java.io.*;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Scanner;
 import java.util.Map;
 import org.json.simple.JSONArray;
@@ -11,8 +9,8 @@ import org.json.simple.parser.*;
 public class ManagerConsoleApp {
     private static final String DATA_PATH = "src/Data/Stores.json";
     private static final Scanner scanner = new Scanner(System.in);
-    final List<Store> stores = new ArrayList<>();
-    final Map<String, Map<String, Integer>> productSales = new HashMap<>();
+
+    private Map<String, Store> stores = new HashMap<>();
 
     public ManagerConsoleApp() {
         loadStoresFromJson();
@@ -30,64 +28,57 @@ public class ManagerConsoleApp {
             storesArray = (JSONArray) ((JSONObject) temp).get("Stores");
             for (Object obj : storesArray) {
                 Store store = new Store((JSONObject) obj);
-                stores.add(store);
-                productSales.put(store.getStoreName(), new HashMap<>());
-
-                for (Product product : store.getProducts()) {
-                    productSales.get(store.getStoreName()).put(product.getProductType(), 0);
-                }
+                stores.put(store.getStoreName(), store);
             }
-        } catch (Exception exception) {
-            System.out.println("Error reading store data: " + exception.getMessage());
+        } catch (Exception e) {
+            System.out.println("Error reading file: " + e.getMessage());
         }
     }
 
     private void saveStore() {
         JSONArray allStores = new JSONArray();
+        JSONObject root = new JSONObject();
 
-        for (Store currentstore : stores) {
-            allStores.add(currentstore.toJSONObject());
+        for (Store s : stores.values()) {
+            allStores.add(s.toJSONObject());
         }
+        root.put("Stores", allStores);
+
         try (FileWriter file = new FileWriter(DATA_PATH)) {
-            file.write(allStores.toJSONString());
-        } catch (IOException exception) {
-            System.err.println("Save failed: " + exception.getMessage());
+            file.write(root.toJSONString());
+        } catch (Exception e) {
+            System.out.println("Error saving file: " + e.getMessage());
         }
     }
 
     private void addStore() {
-        System.out.print("Enter path to JSON file: ");
+        System.out.print("Enter json path of the new store: ");
         String path = scanner.nextLine();
 
         try (FileReader reader = new FileReader(path)) {
             JSONObject storeJson = (JSONObject) new JSONParser().parse(reader);
             Store newStore = new Store(storeJson);
+            String storeName = newStore.getStoreName();
 
-            for (Store existingStore : stores) {
-                if (existingStore.getStoreName().equals(newStore.getStoreName())) {
-                    System.out.println("Store already exists.");
-                    return;
-                }
+            if (stores.containsKey(storeName)) {
+                System.out.println("Store already exists");
+                return;
             }
-            stores.add(newStore);
-            productSales.put(newStore.getStoreName(), new HashMap<>());
-            for (Product product : newStore.getProducts()) {
-                productSales.get(newStore.getStoreName()).put(product.getProductType(), 0);
-            }
+            stores.put(storeName, newStore);
             saveStore();
-            System.out.println("Store added");
-        } catch (Exception exception) {
-            System.out.println("Error adding store: " + exception.getMessage());
+        } catch (Exception e) {
+            System.out.println("Error adding store: " + e.getMessage());
         }
     }
 
     private void addProduct() {
-        if (stores.isEmpty()) {
-            System.out.println("No stores have been loaded yet.");
+        System.out.print("Enter store name tou want to add a product: ");
+        String storeName = scanner.nextLine();
+        if (!stores.containsKey(storeName)) {
+            System.out.println("Sorry,store doesn't exist");
             return;
         }
-        System.out.print("Enter store name: ");
-        String storeName = scanner.nextLine();
+
         System.out.print("Product name: ");
         String productName = scanner.nextLine();
         System.out.print("Product type: ");
@@ -98,145 +89,124 @@ public class ManagerConsoleApp {
         double price = scanner.nextDouble();
         scanner.nextLine();
 
-        for (Store store : stores) {
-            if (store.getStoreName().equalsIgnoreCase(storeName)) {
-                Product newProduct= new Product(productName, productType, availableAmount, price);
-                store.addProduct(newProduct);
-                saveStore();
-                System.out.println("Product added");
-                return;
-            }
-        }
-        System.out.println("Store not found!");
+        Product newProduct = new Product(productName, productType, availableAmount, price);
+        stores.get(storeName).addProduct(newProduct);
+        saveStore();
+        System.out.println("Product added successfully");
     }
 
     private void removeProduct() {
-        System.out.print("Enter store name: ");
+        System.out.print("Enter store name you want to remove a product: ");
         String storeName = scanner.nextLine();
-        System.out.print("Enter product name to remove: ");
+
+        if (!stores.containsKey(storeName)) {
+            System.out.print("Store not found!");
+            return;
+        }
+        System.out.print("Name of the product to be removed: ");
         String productName = scanner.nextLine();
 
-        for (Store store : stores) {
-            if (store.getStoreName().equalsIgnoreCase(storeName)) {
-                List<Product> products = store.getProducts();
-                Product productToRemove =null;
-                for (Product product : products) {
-                    if (product.getProductName().equalsIgnoreCase(productName)) {
-                        productToRemove = product;
-                        break;
-                    }
-                }
-                if (productToRemove != null) {
-                    productToRemove.setHidden(true);
-                    saveStore();
-                    System.out.println("Product removed successfully.");
-                    return;
-                }
-            }
-        }
-        System.out.println("Store not found!");
+        Store store = stores.get(storeName);
+        store.removeProduct(productName);
+        saveStore();
+        System.out.println("Product removed");
     }
 
     private void manageStock() {
-        System.out.print("Enter store name: ");
+        System.out.print("Enter store name you want to manage stock: ");
         String storeName = scanner.nextLine();
-        System.out.print("Enter product name: ");
+
+        if (!stores.containsKey(storeName)) {
+            System.out.println("Store not found");
+            return;
+        }
+
+        System.out.println("Enter product name: ");
         String productName = scanner.nextLine();
-        System.out.print("Enter new available amount: ");
+        System.out.println("Enter new available amount: ");
         int newAmount = scanner.nextInt();
         scanner.nextLine();
 
-       for (Store store : stores) {
-            if (store.getStoreName().equalsIgnoreCase(storeName)) {
-                store.manageStock(productName, newAmount);
-                saveStore();
-                System.out.println("Stock updated successfully!");
-                return;
-            }
+        Store store = stores.get(storeName);
+        boolean updatedStock = store.manageStock(productName, newAmount);
+
+        if (updatedStock) {
+            saveStore();
+            System.out.println("Stock updated");
+        } else {
+            System.out.println("Product not found");
         }
-        System.out.println("Store not found.");
     }
 
     private void saveSales() {
-        System.out.print("Enter store name: ");
+        System.out.println("Enter store name you want to save a sale: ");
         String storeName = scanner.nextLine();
-        System.out.print("Enter product name: ");
+
+        if (!stores.containsKey(storeName)) {
+            System.out.println("Store not found");
+            return;
+        }
+
+        System.out.println("Enter product name: ");
         String productName = scanner.nextLine();
-        Store store = null;
-        for (Store s : stores) {
-            if (s.getStoreName().equalsIgnoreCase(storeName)) {
-                store = s;
-                break;
-            }
-        }
-        if (store == null) {
-            System.out.println("Store not found.");
+
+        Store store = stores.get(storeName);
+        Map<String, Product> products = store.getProducts();
+
+        if (!products.containsKey(productName)) {
+            System.out.println("Product not found");
             return;
         }
-        Product product = null;
-        for (Product p : store.getProducts()) {
-            if (p.getProductName().equalsIgnoreCase(productName) && !p.isHidden()) {
-                product = p;
-                break;
-            }
-        }
-        if (product == null) {
-            System.out.println("Product not found.");
+
+        Product product = products.get(productName);
+        if (product.isHidden()) {
+            System.out.println("This product is currently not available");
             return;
         }
-        System.out.print("Enter quantity that have been sold: ");
+
+        System.out.println("Enter quantity that has been sold: ");
         int quantity = scanner.nextInt();
         scanner.nextLine();
-        int newAmount = product.getAvailableAmount() - quantity;
-        if (newAmount < 0) {
-            System.out.println("Insufficient stock. Available: " + product.getAvailableAmount());
-            return;
+
+        boolean successSaved = store.recordSale(productName, quantity);
+        if (successSaved) {
+            saveStore();
+            System.out.println("Sale saved");
+        } else {
+            System.out.println("Insufficient stock. Available only: " + product.getAvailableAmount());
         }
-        product.setAvailableAmount(newAmount);
-        String productType = product.getProductType();
-        Map<String, Integer> storeSales = productSales.get(storeName);
-        if (storeSales == null) {
-            storeSales = new HashMap<>();
-            productSales.put(storeName, storeSales);
-        }
-        int currentSales = storeSales.getOrDefault(productType, 0);
-        storeSales.put(productType, currentSales + quantity);
-        saveStore();
     }
 
     private void displaySalesByProduct() {
-        System.out.print("Enter product category: ");
+        System.out.println("Enter product category you are interested in displaying: ");
         String category = scanner.nextLine();
 
-        System.out.println("\nSales by Product: " + category );
         Map<String, Integer> salesByStore = new HashMap<>();
         int total = 0;
         boolean found = false;
-        for (Store store : stores) {
-            String storeName = store.getStoreName();
-            Map<String, Integer> storeSales = productSales.get(storeName);
 
-            if (storeSales != null && storeSales.containsKey(category)) {
-                found = true;
-                int sales = storeSales.get(category);
-                salesByStore.put(storeName, sales);
-                total += sales;
+        for (Store store :stores.values()) {
+            int count = store.getSalesByProductType(category);
+            if (count > 0) {
+                salesByStore.put(store.getStoreName(), count);
+                total += count;
             }
         }
-        if (found) {
-            for (Map.Entry<String, Integer> entry : salesByStore.entrySet()) {
-                System.out.println("\"" + entry.getKey() + "\": " + entry.getValue());
-            }
-            System.out.println("\"total\": " + total);
-        } else {
-            System.out.println("No products found in " + category + " category.");
+
+        if (salesByStore.isEmpty()) {
+            System.out.println("No sales found.");
+        }else{
+            salesByStore.forEach((name, count) -> System.out.println(name + ": " + count));
+            System.out.println("Total sales in category: " + total);
         }
     }
+
     public static void main(String[] args) {
         ManagerConsoleApp manager = new ManagerConsoleApp();
         boolean app_running = true;
+
         while (app_running) {
-            System.out.print("Enter your choice: ");
+            System.out.println("Enter your choice: ");
             System.out.println("1. Add new store");
             System.out.println("2. Add new product to store");
             System.out.println("3. Remove product from store");
@@ -244,6 +214,7 @@ public class ManagerConsoleApp {
             System.out.println("5. Save a sale");
             System.out.println("6. Display sales by product");
             System.out.println("7. Exit");
+
             int choice = scanner.nextInt();
             scanner.nextLine();
 
