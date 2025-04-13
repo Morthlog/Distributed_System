@@ -42,17 +42,18 @@ public class ManagerConsoleApp {
         }
     }
 
-    private void saveStore() {
-        JSONArray allStores = new JSONArray();
-
-        for (Store currentstore : stores) {
-            allStores.add(currentstore.toJSONObject());
-        }
-        try (FileWriter file = new FileWriter(DATA_PATH)) {
-            file.write(allStores.toJSONString());
-        } catch (IOException exception) {
-            System.err.println("Save failed: " + exception.getMessage());
-        }
+    //Use of json in currentstore.toJSONObject() conflicts with serializable
+    private void saveStore() { 
+//        JSONArray allStores = new JSONArray();
+//
+//        for (Store currentstore : stores) {
+//            allStores.add(currentstore.toJSONObject());
+//        }
+//        try (FileWriter file = new FileWriter(DATA_PATH)) {
+//            file.write(allStores.toJSONString());
+//        } catch (IOException exception) {
+//            System.err.println("Save failed: " + exception.getMessage());
+//        }
     }
 
     private void addStore() {

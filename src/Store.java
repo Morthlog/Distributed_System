@@ -1,10 +1,11 @@
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-public class Store  {
+public class Store implements Serializable {
     final String storeName;
     final double latitude;
     final double longitude;
@@ -99,25 +100,25 @@ public class Store  {
         return false;
     }
 
-    public JSONObject toJSONObject() {
-        JSONObject json = new JSONObject();
-        json.put("StoreName", storeName);
-        json.put("Latitude", latitude);
-        json.put("Longitude", longitude);
-        json.put("FoodCategory", foodCategory);
-        json.put("Stars", stars);
-        json.put("NoOfVotes", noOfVotes);
-        json.put("StoreLogo", storeLogo);
-        json.put("PriceCategory", priceCategory);
-
-        JSONArray productsArray = new JSONArray();
-        for (Product product : products) {
-            productsArray.add(product.toJSONObject());
-        }
-        json.put("Products", productsArray);
-
-        return json;
-    }
+//    public JSONObject toJSONObject() {
+//        JSONObject json = new JSONObject();
+//        json.put("StoreName", storeName);
+//        json.put("Latitude", latitude);
+//        json.put("Longitude", longitude);
+//        json.put("FoodCategory", foodCategory);
+//        json.put("Stars", stars);
+//        json.put("NoOfVotes", noOfVotes);
+//        json.put("StoreLogo", storeLogo);
+//        json.put("PriceCategory", priceCategory);
+//
+//        JSONArray productsArray = new JSONArray();
+//        for (Product product : products) {
+//            productsArray.add(product.toJSONObject());
+//        }
+//        json.put("Products", productsArray);
+//
+//        return json;
+//    }
 
     public String getStoreName() {
         return storeName;

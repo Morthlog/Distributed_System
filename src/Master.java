@@ -164,6 +164,37 @@ public class Master extends Thread {
         }
     }
 
+    private void initWorkerMemory(String DATA_PATH){
+        try {
+            Object temp = new JSONParser().parse(new FileReader(DATA_PATH));
+            JSONArray stores = (JSONArray) ((JSONObject)temp).get("Stores");
+            Message<Store> msg; // should be extended store
+            for (int i = 0; i < stores.size(); i++){
+                int workerID = i % n_workers;
+                TCPServer server = serverWorker.get(workerID);
+                server.startConnection();
+                Store store = new Store((JSONObject)stores.get(i));
+                System.out.println(store);
+                msg = new Message<>(store);
+                msg.setRequest(RequestCode.INIT_MEMORY);
+                System.out.println("Sending Store: " + i);
+                server.sendMessage(msg);
+            }
+            for (int i = 0; i < n_workers; i++){
+                serverWorker.get(i).startConnection();
+                msg = new Message<>();
+                msg.setRequest(RequestCode.END_INIT_MEMORY);
+                serverWorker.get(i).sendMessage(msg);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            System.err.println("Couldn't initialize Worker memory: " + e.getMessage());
+            throw new RuntimeException();
+        }
+
+
+    }
+
 
     public static void main(String[] args){
 
@@ -185,7 +216,7 @@ public class Master extends Thread {
                 // during use, every worker will be on the same system with the same IP
                 // using a different port should stop all connectivity issues
                 ProcessBuilder pb = new ProcessBuilder(
-                        "cmd", "/c", "start", "cmd", "/k", "cd ./src && java Worker " + i);
+                        "cmd", "/c", "start", "cmd", "/k", "cd ./src && java  -cp .;jar/json-simple-1.1.1.jar  Worker " + i);
                 workers[i] = pb.start();
             }
             catch(IOException e)
@@ -194,27 +225,7 @@ public class Master extends Thread {
             }
         }
 
-        // Read initial memory
-        JSONArray stores;
-        try
-        {
-            Object temp = new JSONParser().parse(new FileReader(DATA_PATH));
-            stores = (JSONArray) ((JSONObject)temp).get("Stores");
-        }
-        catch (Exception e)
-        {
-            System.out.println("JSON data could not be parsed");
-            throw new RuntimeException();
-        }
-
-        // Send store data to each Worker
-        int currentWorker = 0;
-        for (var obj: stores)
-        {
-            JSONObject store = (JSONObject)obj;
-
-            currentWorker = (currentWorker + 1) % n_workers;
-        }
+        server.initWorkerMemory(DATA_PATH);
 
         // Loop and wait for TCP call
 

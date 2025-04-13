@@ -4,6 +4,9 @@ public enum RequestCode
     REMOVE_PRODUCT,
     BUY,
     SEARCH,
+    INIT_MEMORY,
+    INIT_BACKUP,
+    END_INIT_MEMORY,
     STUB_TEST_1,
     STUB_TEST_2
 }

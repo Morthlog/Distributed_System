@@ -4,15 +4,15 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static java.lang.Thread.sleep;
 
 public class Worker extends Communication {
 
     // Hashmap<String, Store> for memory and backup
+    private static final Map<String, Store> memory = new HashMap<>(); // should be extendedStore
+    private static final Map<String, Store> backup = new HashMap<>(); // should be extendedStore
     /**
      * actionTable for every way the {@link Worker} should respond
      * current actions are not permanent
@@ -78,7 +78,10 @@ public class Worker extends Communication {
         {
             throw new RuntimeException(e);
         }
-        Worker client;
+        Worker client = new Worker();
+
+        client.init(ip, Integer.parseInt(args[0]));
+
         while (true)
         {
             client = new Worker();
@@ -107,5 +110,37 @@ public class Worker extends Communication {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    private void init(String ip, int id) {
+        System.out.println("Starting memory initialization");
+        while(true){
+            Message<Store> request; // should be extended store
+            startConnection(ip, TCPServer.basePort + 1 + id);
+            System.out.println("Connection established");
+            try{
+                request = receiveMessage();
+            }
+            catch (Exception e) {
+                System.err.printf("Could not receive request from %s.\n", e.getMessage());
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+            if (request.getRequest() == RequestCode.INIT_MEMORY){
+                memory.put(((Store)request.getValue()).getStoreName(), (Store)request.getValue());
+            } else if (request.getRequest() == RequestCode.INIT_BACKUP) {
+                backup.put(((Store)request.getValue()).getStoreName(), (Store)request.getValue());
+            } else if (request.getRequest() == RequestCode.END_INIT_MEMORY) {
+                stopConnection();
+                break;
+            }
+            else{
+                System.out.println("Unknown request: " + request.getRequest());
+                throw new RuntimeException();
+            }
+
+            stopConnection();
+        }
+        System.out.println("Memory initialization complete");
     }
 }
