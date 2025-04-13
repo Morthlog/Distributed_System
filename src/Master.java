@@ -129,10 +129,7 @@ public class Master extends Thread {
         Message<T> response = null;
         try {
             Message<T> msg = serverClient.receiveMessage();
-            synchronized (id)
-            {
-                msg.setId(++id);
-            }
+            setIdToRequest(msg);
             System.out.println("Client asked for: " + msg.getValue());
             initMapReduce(msg.getId());
 
@@ -146,6 +143,10 @@ public class Master extends Thread {
             throw new RuntimeException(e);
         }
 
+    }
+
+    private synchronized <T> void setIdToRequest(Message<T> msg){
+        msg.setId(++id);
     }
 
 	public void run()
