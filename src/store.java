@@ -4,20 +4,19 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 class Store {
-    private String storeName;
-    private double latitude;
-    private double longitude;
-    private String foodCategory;
-    private int stars;
-    private int noOfVotes;
-    private String storeLogo;
-    private String priceCategory;
+    protected String storeName;
+    protected double latitude;
+    protected double longitude;
+    protected String foodCategory;
+    protected int stars;
+    protected int noOfVotes;
+    protected String storeLogo;
+    protected String priceCategory;
 
-    private Map<String, Product> products;
-    private Map<String, Integer> productSales;
+    protected Map<String, Product> visibleProducts;
 
     public Store(String storeName, double latitude, double longitude, String foodCategory,
-                 int stars, int noOfVotes, String storeLogo, Map<String, Product> products) {
+                 int stars, int noOfVotes, String storeLogo) {
         this.storeName = storeName;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -26,13 +25,7 @@ class Store {
         this.noOfVotes = noOfVotes;
         this.storeLogo = storeLogo;
 
-        this.products = products;
-        this.productSales = new HashMap<>();
-
-        for (Product product : products.values()) {
-            String type = product.getProductType();
-            productSales.put(type, 0);
-        }
+        this.visibleProducts = new HashMap<>();
         calculatePriceCategory();
     }
 
@@ -45,8 +38,7 @@ class Store {
         this.noOfVotes = ((Number) jsonObject.get("NoOfVotes")).intValue();
         this.storeLogo = (String) jsonObject.get("StoreLogo");
 
-        this.productSales = new HashMap<>();
-        this.products = new HashMap<>();
+        this.visibleProducts = new HashMap<>();
 
         JSONArray productList = (JSONArray) jsonObject.get("Products");
 
@@ -61,20 +53,20 @@ class Store {
 
                 Product product = new Product(productName, productType, availableAmount, price);
 
-                products.put(productName, product);
-                String type = product.getProductType();
-                productSales.put(type, 0);
+                if (!product.isHidden()) {
+                    visibleProducts.put(productName, product);
+                }
             }
         }
         calculatePriceCategory();
     }
 
-    private void calculatePriceCategory() {
+    protected void calculatePriceCategory() {
         double sum = 0.0;
-        for (Product p : products.values()) {
+        for (Product p : visibleProducts.values()) {
             sum += p.getPrice();
         }
-        double averagePrice = sum / products.size();
+        double averagePrice = sum / visibleProducts.size();
         if (averagePrice <= 5) {
             this.priceCategory = "$";
         } else if (averagePrice <= 15) {
@@ -84,94 +76,13 @@ class Store {
         }
     }
 
-    public void addProduct(Product product) {
-        if (products == null) {
-            products = new HashMap<>();
-        }
-        products.put(product.getProductName(), product);
-
-
-        String type = product.getProductType();
-        if (!productSales.containsKey(type)) {
-            productSales.put(type, 0);
-        }
-
-        calculatePriceCategory();
-    }
-
-    public void removeProduct(String productName) {
-        Product product = products.get(productName);
-        if (product != null) {
-            product.setHidden(true);  // Mark as hidden instead of removing
-        }
-        calculatePriceCategory();
-    }
-
-    public boolean manageStock(String productName, int newAmount) {
-        if (products == null) {
-            return false;
-        }
-        Product product = products.get(productName);
-        product.setAvailableAmount(newAmount);
-        return true;
-    }
-
-    public boolean recordSale(String productName, int quantity) {
-        if (!products.containsKey(productName)) {
-            return false;
-        }
-
-        Product product = products.get(productName);
-        int currentAmount = product.getAvailableAmount();
-
-        if (currentAmount < quantity) {
-            return false;
-        }
-        product.setAvailableAmount(currentAmount - quantity);
-
-        String productType = product.getProductType();
-        int currentSales = productSales.getOrDefault(productType, 0);
-        productSales.put(productType, currentSales + quantity);
-
-        return true;
-    }
-
-    public int getSalesByProductType(String productType) {
-        return productSales.getOrDefault(productType, 0);
-    }
-
-    public JSONObject toJSONObject() {
-        JSONObject json = new JSONObject();
-        json.put("StoreName", storeName);
-        json.put("Latitude", latitude);
-        json.put("Longitude", longitude);
-        json.put("FoodCategory", foodCategory);
-        json.put("Stars", stars);
-        json.put("NoOfVotes", noOfVotes);
-        json.put("StoreLogo", storeLogo);
-        json.put("PriceCategory", priceCategory);
-
-        JSONArray productsArray = new JSONArray();
-        for (Product product : products.values()) {
-            productsArray.add(product.toJSONObject());
-        }
-        json.put("Products", productsArray);
-
-        return json;
-    }
-
     public String getStoreName() {
         return storeName;
     }
-
-    public Map<String, Product> getProducts() {
-        return products;
+    
+    public Map<String, Product> getVisibleProducts() {
+        return visibleProducts;
     }
-
-    public Map<String, Integer> getProductSales() {
-        return productSales;
-    }
-
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder();
@@ -184,15 +95,16 @@ class Store {
                 .append("\"NoOfVotes\": ").append(noOfVotes).append(", ")
                 .append("\"StoreLogo\": \"").append(storeLogo).append("\", ")
                 .append("\"Products\": [");
+
         int i = 0;
-        for (Product p : products.values()) {
+        for (Product p : visibleProducts.values()) {
             result.append("{")
                     .append("\"ProductName\": \"").append(p.getProductName()).append("\", ")
                     .append("\"ProductType\": \"").append(p.getProductType()).append("\", ")
                     .append("\"Available Amount\": ").append(p.getAvailableAmount()).append(", ")
                     .append("\"Price\": ").append(p.getPrice())
                     .append("}");
-            if (i < products.size() - 1) {
+            if (i < visibleProducts.size() - 1) {
                 result.append(", ");
             }
             i++;
