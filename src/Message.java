@@ -4,7 +4,7 @@ public class Message <T> implements Serializable {
     private T value;
     private int id;
     private Client client;
-    private int request;
+    private RequestCode request;
 
     public Message(){}
 
@@ -12,7 +12,7 @@ public class Message <T> implements Serializable {
         this.value = value;
     }
     
-    public Message(T value, Client client, int request) {
+    public Message(T value, Client client, RequestCode request) {
         this(value);
         this.client = client;
         this.request = request;
@@ -52,14 +52,14 @@ public class Message <T> implements Serializable {
      * Identifier that corresponds to the type of request
      * @return request code
      */
-    public int getRequest() {
+    public RequestCode getRequest() {
         return request;
     }
 
     /**
      * Identifier that corresponds to the type of request
      */
-    public void setRequest(int request) {
+    public void setRequest(RequestCode request) {
         this.request = request;
     }
 }

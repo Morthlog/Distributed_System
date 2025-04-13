@@ -25,10 +25,10 @@ public class stubUser extends Communication{
                 if (i%2 == 0)
                 {
                     val = "From: "+ stub.name + ". Just add changed on end " + i + " ";
-                    msg = new Message<>(val, Client.Customer, 1);
+                    msg = new Message<>(val, Client.Customer, RequestCode.STUB_TEST_1);
                 }
                 else
-                    msg = new Message<>(57 + 2*i, Client.Customer, 2);
+                    msg = new Message<>(57 + 2*i, Client.Customer, RequestCode.STUB_TEST_2);
                 stub.sendMessage(msg);
                 response = stub.receiveMessage();
                 System.out.println(response.getValue());

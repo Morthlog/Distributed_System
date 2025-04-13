@@ -9,20 +9,20 @@ public class Reducer {
 
     public static <T,T1> T1 reduce(Message<T> msg){
         Client client = msg.getClient();
-        int code = msg.getRequest();
+        RequestCode code = msg.getRequest();
         List<Object> list = map.get(msg.getId());
         return switch (client) { // only add cases where broadcast is being used
             case Customer -> switch (code) {
-                case 1 -> null;
-                case 2 -> makeNum(list);
+                case STUB_TEST_1 -> null;
+                case STUB_TEST_2 -> makeNum(list);
                 default -> {
                     System.err.println("Unknown customer code: " + code);
                     throw new RuntimeException();
                 }
             };
             case Manager -> switch (code) { // only add cases where broadcast is being used
-                case 1 -> null;
-                case 2 -> null;
+                case ADD_STORE -> null;
+                case REMOVE_PRODUCT -> null;
                 default -> {
                     System.err.println("Unknown manager code: " + code);
                     throw new RuntimeException();

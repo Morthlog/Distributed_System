@@ -76,22 +76,22 @@ public class Master extends Thread {
      */
     private <T,T1> T1 callAppropriateWorker(Message<T> msg){
         Client client = msg.getClient();
-        int code = msg.getRequest();
+        RequestCode code = msg.getRequest();
         int workerId = 0;
         // =========
           // if msg.val is Store, set workerId to the correct worker
         // =========
         return switch (client) {
             case Customer -> switch (code) { // replace with appropriate cases
-                case 1 -> singleWorker(msg, workerId);
-                case 2 -> broadcast(msg);
+                case STUB_TEST_1 -> singleWorker(msg, workerId);
+                case STUB_TEST_2 -> broadcast(msg);
                 default -> {
                     System.err.println("Unknown customer code: " + code);
                     throw new RuntimeException();
                 }
             };
             case Manager -> switch (code) { // replace with appropriate cases
-                case 1, 2 -> singleWorker(msg, workerId);
+                case ADD_STORE, REMOVE_PRODUCT -> singleWorker(msg, workerId);
                 default -> {
                     System.err.println("Unknown manager code: " + code);
                     throw new RuntimeException();

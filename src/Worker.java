@@ -19,20 +19,20 @@ public class Worker extends Communication {
      */
     private static <T> T actionTable(Message<T> msg) {
         Client client = msg.getClient();
-        int code = msg.getRequest();
+        RequestCode code = msg.getRequest();
         T val = msg.getValue();
         return switch (client) {
             case Customer -> switch (code) {
-                case 1 -> sendString(val);
-                case 2 -> sendNum(val);
+                case STUB_TEST_1-> sendString(val);
+                case STUB_TEST_2 -> sendNum(val);
                 default -> {
                     System.err.println("Unknown customer code: " + code);
                     throw new RuntimeException();
                 }
             };
             case Manager -> switch (code) {
-                case 1 -> null;
-                case 2 -> null;
+                case ADD_STORE -> null;
+                case REMOVE_PRODUCT -> null;
                 default -> {
                     System.err.println("Unknown manager code: " + code);
                     throw new RuntimeException();
