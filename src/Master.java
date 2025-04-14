@@ -12,9 +12,11 @@ public class Master extends Thread {
     private static Integer id = 0;
 
     private static int n_workers;
+    private static final HashMap<String, Integer> storeToWorkerMemory = new HashMap<>();
+    private static final HashMap<String, Integer> storeToWorkerBackup = new HashMap<>();
 
     private TCPServer serverClient = null;
-    private static List<TCPServer> serverWorker = new ArrayList<>();
+    private static final List<TCPServer> serverWorker = new ArrayList<>();
 
     public Master(Socket connection){
         serverClient = new TCPServer(connection);
@@ -173,14 +175,18 @@ public class Master extends Thread {
                 int workerID = i % n_workers;
                 TCPServer server = serverWorker.get(workerID);
                 server.startConnection();
+
                 Store store = new Store((JSONObject)stores.get(i));
-                System.out.println(store);
                 msg = new Message<>(store);
                 msg.setRequest(RequestCode.INIT_MEMORY);
-                System.out.println("Sending Store: " + i);
                 server.sendMessage(msg);
+
+                storeToWorkerMemory.put(store.getStoreName(), workerID);
             }
-            for (int i = 0; i < n_workers; i++){
+            // ===========
+            // backup
+            // ===========
+            for (int i = 0; i < n_workers; i++){ // end Initialization
                 serverWorker.get(i).startConnection();
                 msg = new Message<>();
                 msg.setRequest(RequestCode.END_INIT_MEMORY);
