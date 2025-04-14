@@ -24,7 +24,7 @@ public class Master extends Thread {
 
     public Master(){}
 
-    private static <T,T1> T1 broadcast(Message<T> msg){
+    private static <T,T1> T1 broadcast(BackendMessage<T> msg){
         List<Thread> threads = new ArrayList<>();
         for (int i = 0; i < n_workers; i++){
             final int workerId = i;
@@ -46,7 +46,7 @@ public class Master extends Thread {
         return Reducer.reduce(msg);
     }
 
-    private static <T,T1> T1 singleWorker(Message<T> msg, int worker){
+    private static <T,T1> T1 singleWorker(BackendMessage<T> msg, int worker){
         Message<T1> response;
         try{
             TCPServer server = serverWorker.get(worker);
@@ -64,6 +64,13 @@ public class Master extends Thread {
                 list.add(response.getValue());
             }
             currentConnection.stopConnection();
+            if (((BackendMessage<T1>)response).getSaveState() == SaveState.REQUIRES_BACKUP)
+            {
+                // ===============
+                // pick correct worker for backup
+                // set msg as backup and send
+                // ===============
+            }
             return response.getValue(); // only used on non-broadcast calls
         }
         catch(IOException e){
@@ -76,7 +83,7 @@ public class Master extends Thread {
     /**
      * Current values are temporary
      */
-    private <T,T1> T1 callAppropriateWorker(Message<T> msg){
+    private <T,T1> T1 callAppropriateWorker(BackendMessage<T> msg){
         Client client = msg.getClient();
         RequestCode code = msg.getRequest();
         int workerId = 0;
@@ -102,9 +109,9 @@ public class Master extends Thread {
         };
     }
 
-    public <T,T1> Message<T1> startForBroker(Message<T> msg) {
+    public <T,T1> Message<T1> startForBroker(BackendMessage<T> msg) {
         T1 reduced = callAppropriateWorker(msg);
-        Message<T1> response = new Message<>(reduced);
+        BackendMessage<T1> response = new BackendMessage<>(reduced);
 
         response.setId(msg.getId());
         response.setClient(msg.getClient());
@@ -130,7 +137,7 @@ public class Master extends Thread {
     private <T> void startForClient() {
         Message<T> response = null;
         try {
-            Message<T> msg = serverClient.receiveMessage();
+            BackendMessage<T> msg = new BackendMessage<>(serverClient.receiveMessage());
             setIdToRequest(msg);
             System.out.println("Client asked for: " + msg.getValue());
             initMapReduce(msg.getId());
@@ -147,7 +154,7 @@ public class Master extends Thread {
 
     }
 
-    private synchronized <T> void setIdToRequest(Message<T> msg){
+    private synchronized <T> void setIdToRequest(BackendMessage<T> msg){
         msg.setId(++id);
     }
 

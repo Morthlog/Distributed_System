@@ -2,9 +2,9 @@ import java.io.Serializable;
 
 public class Message <T> implements Serializable {
     private T value;
-    private int id;
     private Client client;
     private RequestCode request;
+
 
     public Message(){}
 
@@ -24,17 +24,6 @@ public class Message <T> implements Serializable {
 
     public void setValue(T value) {
         this.value = value;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    /** id is only set from Master for MapReduce
-     * @param id message id
-     */
-    public void setId(int id) {
-        this.id = id;
     }
 
     /**

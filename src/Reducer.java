@@ -7,7 +7,7 @@ public class Reducer {
 
     public static Map<Integer, List<Object>> map = new HashMap<>();
 
-    public static <T,T1> T1 reduce(Message<T> msg){
+    public static <T,T1> T1 reduce(BackendMessage<T> msg){
         Client client = msg.getClient();
         RequestCode code = msg.getRequest();
         List<Object> list = map.get(msg.getId());

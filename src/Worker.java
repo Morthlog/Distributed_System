@@ -17,7 +17,7 @@ public class Worker extends Communication {
      * actionTable for every way the {@link Worker} should respond
      * current actions are not permanent
      */
-    private static <T> T actionTable(Message<T> msg) {
+    private static <T> T actionTable(BackendMessage<T> msg) {
         Client client = msg.getClient();
         RequestCode code = msg.getRequest();
         T val = msg.getValue();
@@ -55,7 +55,7 @@ public class Worker extends Communication {
      * Take the appropriate action based on the msg's value's type
      * @param msg {@link Message} containing client's request
      */
-    public static <T> void ManageRequest(Message<T> msg, Worker client)
+    public static <T> void ManageRequest(BackendMessage<T> msg, Worker client)
     {
         try{
             T value = actionTable(msg);
@@ -99,7 +99,7 @@ public class Worker extends Communication {
                 throw new RuntimeException(e);
             }
             Worker finalClient = client;
-            Thread t = new Thread(() -> ManageRequest(request, finalClient));
+            Thread t = new Thread(() -> ManageRequest((BackendMessage<T>) request, finalClient));
             t.start();
             try
             {
