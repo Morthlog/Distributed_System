@@ -16,6 +16,7 @@ public class DummyApp
     {
         keyboard = new Scanner(System.in);
         filter = new Filter();
+        setDefaultFilters();
     }
 
     public int getIntInput()
@@ -249,10 +250,6 @@ public class DummyApp
                         System.out.println("Invalid option, try again.");
                 }
             }
-        }
-        else
-        {
-            app.setDefaultFilters();
         }
         //send the filter to the server
         app.customer.search(app.filter);
