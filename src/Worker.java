@@ -1,8 +1,4 @@
-import java.io.*;
-import java.math.BigDecimal;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
 
@@ -25,6 +21,8 @@ public class Worker extends Communication {
             case Customer -> switch (code) {
                 case STUB_TEST_1-> sendString(val);
                 case STUB_TEST_2 -> sendNum(val);
+                case SEARCH -> (T) mapSearch((Filter) val);
+                case BUY -> (T) buy((ShoppingCart) val);
                 default -> {
                     System.err.println("Unknown customer code: " + code);
                     throw new RuntimeException();
@@ -39,7 +37,101 @@ public class Worker extends Communication {
                 }
             };
         };
+    }
 
+    private static String buy(ShoppingCart shoppingCart)
+    {
+        Store store = memory.get(shoppingCart.getStoreName());
+
+        synchronized (store)
+        {
+//            double cartValue = 0;
+//
+//            for (Map.Entry<String, Integer> entry : shoppingCart.getProducts().entrySet())
+//            {
+//                String productName = entry.getKey();
+//                int quantity = entry.getValue();
+//
+//                store.recordSale(productName, quantity);
+//
+//                double price = store.getProductPrice(productName);
+//                cartValue += price * quantity;
+//            }
+//
+//            store.addRevenue(cartValue);
+
+            return "Purchase completed for store: "+ store.getStoreName()+ " and products "+ shoppingCart.getProducts();
+        }
+    }
+
+
+
+    private static List<Store> mapSearch(Filter filter)
+    {
+        List<Store> result = new ArrayList<>();
+        for (Store store : memory.values())
+        {
+            if (storeMatchesFilter(store, filter))
+            {
+                result.add(store);
+            }
+        }
+        return result;
+    }
+
+
+    private static boolean storeMatchesFilter(Store store, Filter filter)
+    {
+        double distance = calculateDistance(
+                filter.getLatitude(), filter.getLongitude(),
+                store.getLatitude(), store.getLongitude()
+        );
+        if (distance > 5.0)
+            return false;
+
+        // check food categories
+        if (!matchesCategory(store.getFoodCategory(), filter.getFoodCategories()))
+        {
+            return false;
+        }
+        // check price categories
+        if (!matchesCategory(store.getPriceCategory(), filter.getPriceCategories()))
+        {
+            return false;
+        }
+        // check minimum stars
+        if (store.getStars() < filter.getStars())
+        {
+            return false;
+        }
+        return true;
+    }
+
+    private static<T> boolean matchesCategory(String storeCategory, T[] filterCategories)
+    {
+        for (T category : filterCategories)
+        {
+            if (storeCategory.equalsIgnoreCase(category.toString()))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Equirectangular Distance Approximation. Good and fast for our case (short distance).
+    static double calculateDistance(double lat1, double lon1, double lat2, double lon2)
+    {
+        double lat1Rad = Math.toRadians(lat1);
+        double lat2Rad = Math.toRadians(lat2);
+        double lon1Rad = Math.toRadians(lon1);
+        double lon2Rad = Math.toRadians(lon2);
+        double meanLat= (lat1Rad + lat2Rad) / 2;
+        double deltaLon = (lon2Rad - lon1Rad) * Math.cos(meanLat);
+        double deltaLat = (lat2Rad - lat1Rad);
+        double distance = Math.sqrt(deltaLon * deltaLon + deltaLat * deltaLat) *6371; // (6371 = Earth's radius approximation)
+
+        return distance;
     }
 
     private static <T> T sendString(T val){
@@ -141,6 +233,7 @@ public class Worker extends Communication {
 
             stopConnection();
         }
+
         System.out.println("Memory initialization complete");
     }
 }

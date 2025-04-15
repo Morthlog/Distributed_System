@@ -92,8 +92,8 @@ public class Master extends Thread {
         // =========
         return switch (client) {
             case Customer -> switch (code) { // replace with appropriate cases
-                case STUB_TEST_1 -> singleWorker(msg, workerId);
-                case STUB_TEST_2 -> broadcast(msg);
+                case STUB_TEST_1, BUY -> singleWorker(msg, workerId);
+                case STUB_TEST_2, SEARCH -> broadcast(msg);
                 default -> {
                     System.err.println("Unknown customer code: " + code);
                     throw new RuntimeException();

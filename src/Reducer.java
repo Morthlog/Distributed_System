@@ -15,6 +15,7 @@ public class Reducer {
             case Customer -> switch (code) {
                 case STUB_TEST_1 -> null;
                 case STUB_TEST_2 -> makeNum(list);
+                case SEARCH -> (T1) getFilteredStores(list);
                 default -> {
                     System.err.println("Unknown customer code: " + code);
                     throw new RuntimeException();
@@ -30,6 +31,26 @@ public class Reducer {
             };
         };
     }
+
+    private static List<Store> getFilteredStores(List<Object> mappedResults)
+    {
+        List<Store> combinedStores = new ArrayList<>();
+        if (mappedResults != null)
+        {
+            for (Object result : mappedResults)
+            {
+                for (Object store : (List<?>) result)
+                {
+                    if (store instanceof Store)
+                    {
+                        combinedStores.add((Store) store);
+                    }
+                }
+            }
+        }
+        return combinedStores;
+    }
+
 
     /**
      * Temporary for stubUser

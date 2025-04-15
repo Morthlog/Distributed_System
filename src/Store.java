@@ -49,7 +49,7 @@ public class Store implements Serializable {
                         ((Number) productJson.get("Available Amount")).intValue(),
                         ((Number) productJson.get("Price")).doubleValue()
                 );
-                this.products.add(product);
+                addProduct(product);// correct add product
             }
         }
     }
@@ -160,9 +160,21 @@ public class Store implements Serializable {
     {
         return foodCategory;
     }
-
+    public  String getPriceCategory () {
+        return priceCategory;
+    }
     public int getStars()
     {
         return stars;
+    }
+
+    public double getLatitude()
+    {
+        return latitude;
+    }
+
+    public double getLongitude()
+    {
+        return longitude;
     }
 }

@@ -4,76 +4,88 @@ import java.io.Serializable;
 
 public class Filter implements Serializable
 {
-	@Serial
-	private static final long serialVersionUID = 1L;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-	double latitude;
-	double longitude;
-	private int stars;
-	private String price;
-	private FoodCategory [] categories;
+    double latitude;
+    double longitude;
+    private int stars;
+    private String [] priceCategories;
+    private FoodCategory[] foodCategories;
+    String[] availablePrices = {"$", "$$", "$$$"};
+    int[] availableStars = {1, 2, 3, 4, 5};
 
+    public FoodCategory[] getAvailableFoodCategories()
+    {
+        return FoodCategory.values();
+    }
 
+    public String[] getAvailablePrices()
+    {
+        return availablePrices.clone();
+    }
 
-	String[] availablePrices = { "$", "$$", "$$$" };
+    public int[] getAvailableStars()
+    {
+        return availableStars.clone();
+    }
 
-	int[] availableStars = { 1, 2, 3, 4, 5 };
+    public void setStars(int stars)
+    {
+        this.stars = stars;
+    }
 
-	public FoodCategory[] getAvailableFoodCategories()
-	{
-		return FoodCategory.values();
-	}
-	
-	public String[] getAvailablePrices()
-	{
-		return availablePrices.clone();
-	}
+    public void setPriceCategories(String[] priceCategories)
+    {
+        this.priceCategories = priceCategories;
+    }
 
-	public int[] getAvailableStars()
-	{
-		return availableStars.clone();
-	}
+    public void setFoodCategories(FoodCategory[] foodCategories)
+    {
+        this.foodCategories = foodCategories;
+    }
 
-	public void setStars(int stars)
-	{
-		this.stars = stars;
-	}
+    public int getStars()
+    {
+        return stars;
+    }
 
-	public void setPrice(String price)
-	{
-		this.price = price;
-	}
+    public String[] getPriceCategories()
+    {
+        return priceCategories.clone();
+    }
 
-	public void setCategories(FoodCategory[] categories)
-	{
-		this.categories = categories;
-	}
+    public FoodCategory[] getFoodCategories()
+    {
+        return foodCategories.clone();
+    }
 
-	public int getStars()
-	{
-		return stars;
-	}
+    @Override
+    public String toString()
+    {
+        return "Filter [Stars=" + stars +
+                ", Price=" + java.util.Arrays.toString(priceCategories)  +
+                ", Categories=" + java.util.Arrays.toString(foodCategories)  + "]";
+    }
 
-	public String getPrice() {
-		return price;
-	}
+    public void setLatitude(double latitude)
+    {
+        this.latitude = latitude;
+    }
 
-	public FoodCategory[] getCategories() {
-		return categories.clone();
-	}
+    public void setLongitude(double longitude)
+    {
+        this.longitude = longitude;
+    }
 
-	@Override
-	public String toString()
-	{
-		return "Filter [Stars=" + stars +
-				", Price=" + price +
-				", Categories=" + (categories != null ? java.util.Arrays.toString(categories) : "None") + "]";
-	}
+    public double getLatitude()
+    {
+        return latitude;
+    }
 
-	public void setCoordinates(double latitude, double longitude)
-	{
-		this.latitude=latitude;
-		this.longitude=longitude;
-	}
+    public double getLongitude()
+    {
+        return longitude;
+    }
 }
 

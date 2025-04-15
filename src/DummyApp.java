@@ -1,4 +1,5 @@
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -6,7 +7,107 @@ import java.util.Scanner;
 
 public class DummyApp
 {
-    public static void displayStores(List<Store> stores)
+    private Scanner keyboard;
+    private Customer customer;
+    Filter filter;
+    String ip;
+
+    public DummyApp()
+    {
+        keyboard = new Scanner(System.in);
+        filter = new Filter();
+    }
+
+    public int getIntInput()
+    {
+        int num = keyboard.nextInt();
+        keyboard.nextLine(); // Clear the Enter key left after nextInt()
+        return num;
+    }
+
+    public void inputCustomerName()
+    {
+        System.out.print("Enter name: ");
+        String name = keyboard.nextLine();
+        customer = new Customer(name);
+        filter.setLatitude(37.9932963);
+        filter.setLongitude( 23.733413);
+    }
+
+    public void connect() throws UnknownHostException
+    {
+        ip = InetAddress.getLocalHost().getHostAddress();
+        customer.startConnection(ip, TCPServer.basePort);
+    }
+
+    public void inputCoordinates()
+    {
+        System.out.print("Enter your latitude (e.g., 37.9932963): ");
+        double latitude = Double.parseDouble(keyboard.nextLine());
+        System.out.print("Enter your longitude (e.g., 23.733413): ");
+        double longitude = Double.parseDouble(keyboard.nextLine());
+        filter.setLatitude(latitude);
+        filter.setLongitude(longitude);
+    }
+
+    public void chooseFoodCategories()
+    {
+        System.out.println("Choose from the available food categories by typing the category's number separated by space (e.g., 1 5 2):");
+        FoodCategory[] categories = filter.getAvailableFoodCategories();
+        for (int i = 0; i < categories.length; i++)
+        {
+            System.out.println(i + ": " + categories[i]);
+        }
+
+        String chosenCategories = keyboard.nextLine();
+        String[] categoryIndexes = chosenCategories.split("\\s+");
+        List<FoodCategory> selectedCategories = new ArrayList<>();
+
+        for (String indexString : categoryIndexes)
+        {
+            int index = Integer.parseInt(indexString);
+            selectedCategories.add(categories[index]);
+        }
+        filter.setFoodCategories(selectedCategories.toArray(new FoodCategory[0]));
+    }
+
+    public void chooseLeastStars()
+    {
+        System.out.println("Choose least stars " + Arrays.toString(filter.getAvailableStars()));
+        int chosenStars = getIntInput();
+        filter.setStars(chosenStars);
+    }
+
+    public void choosePriceCategories()
+    {
+        System.out.println("Choose price categories by typing the price's number separated by space (e.g., 0 1 2)::");
+        String[] prices = filter.getAvailablePrices();
+        for (int i = 0; i < prices.length; i++)
+        {
+            System.out.println(i + ": " + prices[i]);
+        }
+
+        String choices = keyboard.nextLine();
+        String[] categoryIndexes = choices.split("\\s+");
+        List<String> selectedCategories = new ArrayList<>();
+
+        for (String indexString : categoryIndexes)
+        {
+            int index = Integer.parseInt(indexString);
+            selectedCategories.add(prices[index]);
+        }
+        filter.setPriceCategories(selectedCategories.toArray(new String[0]));
+    }
+
+    public void setDefaultFilters()
+    {
+        filter.setFoodCategories(filter.getAvailableFoodCategories());
+        filter.setStars(1);
+        filter.setPriceCategories(filter.getAvailablePrices());
+        System.out.println("Default filters set: " + filter);
+    }
+
+    public void displayStores(List<Store> stores)
     {
         if (stores == null || stores.isEmpty())
         {
@@ -17,135 +118,159 @@ public class DummyApp
         for (int i = 0; i < stores.size(); i++)
         {
             Store store = stores.get(i);
-            System.out.println(i + ": " + store.getStoreName() + ". Food Category: " + store.getFoodCategory() + ". Stars: " + store.getStars());
-            // calculated from system
-//            System.out.println("Price Category: " + store.getPriceCategory());
+            System.out.println(i + ": " + store.getStoreName()
+                    + ". Food Category: " + store.getFoodCategory()
+                    + ". Stars: " + store.getStars()
+                    + ". Price Category: " + store.getPriceCategory());
         }
     }
 
+    public Store chooseStore(List<Store> stores)
+    {
+        System.out.println("Enter the number of the store you want to view products for:");
+        int storeIndex = getIntInput();
+        return stores.get(storeIndex);
+    }
 
-    public static void displayStoreProducts(Store store)
+    public void displayStoreProducts(Store store)
     {
         List<Product> products = store.getProducts();
         System.out.println("Products in " + store.getStoreName() + ":");
         for (int i = 0; i < products.size(); i++)
         {
-            System.out.println(i + ": " + products.get(i).getProductName() + ". Price: " + products.get(i).getPrice());
+            System.out.println(i + ": " + products.get(i).getProductName()
+                    + ". Price: " + products.get(i).getPrice());
+        }
+    }
+
+    public void chooseProducts(Store store)
+    {
+        List<Product> products = store.getProducts();
+        customer.addStoreNameToCart(store.getStoreName());
+        while (true)
+        {
+            displayStoreProducts(store);
+            System.out.println("Type product number to add to cart (or -1 to finish):");
+            int productIndex = getIntInput();
+
+            if (productIndex == -1)
+            {
+                break;
+            }
+
+            String selectedProductName = products.get(productIndex).getProductName();
+            System.out.println("Type quantity for '" + selectedProductName + "':");
+            int quantity = getIntInput();
+            customer.addToCart(selectedProductName, quantity);
+            System.out.println("Added " + quantity + " x '" + selectedProductName + "' to cart.");
+        }
+    }
+
+    public void finalizeOrder()
+    {
+        System.out.println("How do you want to continue?");
+        System.out.println("1. Complete order");
+        System.out.println("2. Cancel and start again");
+        System.out.println("3. Close the app");
+        int choice = getIntInput();
+        if (choice == 1)
+        {
+            customer.startConnection(ip, TCPServer.basePort);
+            customer.buy();
+        }
+        else if (choice == 2)
+        {
+            System.out.println("Order canceled. Restarting...");
+            main(null);
+        }
+        else
+        {
+            System.out.println("Closing app...");
         }
     }
 
     public static void main(String[] args)
     {
+        DummyApp app = new DummyApp();
+        app.inputCustomerName();
+        int choice;
         try
         {
-            Scanner keyboard = new Scanner(System.in);
-            System.out.print("Enter name: ");
-            String name = keyboard.nextLine();
-            Customer customer = new Customer(name);
-
-            String ip = InetAddress.getLocalHost().getHostAddress();
-            customer.startConnection(ip, TCPServer.basePort);
-
-            while (true)
-            {
-
-                Filter filter = new Filter();
-
-                // Enter user coordinates
-                System.out.print("Enter your latitude (e.g., 37.9932963): ");
-                double latitude = Double.parseDouble(keyboard.nextLine());
-
-                System.out.print("Enter your longitude (e.g., 23.733413): ");
-                double longitude = Double.parseDouble(keyboard.nextLine());
-                filter.setCoordinates(latitude, longitude);
-
-                //Chose food categories
-                System.out.println("Choose from the available food categories by typing the category's number separated by space(e.g 1 5 2)");
-                FoodCategory[] categories = filter.getAvailableFoodCategories();
-                for (int i = 0; i < categories.length; i++)
-                {
-                    System.out.println(i + ": " + categories[i]);
-                }
-
-                String chosenCategories = keyboard.nextLine();
-                String[] categoryIndexes = chosenCategories.split("\\s+");
-                List<FoodCategory> selectedCategories = new ArrayList<>();
-
-                for (String indexString : categoryIndexes)
-                {
-                    int index = Integer.parseInt(indexString);
-                    selectedCategories.add(categories[index]);
-                }
-                filter.setCategories(selectedCategories.toArray(new FoodCategory[0]));
-                System.out.println("Categories chosen" + Arrays.toString(filter.getCategories()));
-
-                // User selects the minimum number of stars. Results will have at least this many stars
-                System.out.println("Choose least stars" + Arrays.toString(filter.getAvailableStars()));
-                int chosenStars = Integer.parseInt(keyboard.nextLine());
-                filter.setStars(chosenStars);
-
-                // User selects the minimum price. Results will have at least this price.
-                System.out.println("Choose least price by typing the price's number");
-                String[] prices = filter.getAvailablePrices();
-                for (int i = 0; i < prices.length; i++)
-                {
-                    System.out.println(i + ": " + prices[i]);
-                }
-                String chosenPrice = keyboard.nextLine();
-                int index = Integer.parseInt(chosenPrice);
-                filter.setPrice(prices[index]);
-
-                customer.setFilter(filter);
-
-                System.out.println("Final filter: " + customer.filter);
-
-                //send filter to master
-                customer.search(filter);
-
-                // Receive and display stores
-                List<Store> stores = (List<Store>) customer.receiveMessageObject();
-                displayStores(stores);
-
-                // Choose a store
-                System.out.println("Enter the number of the store you want to view products for:");
-                int storeIndex = Integer.parseInt(keyboard.nextLine());
-                Store selectedStore = stores.get(storeIndex);
-                displayStoreProducts(selectedStore);
-
-                // Choose products
-                System.out.println("Type product numbers separated by space to add to cart");
-                String input = keyboard.nextLine();
-                List<Product> products = selectedStore.getProducts();
-                String[] parts = input.split("\\s+");
-                for (String part : parts)
-                {
-                    int productIndex = Integer.parseInt(part);
-                    String productName = products.get(productIndex).getProductName();
-                    customer.addToCart(productName);
-                    System.out.println("Product '" + productName + "' added to cart.");
-                }
-
-
-                System.out.println("Do you want to buy this order? Type 'Yes' to buy, 'No' to start again or 'exit' to close the app");
-                String answer = keyboard.nextLine();
-                if(answer.equalsIgnoreCase("Yes"))
-                {
-                    customer.startConnection(ip, TCPServer.basePort);
-                    customer.buy();
-                }
-                else if(answer.equalsIgnoreCase("No"))
-                {
-                    return;
-                }
-                else break;
-
-            }
-            keyboard.close();
+            app.connect();
+        }
+        catch (UnknownHostException e)
+        {
+            System.err.println("Error connecting: " + e.getMessage());
+            return;
         }
 
-        catch (Exception e)
+        System.out.println("Coordinates detected: latitude = " + app.filter.getLatitude() + ", longitude = " + app.filter.getLongitude());
+        System.out.println("Do you want to enter new coordinates?");
+        System.out.println("1. Yes");
+        System.out.println("2. No");
+        choice = app.getIntInput();
+        if (choice == 1)
         {
-            throw new RuntimeException(e);
+            app.inputCoordinates();
+        }
+
+        System.out.println("Do you want to filter the stores?");
+        System.out.println("1. Yes");
+        System.out.println("2. No");
+        choice = app.getIntInput();
+
+        if (choice == 1)
+        {
+            boolean continueFiltering = true;
+            while (continueFiltering)
+            {
+                System.out.println("Available filters:");
+                System.out.println("1. Choose food categories");
+                System.out.println("2. Choose stars");
+                System.out.println("3. Choose price category");
+                System.out.println("4. Continue");
+                choice = app.getIntInput();
+
+                switch (choice)
+                {
+                    case 1:
+                        app.chooseFoodCategories();
+                        break;
+                    case 2:
+                        app.chooseLeastStars();
+                        break;
+                    case 3:
+                        app.choosePriceCategories();
+                        break;
+                    case 4:
+                        continueFiltering = false;
+                        break;
+                    default:
+                        System.out.println("Invalid option, try again.");
+                }
+            }
+        }
+        else
+        {
+            app.setDefaultFilters();
+        }
+        //send the filter to the server
+        app.customer.search(app.filter);
+
+        Message<List<Store>> responseMsg = app.customer.receiveMessage();
+        List<Store> stores = responseMsg.getValue();
+        app.displayStores(stores);
+
+        if (!stores.isEmpty())
+        {
+            Store selectedStore = app.chooseStore(stores);
+            app.chooseProducts(selectedStore);
+            app.finalizeOrder();
+        }
+        else
+        {
+            System.out.println("Try with new filters. Restarting...");
+            main(null);
         }
     }
 }

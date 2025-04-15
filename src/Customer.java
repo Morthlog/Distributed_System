@@ -1,77 +1,38 @@
-import java.io.IOException;
-import java.net.InetAddress;
-import java.util.*;
-
-
 public class Customer extends stubUser
 {
-    Filter filter;
-    Set<String> cart = new HashSet<>();
-    String name;
+    private final ShoppingCart shoppingCart = new ShoppingCart();
 
     public Customer(String name)
     {
-        super(name);
-        this.name = name;
-    }
-
-    public void setFilter(Filter filter)
-    {
-        this.filter = filter;
-    }
-
-    public Filter getFilter()
-    {
-        return filter;
+        super(name);;
     }
 
     public void search(Filter filter)
     {
-        try
-        {
-            out.writeObject(filter);
-            out.flush();
-        }
-        catch (IOException e)
-        {
-            throw new RuntimeException(e);
-        }
+        Message<Filter> msg = new Message<>(filter,Client.Customer,RequestCode.SEARCH);
+        sendMessage(msg);
     }
 
     public void buy()
     {
-        try
-        {
-            out.writeObject(cart);
-            out.flush();
+        Message<ShoppingCart> msg = new Message<>(shoppingCart,Client.Customer,RequestCode.BUY);
+        sendMessage(msg);
 
-            // Receive purchase confirmation
-            Object response = in.readObject();
-            System.out.println("Purchase response: " + response);
+        // Receive purchase confirmation
+        Message<String> responseMsg = receiveMessage();
+        String value  = responseMsg.getValue();
+        System.out.println("Purchase response: " + value);
 
-            cart.clear();
-        }
-        catch (IOException | ClassNotFoundException e)
-        {
-            System.err.println("Error during purchase: " + e.getMessage());
-        }
+        shoppingCart.clear();
     }
 
-    public Object receiveMessageObject()
+    public void addToCart(String productName, int count)
     {
-        try
-        {
-            return in.readObject();
-        }
-        catch (IOException | ClassNotFoundException e)
-        {
-            System.err.println("Error receiving object: " + e.getMessage());
-            return null;
-        }
+        shoppingCart.addProduct(productName, count);
     }
 
-    public void addToCart(String product)
+    public void  addStoreNameToCart(String storeName)
     {
-        cart.add(product);
+        shoppingCart.setStoreName(storeName);
     }
 }
