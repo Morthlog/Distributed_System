@@ -176,7 +176,7 @@ public class DummyApp
         if (choice == 1)
         {
             customer.startConnection(ip, TCPServer.basePort);
-            customer.buy();
+            new Thread(()->customer.buy()).start();
         }
         else if (choice == 2)
         {
