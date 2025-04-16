@@ -1,26 +1,34 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 
 public class TCPServer extends Communication {
     public static final int basePort = 8000;
     public ServerSocket serverSocket;
     public int port = basePort;
 
-    public TCPServer(Socket connection) {
+    public TCPServer(Socket connection) throws IOException {
         socket = connection;
         try {
             out = new ObjectOutputStream(connection.getOutputStream());
             in = new ObjectInputStream(connection.getInputStream());
         } catch (IOException e) {
             e.printStackTrace();
+            throw new SocketException();
         }
     }
 
     public TCPServer(int port) {
+        this(port, false);
+    }
+
+    public TCPServer(int port, boolean timeout) {
         this.port = port;
         try{
             serverSocket = new ServerSocket(port);
+            if (timeout)
+                serverSocket.setSoTimeout(5000);
         }catch(IOException e){
 
         }

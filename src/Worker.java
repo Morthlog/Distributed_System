@@ -38,8 +38,22 @@ public class Worker extends Communication {
                     throw new RuntimeException();
                 }
             };
+            case MASTER -> switch (code){
+                case TRANSFER_BACKUP -> transferToMemory(val);
+                default -> {
+                    System.err.println("Unknown MASTER code: " + code);
+                    throw new RuntimeException();
+                }
+            };
         };
 
+    }
+
+    private static <T> T transferToMemory(T val){
+        String storeName = (String)val;
+        memory.put(storeName, backup.get(storeName));
+        backup.remove(storeName);
+        return (T)"OK";
     }
 
     private static <T> T sendString(T val){
@@ -68,6 +82,7 @@ public class Worker extends Communication {
         }
     }
     public static <T> void main(String[] args){
+
         System.out.printf("Worker %s has started\n", args[0]);
         String ip;
         try
