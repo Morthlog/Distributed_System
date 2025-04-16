@@ -113,7 +113,7 @@ public class Worker extends Communication {
     }
 
     private void init(String ip, int id) {
-        System.out.println("Starting memory initialization");
+        System.out.println("Starting memory/backup initialization");
         while(true){
             Message<Store> request; // should be extended store
             startConnection(ip, TCPServer.basePort + 1 + id);
@@ -127,9 +127,9 @@ public class Worker extends Communication {
                 throw new RuntimeException(e);
             }
             if (request.getRequest() == RequestCode.INIT_MEMORY){
-                memory.put(((Store)request.getValue()).getStoreName(), (Store)request.getValue());
+                memory.put(request.getValue().getStoreName(), request.getValue());
             } else if (request.getRequest() == RequestCode.INIT_BACKUP) {
-                backup.put(((Store)request.getValue()).getStoreName(), (Store)request.getValue());
+                backup.put(request.getValue().getStoreName(), request.getValue());
             } else if (request.getRequest() == RequestCode.END_INIT_MEMORY) {
                 stopConnection();
                 break;
@@ -141,6 +141,6 @@ public class Worker extends Communication {
 
             stopConnection();
         }
-        System.out.println("Memory initialization complete");
+        System.out.println("Memory/Backup initialization complete");
     }
 }

@@ -64,13 +64,18 @@ public class Master extends Thread {
                 list.add(response.getValue());
             }
             currentConnection.stopConnection();
+
             if (((BackendMessage<T1>)response).getSaveState() == SaveState.REQUIRES_BACKUP)
             {
-                // ===============
-                // pick correct worker for backup
-                // set msg as backup and send
-                // ===============
+                int workerId = storeToWorkerBackup.get(((StoreNameProvider) msg.getValue()).getStoreName());
+                msg.setSaveState(SaveState.BACKUP);
+                server = serverWorker.get(workerId);
+                synchronized (server){
+                    currentConnection = new TCPServer(server.serverSocket.accept());
+                }
+                currentConnection.sendMessage(msg);
             }
+
             return response.getValue(); // only used on non-broadcast calls
         }
         catch(IOException e){
@@ -79,6 +84,15 @@ public class Master extends Thread {
         return null;
     }
 
+    private <T,T1> T1 findCorrectWorker(BackendMessage<T> msg){
+        int workerId;
+        if (msg.getRequest() == RequestCode.STUB_TEST_1 || msg.getRequest() == RequestCode.STUB_TEST_2)
+            workerId = 0; // only for stub
+        else
+            workerId = storeToWorkerMemory.get(((StoreNameProvider) msg.getValue()).getStoreName());
+
+        return singleWorker(msg, workerId);
+    }
 
     /**
      * Current values are temporary
@@ -86,13 +100,9 @@ public class Master extends Thread {
     private <T,T1> T1 callAppropriateWorker(BackendMessage<T> msg){
         Client client = msg.getClient();
         RequestCode code = msg.getRequest();
-        int workerId = 0;
-        // =========
-          // if msg.val is Store, set workerId to the correct worker
-        // =========
         return switch (client) {
             case Customer -> switch (code) { // replace with appropriate cases
-                case STUB_TEST_1 -> singleWorker(msg, workerId);
+                case STUB_TEST_1 -> findCorrectWorker(msg);
                 case STUB_TEST_2 -> broadcast(msg);
                 default -> {
                     System.err.println("Unknown customer code: " + code);
@@ -100,7 +110,7 @@ public class Master extends Thread {
                 }
             };
             case Manager -> switch (code) { // replace with appropriate cases
-                case ADD_STORE, REMOVE_PRODUCT -> singleWorker(msg, workerId);
+                case ADD_STORE, REMOVE_PRODUCT -> findCorrectWorker(msg);
                 default -> {
                     System.err.println("Unknown manager code: " + code);
                     throw new RuntimeException();
@@ -175,12 +185,14 @@ public class Master extends Thread {
 
     private void initWorkerMemory(String DATA_PATH){
         try {
+            Map<String, Store> nameToStore = new HashMap<>(); // should be extended store
             Object temp = new JSONParser().parse(new FileReader(DATA_PATH));
             JSONArray stores = (JSONArray) ((JSONObject)temp).get("Stores");
             Message<Store> msg; // should be extended store
+            int workerId;
             for (int i = 0; i < stores.size(); i++){
-                int workerID = i % n_workers;
-                TCPServer server = serverWorker.get(workerID);
+                workerId = i % n_workers;
+                TCPServer server = serverWorker.get(workerId);
                 server.startConnection();
 
                 Store store = new Store((JSONObject)stores.get(i));
@@ -188,11 +200,26 @@ public class Master extends Thread {
                 msg.setRequest(RequestCode.INIT_MEMORY);
                 server.sendMessage(msg);
 
-                storeToWorkerMemory.put(store.getStoreName(), workerID);
+                storeToWorkerMemory.put(store.getStoreName(), workerId);
+                nameToStore.put(store.getStoreName(), store);
             }
-            // ===========
-            // backup
-            // ===========
+            int[] hashingVariance = new int[n_workers];
+
+            for (var set: storeToWorkerMemory.entrySet()){
+                workerId = (set.getValue() + (++hashingVariance[set.getValue()])) % n_workers;
+                if (workerId == set.getValue())
+                    workerId = (workerId + 1) % n_workers;
+                TCPServer server = serverWorker.get(workerId);
+                server.startConnection();
+
+                Store store = nameToStore.get(set.getKey());
+                msg = new Message<>(store);
+                msg.setRequest(RequestCode.INIT_BACKUP);
+                server.sendMessage(msg);
+
+                storeToWorkerBackup.put(store.getStoreName(), workerId);
+            }
+
             for (int i = 0; i < n_workers; i++){ // end Initialization
                 serverWorker.get(i).startConnection();
                 msg = new Message<>();
