@@ -86,12 +86,14 @@ public class Master extends Thread {
             if (((BackendMessage<T1>)response).getSaveState() == SaveState.REQUIRES_BACKUP)
             {
                 int workerId = storeToWorkerBackup.get(((StoreNameProvider) msg.getValue()).getStoreName());
-                msg.setSaveState(SaveState.BACKUP);
-                server = serverWorker.get(workerId);
-                synchronized (server){
-                    currentConnection = new TCPServer(server.serverSocket.accept());
+                if (workerId != -1){ // no secondary backup location exists
+                    msg.setSaveState(SaveState.BACKUP);
+                    server = serverWorker.get(workerId);
+                    synchronized (server){
+                        currentConnection = new TCPServer(server.serverSocket.accept());
+                    }
+                    currentConnection.sendMessage(msg);
                 }
-                currentConnection.sendMessage(msg);
             }
 
             return response.getValue(); // only used on non-broadcast calls
@@ -125,6 +127,7 @@ public class Master extends Thread {
                 msg.setClient(Client.MASTER);
                 msg.setRequest(RequestCode.TRANSFER_BACKUP);
                 currentConnection.sendMessage(msg);
+                storeToWorkerBackup.replace(set.getKey(), -1);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
