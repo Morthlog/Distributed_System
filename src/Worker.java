@@ -41,6 +41,15 @@ public class Worker extends Communication {
 
     private static String buy(ShoppingCart shoppingCart)
     {
+        try
+        {
+            // Simulate a delay so that the animation in DummyApp has time to play
+            sleep(2000);
+        }
+        catch (InterruptedException e)
+        {
+            throw new RuntimeException(e);
+        }
         Store store = memory.get(shoppingCart.getStoreName());
 
         synchronized (store)
@@ -68,6 +77,15 @@ public class Worker extends Communication {
 
     private static List<Store> mapSearch(Filter filter)
     {
+        try
+        {
+            // Simulate a delay so that the animation in DummyApp has time to play
+            sleep(2000);
+        }
+        catch (InterruptedException e)
+        {
+            throw new RuntimeException(e);
+        }
         List<Store> result = new ArrayList<>();
         for (Store store : memory.values())
         {

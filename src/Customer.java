@@ -1,28 +1,53 @@
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.List;
+
 public class Customer extends stubUser
 {
     private final ShoppingCart shoppingCart = new ShoppingCart();
+    String ip;
 
     public Customer(String name)
     {
-        super(name);;
+        super(name);
+        try
+        {
+            setIp();
+        }
+        catch (UnknownHostException e)
+        {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void search(Filter filter)
+    public void setIp() throws UnknownHostException
     {
-        Message<Filter> msg = new Message<>(filter,Client.Customer,RequestCode.SEARCH);
+        ip = InetAddress.getLocalHost().getHostAddress();
+    }
+
+    public void search(Filter filter, Callback<List<Store>> callback)
+    {
+        startConnection(ip, TCPServer.basePort);
+        Message<Filter> msg = new Message<>(filter, Client.Customer, RequestCode.SEARCH);
         sendMessage(msg);
+
+        Message<List<Store>> responseMsg = receiveMessage();
+        List<Store> stores = responseMsg.getValue();
+        stopConnection();
+        callback.onComplete(stores);
     }
 
-    public void buy()
+    public void buy(Callback<String> callback)
     {
-        Message<ShoppingCart> msg = new Message<>(shoppingCart,Client.Customer,RequestCode.BUY);
+        startConnection(ip, TCPServer.basePort);
+        Message<ShoppingCart> msg = new Message<>(shoppingCart, Client.Customer, RequestCode.BUY);
         sendMessage(msg);
 
         // Receive purchase confirmation
         Message<String> responseMsg = receiveMessage();
-        String value  = responseMsg.getValue();
-        System.out.println("Purchase response: " + value);
-
+        String value = responseMsg.getValue();
+        stopConnection();
+        callback.onComplete(value);
         shoppingCart.clear();
     }
 
@@ -31,7 +56,7 @@ public class Customer extends stubUser
         shoppingCart.addProduct(productName, count);
     }
 
-    public void  addStoreNameToCart(String storeName)
+    public void addStoreNameToCart(String storeName)
     {
         shoppingCart.setStoreName(storeName);
     }

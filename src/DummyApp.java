@@ -1,5 +1,3 @@
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -7,10 +5,10 @@ import java.util.Scanner;
 
 public class DummyApp
 {
+    private static boolean loading;
     private Scanner keyboard;
     private Customer customer;
     Filter filter;
-    String ip;
 
     public DummyApp()
     {
@@ -32,13 +30,7 @@ public class DummyApp
         String name = keyboard.nextLine();
         customer = new Customer(name);
         filter.setLatitude(37.9932963);
-        filter.setLongitude( 23.733413);
-    }
-
-    public void connect() throws UnknownHostException
-    {
-        ip = InetAddress.getLocalHost().getHostAddress();
-        customer.startConnection(ip, TCPServer.basePort);
+        filter.setLongitude(23.733413);
     }
 
     public void inputCoordinates()
@@ -174,10 +166,12 @@ public class DummyApp
         System.out.println("2. Cancel and start again");
         System.out.println("3. Close the app");
         int choice = getIntInput();
+        
         if (choice == 1)
         {
-            customer.startConnection(ip, TCPServer.basePort);
-            new Thread(()->customer.buy()).start();
+            new Thread(() -> customer.buy(this::handleBuyResult)).start();
+            loading = true;
+            playAnimation();// loading must be put after the call or in new thread, else the thread will get stuck
         }
         else if (choice == 2)
         {
@@ -190,20 +184,52 @@ public class DummyApp
         }
     }
 
+    public void playAnimation()
+    {
+        StringBuilder text = new StringBuilder("Loading.");
+        long start = System.currentTimeMillis();
+        long end;
+        while (loading)
+        {
+            end = System.currentTimeMillis();
+            if (end - start > 200)
+            {
+                text.append(".");
+                start = end;
+            }
+
+            System.out.print(text + "\r");
+        }
+    }
+
+    private void handleSearchResults(List<Store> stores)
+    {
+        loading = false;
+        displayStores(stores);
+
+        if (stores.isEmpty())
+        {
+            System.out.println("Try with new filters. Restarting...");
+            main(null);
+            return;
+        }
+
+        Store selectedStore = chooseStore(stores);
+        chooseProducts(selectedStore);
+        finalizeOrder();
+    }
+
+    private void handleBuyResult(String confirmation)
+    {
+        loading = false;
+        System.out.println("Purchase response: " + confirmation);
+    }
+
     public static void main(String[] args)
     {
         DummyApp app = new DummyApp();
         app.inputCustomerName();
         int choice;
-        try
-        {
-            app.connect();
-        }
-        catch (UnknownHostException e)
-        {
-            System.err.println("Error connecting: " + e.getMessage());
-            return;
-        }
 
         System.out.println("Coordinates detected: latitude = " + app.filter.getLatitude() + ", longitude = " + app.filter.getLongitude());
         System.out.println("Do you want to enter new coordinates?");
@@ -251,23 +277,11 @@ public class DummyApp
                 }
             }
         }
+
         //send the filter to the server
-        app.customer.search(app.filter);
-
-        Message<List<Store>> responseMsg = app.customer.receiveMessage();
-        List<Store> stores = responseMsg.getValue();
-        app.displayStores(stores);
-
-        if (!stores.isEmpty())
-        {
-            Store selectedStore = app.chooseStore(stores);
-            app.chooseProducts(selectedStore);
-            app.finalizeOrder();
-        }
-        else
-        {
-            System.out.println("Try with new filters. Restarting...");
-            main(null);
-        }
+        new Thread(() ->
+                app.customer.search(app.filter, app::handleSearchResults)).start();
+        loading = true;
+        app.playAnimation();
     }
 }
