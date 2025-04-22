@@ -6,7 +6,7 @@ import org.json.simple.JSONObject;
 
 class ExtendedStore extends Store {
     private Map<String, Product> products;
-    private Map<String, Integer> productSales;
+    private Map<String, Double> productSales;
 
     public ExtendedStore(String storeName, double latitude, double longitude, String foodCategory,
                          int stars, int noOfVotes, String storeLogo, Map<String, Product> products) {
@@ -16,8 +16,8 @@ class ExtendedStore extends Store {
         this.productSales = new HashMap<>();
 
         for (Product product : products.values()) {
-            String type = product.getProductType();
-            productSales.put(type, 0);
+            String productName = product.getProductName();
+            productSales.put(productName, 0.0);
 
             if (!product.isHidden()) {
                 visibleProducts.put(product.getProductName(), product);
@@ -45,17 +45,13 @@ class ExtendedStore extends Store {
                 boolean hidden = productJson.containsKey("Hidden") && (boolean) productJson.get("Hidden");
 
                 Product product = new Product(productName, productType, availableAmount, price, hidden);
-
                 products.put(productName, product);
 
                 if (!product.isHidden()) {
                     visibleProducts.put(productName, product);
                 }
 
-                String type = product.getProductType();
-                if (!productSales.containsKey(type)) {
-                    productSales.put(type, 0);
-                }
+                productSales.put(productName, 0.0);
             }
         }
         calculatePriceCategory();
@@ -68,10 +64,7 @@ class ExtendedStore extends Store {
             visibleProducts.put(product.getProductName(), product);
         }
 
-        String type = product.getProductType();
-        if (!productSales.containsKey(type)) {
-            productSales.put(type, 0);
-        }
+        productSales.put(product.getProductName(), 0.0);
 
         calculatePriceCategory();
     }
@@ -85,7 +78,7 @@ class ExtendedStore extends Store {
         calculatePriceCategory();
     }
 
-    public boolean manageStock(String productName, int newAmount) {
+    public boolean manageStock(String productName, int amountChange, boolean bypassChecks) {
         if (products == null) {
             return false;
         }
@@ -93,60 +86,70 @@ class ExtendedStore extends Store {
         if (product == null) {
             return false;
         }
-        product.setAvailableAmount(newAmount);
-        return true;
+
+        synchronized (product) {
+            int currentAmount = product.getAvailableAmount();
+            int newAmount = currentAmount + amountChange;
+
+            if (!bypassChecks && newAmount < 0) {
+                return false;
+            }
+
+            product.setAvailableAmount(newAmount);
+            return true;
+        }
     }
 
-    public boolean recordSale(String productName, int quantity) {
+    public boolean manageStock(String productName, int amountChange) {
+        return manageStock(productName,amountChange,false);
+    }
+
+    public boolean saveSale(String productName, int quantity, boolean bypassChecks) {
         if (!products.containsKey(productName)) {
             return false;
         }
 
         Product product = products.get(productName);
-        int currentAmount = product.getAvailableAmount();
+        synchronized (product) {
+            int currentAmount = product.getAvailableAmount();
 
-        if (currentAmount < quantity) {
-            return false;
+            if (!bypassChecks && currentAmount < quantity) {
+                return false;
+            }
+            product.setAvailableAmount(currentAmount - quantity);
+
+            double salesIncome = product.getPrice() * quantity;
+            double currentSales = productSales.getOrDefault(productName, 0.0);
+            productSales.put(productName, currentSales + salesIncome);
+
+            return true;
         }
-        product.setAvailableAmount(currentAmount - quantity);
-
-        String productType = product.getProductType();
-        int currentSales = productSales.getOrDefault(productType, 0);
-        productSales.put(productType, currentSales + quantity);
-
-        return true;
+    }
+    public boolean saveSale(String productName, int quantity) {
+        return saveSale(productName,quantity,false);
     }
 
-    public int getSalesByProductType(String productType) {
-        return productSales.getOrDefault(productType, 0);
-    }
+    public double getSales(String productType) {
+        double totalSales = 0.0;
 
-    public JSONObject toJSONObject() {
-        JSONObject json = new JSONObject();
-        json.put("StoreName", storeName);
-        json.put("Latitude", latitude);
-        json.put("Longitude", longitude);
-        json.put("FoodCategory", foodCategory);
-        json.put("Stars", stars);
-        json.put("NoOfVotes", noOfVotes);
-        json.put("StoreLogo", storeLogo);
-        json.put("PriceCategory", priceCategory);
+        for (Map.Entry<String, Product> entry : products.entrySet()) {
+            Product product = entry.getValue();
+            String productName = product.getProductName();
 
-        JSONArray productsArray = new JSONArray();
-        for (Product product : products.values()) {
-            productsArray.add(product.toJSONObject());
+            if (product.getProductType().equals(productType)) {
+                totalSales += productSales.getOrDefault(productName, 0.0);
+            }
         }
-        json.put("Products", productsArray);
-
-        return json;
+        return totalSales;
     }
+
 
     public Map<String, Product> getProducts() {
-        return products;
+        return new HashMap<>(products);
     }
 
-    public Map<String, Integer> getProductSales() {
-        return productSales;
+    public Map<String, Double> getProductSales() {
+        return new HashMap<>(productSales);
     }
 
     public Store toCustomerStore() {
