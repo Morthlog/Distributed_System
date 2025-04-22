@@ -73,11 +73,10 @@ public class ManagerConsoleApp extends Communication {
             scanner.nextLine();
 
             Product newProduct = new Product(productName, productType, availableAmount, price);
-            Tuples<String, Product> productData = new Tuples<>(storeName, newProduct);
-            Message<Tuples<String, Product>> request = new Message<>(productData, Client.Manager, RequestCode.ADD_PRODUCT);
+            ProductAddition addData =new ProductAddition(storeName, newProduct);
+            Message<ProductAddition> request = new Message<>(addData, Client.Manager, RequestCode.ADD_PRODUCT);
             Message<String> response = sendRequest(request);
             System.out.println(response.getValue());
-
         } catch (Exception e) {
             System.err.println("Error adding product: " + e.getMessage());
         }
@@ -89,11 +88,11 @@ public class ManagerConsoleApp extends Communication {
             String storeName = scanner.nextLine();
             System.out.print("Enter the name of the product you want to remove: ");
             String productName = scanner.nextLine();
-            Tuples<String, String> removeData = new Tuples<>(storeName, productName);
-            Message<Tuples<String, String>> request = new Message<>(removeData, Client.Manager, RequestCode.REMOVE_PRODUCT);
+
+            ProductRemoval removeData = new ProductRemoval(storeName, productName);
+            Message<ProductRemoval> request = new Message<>(removeData, Client.Manager, RequestCode.REMOVE_PRODUCT);
             Message<String> response = sendRequest(request);
             System.out.println(response.getValue());
-            stopConnection();
         } catch (Exception e) {
             System.err.println("Error removing product: " + e.getMessage());
         }
@@ -108,34 +107,16 @@ public class ManagerConsoleApp extends Communication {
             System.out.print("Enter quantity you want to add or remove: ");
             int quantityChange = scanner.nextInt();
             scanner.nextLine();
-            Tuples<Tuples<String, String>, Integer> stockData = new Tuples<>(new Tuples<>(storeName, productName), quantityChange);
-            Message<Tuples<Tuples<String, String>, Integer>> request = new Message<>(stockData, Client.Manager, RequestCode.MANAGE_STOCK);
+
+            StockChange stockData = new StockChange(storeName, productName, quantityChange);
+            Message<StockChange> request = new Message<>(stockData, Client.Manager, RequestCode.MANAGE_STOCK);
             Message<String> response = sendRequest(request);
             System.out.println(response.getValue());
         } catch (Exception e) {
             System.err.println("Error managing stock: " + e.getMessage());
         }
     }
-
-    private void saveSale() {
-        try {
-
-            System.out.print("Enter the name of the store where the sale occurred: ");
-            String storeName = scanner.nextLine();
-            System.out.print("Enter the name of the product: ");
-            String productName = scanner.nextLine();
-            System.out.print("Enter quantity that has been sold: ");
-            int quantity = scanner.nextInt();
-            scanner.nextLine();
-            Tuples<Tuples<String, String>, Integer> saleData = new Tuples<>(new Tuples<>(storeName, productName), quantity);
-            Message<Tuples<Tuples<String, String>, Integer>> request = new Message<>(saleData, Client.Manager, RequestCode.RECORD_SALE);
-            Message<String> response = sendRequest(request);
-            System.out.println(response.getValue());
-        } catch (Exception e) {
-            System.err.println("Error saving sale: " + e.getMessage());
-        }
-    }
-
+    
     private void displaySalesStatistics() {
         System.out.println("\n Sales statistics option:");
         System.out.println("1. By store type");
@@ -195,9 +176,8 @@ public class ManagerConsoleApp extends Communication {
                 System.out.println("2. Add new product to store");
                 System.out.println("3. Remove product from store");
                 System.out.println("4. Manage stock");
-                System.out.println("5. Save a sale");
-                System.out.println("6. Display sales by product");
-                System.out.println("7. Exit");
+                System.out.println("5. Display sales by product");
+                System.out.println("6. Exit");
 
                 int choice = scanner.nextInt();
                 scanner.nextLine();
@@ -216,12 +196,9 @@ public class ManagerConsoleApp extends Communication {
                         manager.manageStock();
                         break;
                     case 5:
-                        manager.saveSale();
-                        break;
-                    case 6:
                         manager.displaySalesStatistics();
                         break;
-                    case 7:
+                    case 6:
                         app_running = false;
                         System.out.println("Exiting...");
                         break;
