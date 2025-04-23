@@ -36,8 +36,22 @@ public class Worker extends Communication {
                     throw new RuntimeException();
                 }
             };
+            case MASTER -> switch (code){
+                case TRANSFER_BACKUP -> transferToMemory(val);
+                default -> {
+                    System.err.println("Unknown MASTER code: " + code);
+                    throw new RuntimeException();
+                }
+            };
         };
+
     }
+
+    private static <T> T transferToMemory(T val){
+        String storeName = (String)val;
+        memory.put(storeName, backup.get(storeName));
+        backup.remove(storeName);
+        return (T)"OK";    }
 
     private static String buy(ShoppingCart shoppingCart)
     {
@@ -178,6 +192,7 @@ public class Worker extends Communication {
         }
     }
     public static <T> void main(String[] args){
+
         System.out.printf("Worker %s has started\n", args[0]);
         String ip;
         try
@@ -223,7 +238,7 @@ public class Worker extends Communication {
     }
 
     private void init(String ip, int id) {
-        System.out.println("Starting memory initialization");
+        System.out.println("Starting memory/backup initialization");
         while(true){
             Message<Store> request; // should be extended store
             startConnection(ip, TCPServer.basePort + 1 + id);
@@ -237,9 +252,9 @@ public class Worker extends Communication {
                 throw new RuntimeException(e);
             }
             if (request.getRequest() == RequestCode.INIT_MEMORY){
-                memory.put(((Store)request.getValue()).getStoreName(), (Store)request.getValue());
+                memory.put(request.getValue().getStoreName(), request.getValue());
             } else if (request.getRequest() == RequestCode.INIT_BACKUP) {
-                backup.put(((Store)request.getValue()).getStoreName(), (Store)request.getValue());
+                backup.put(request.getValue().getStoreName(), request.getValue());
             } else if (request.getRequest() == RequestCode.END_INIT_MEMORY) {
                 stopConnection();
                 break;
@@ -251,7 +266,6 @@ public class Worker extends Communication {
 
             stopConnection();
         }
-
-        System.out.println("Memory initialization complete");
+        System.out.println("Memory/Backup initialization complete");
     }
 }

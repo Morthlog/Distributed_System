@@ -1,4 +1,5 @@
 public enum Client {
     Manager,
-    Customer
+    Customer,
+    MASTER
 }

@@ -29,6 +29,7 @@ public class Reducer {
                     throw new RuntimeException();
                 }
             };
+            case MASTER -> null; // MASTER never requires reduce
         };
     }
 

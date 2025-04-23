@@ -7,6 +7,7 @@ public enum RequestCode
     INIT_MEMORY,
     INIT_BACKUP,
     END_INIT_MEMORY,
+    TRANSFER_BACKUP,
     STUB_TEST_1,
     STUB_TEST_2
 }

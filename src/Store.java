@@ -5,7 +5,7 @@ import java.util.List;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-public class Store implements Serializable {
+public class Store implements Serializable, StoreNameProvider {
     final String storeName;
     final double latitude;
     final double longitude;

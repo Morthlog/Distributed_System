@@ -6,6 +6,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.*;
 import java.net.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static java.lang.Thread.sleep;
 
 public class Master extends Thread {
@@ -14,21 +16,36 @@ public class Master extends Thread {
     private static int n_workers;
     private static final HashMap<String, Integer> storeToWorkerMemory = new HashMap<>();
     private static final HashMap<String, Integer> storeToWorkerBackup = new HashMap<>();
+    private static boolean[] activeWorkers;
 
     private TCPServer serverClient = null;
     private static final List<TCPServer> serverWorker = new ArrayList<>();
 
     public Master(Socket connection){
-        serverClient = new TCPServer(connection);
+        try {
+            serverClient = new TCPServer(connection);
+        }catch (IOException e){
+            throw new RuntimeException(e);
+        }
+
     }
 
     public Master(){}
 
-    private static <T,T1> T1 broadcast(BackendMessage<T> msg){
+    private static <T,T1> T1 broadcast(BackendMessage<T> msg) throws SocketTimeoutException{
         List<Thread> threads = new ArrayList<>();
+        AtomicBoolean gotException = new AtomicBoolean(false);
         for (int i = 0; i < n_workers; i++){
+            if (!activeWorkers[i])
+                continue;
             final int workerId = i;
-            Thread thread = new Thread(() -> singleWorker(msg, workerId));
+            Thread thread = new Thread(() -> {
+                try {
+                    singleWorker(msg, workerId);
+                } catch (Exception e) {
+                    gotException.set(true);
+                }
+            });
             threads.add(thread);
             thread.start();
         }
@@ -42,11 +59,12 @@ public class Master extends Thread {
                 System.err.println(e.getMessage());
             }
         }
-
+        if (gotException.get())
+            throw new SocketTimeoutException();
         return Reducer.reduce(msg);
     }
 
-    private static <T,T1> T1 singleWorker(BackendMessage<T> msg, int worker){
+    private static <T,T1> T1 singleWorker(BackendMessage<T> msg, int worker) throws SocketTimeoutException{
         Message<T1> response;
         try{
             TCPServer server = serverWorker.get(worker);
@@ -64,14 +82,25 @@ public class Master extends Thread {
                 list.add(response.getValue());
             }
             currentConnection.stopConnection();
+
             if (((BackendMessage<T1>)response).getSaveState() == SaveState.REQUIRES_BACKUP)
             {
-                // ===============
-                // pick correct worker for backup
-                // set msg as backup and send
-                // ===============
+                int workerId = storeToWorkerBackup.get(((StoreNameProvider) msg.getValue()).getStoreName());
+                if (workerId != -1){ // no secondary backup location exists
+                    msg.setSaveState(SaveState.BACKUP);
+                    server = serverWorker.get(workerId);
+                    synchronized (server){
+                        currentConnection = new TCPServer(server.serverSocket.accept());
+                    }
+                    currentConnection.sendMessage(msg);
+                }
             }
+
             return response.getValue(); // only used on non-broadcast calls
+        }
+        catch(SocketException e){
+            disableWorker(worker);
+            throw new SocketTimeoutException();
         }
         catch(IOException e){
             System.err.println("Couldn't start server: " + e.getMessage());
@@ -79,6 +108,47 @@ public class Master extends Thread {
         return null;
     }
 
+    private static void disableWorker(int workerId){
+        synchronized (activeWorkers){
+            if (!activeWorkers[workerId])
+                return;
+            activeWorkers[workerId] = false;
+        }
+        try{
+            for (var set : storeToWorkerMemory.entrySet()){
+                if (!set.getValue().equals(workerId))
+                    continue;
+                TCPServer server = serverWorker.get(storeToWorkerBackup.get(set.getKey()));
+                TCPServer currentConnection;
+                synchronized (server){
+                    currentConnection = new TCPServer(server.serverSocket.accept());
+                }
+                Message<String> msg = new BackendMessage<>(set.getKey());
+                msg.setClient(Client.MASTER);
+                msg.setRequest(RequestCode.TRANSFER_BACKUP);
+                currentConnection.sendMessage(msg);
+                storeToWorkerBackup.replace(set.getKey(), -1);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Remove if when stub is no longer needed
+     *
+     */
+    private <T,T1> T1 findCorrectWorker(BackendMessage<T> msg) throws SocketTimeoutException{
+        int workerId;
+        if (msg.getRequest() == RequestCode.STUB_TEST_1 || msg.getRequest() == RequestCode.STUB_TEST_2)
+            workerId = 0; // only for stub, should be removed with stub
+        else{
+            workerId = storeToWorkerMemory.get(((StoreNameProvider) msg.getValue()).getStoreName());
+            if (!activeWorkers[workerId])
+                workerId = storeToWorkerBackup.get(((StoreNameProvider) msg.getValue()).getStoreName());
+        }
+        return singleWorker(msg, workerId);
+    }
 
     /**
      * Current values are temporary
@@ -86,27 +156,31 @@ public class Master extends Thread {
     private <T,T1> T1 callAppropriateWorker(BackendMessage<T> msg){
         Client client = msg.getClient();
         RequestCode code = msg.getRequest();
-        int workerId = 0;
-        // =========
-          // if msg.val is Store, set workerId to the correct worker
-        // =========
-        return switch (client) {
-            case Customer -> switch (code) { // replace with appropriate cases
-                case STUB_TEST_1, BUY -> singleWorker(msg, workerId);
-                case STUB_TEST_2, SEARCH -> broadcast(msg);
-                default -> {
-                    System.err.println("Unknown customer code: " + code);
-                    throw new RuntimeException();
-                }
+        try{
+            return switch (client) {
+                case Customer -> switch (code) { // replace with appropriate cases
+                    case STUB_TEST_1,BUY -> findCorrectWorker(msg);
+                    case STUB_TEST_2, SEARCH -> broadcast(msg);
+                    default -> {
+                        System.err.println("Unknown customer code: " + code);
+                        throw new RuntimeException();
+                    }
+                };
+                case Manager -> switch (code) { // replace with appropriate cases
+                    case ADD_STORE, REMOVE_PRODUCT -> findCorrectWorker(msg);
+                    default -> {
+                        System.err.println("Unknown manager code: " + code);
+                        throw new RuntimeException();
+                    }
+                };
+                case MASTER -> null; // should never address himself
             };
-            case Manager -> switch (code) { // replace with appropriate cases
-                case ADD_STORE, REMOVE_PRODUCT -> singleWorker(msg, workerId);
-                default -> {
-                    System.err.println("Unknown manager code: " + code);
-                    throw new RuntimeException();
-                }
-            };
-        };
+        }catch (SocketTimeoutException e){
+            clearMapReduce(msg.getId());
+            initMapReduce(msg.getId());
+            return callAppropriateWorker(msg); // retry method after transferring Worker memory
+        }
+
     }
 
     public <T,T1> Message<T1> startForBroker(BackendMessage<T> msg) {
@@ -168,19 +242,21 @@ public class Master extends Thread {
     public void connectWorkers(int size){
         for (int i = 0; i < size; i++)
         {
-            serverWorker.add(new TCPServer(TCPServer.basePort + i + 1));
+            serverWorker.add(new TCPServer(TCPServer.basePort + i + 1, true));
             System.out.println(TCPServer.basePort + i + 1);
         }
     }
 
     private void initWorkerMemory(String DATA_PATH){
         try {
+            Map<String, Store> nameToStore = new HashMap<>(); // should be extended store
             Object temp = new JSONParser().parse(new FileReader(DATA_PATH));
             JSONArray stores = (JSONArray) ((JSONObject)temp).get("Stores");
             Message<Store> msg; // should be extended store
+            int workerId;
             for (int i = 0; i < stores.size(); i++){
-                int workerID = i % n_workers;
-                TCPServer server = serverWorker.get(workerID);
+                workerId = i % n_workers;
+                TCPServer server = serverWorker.get(workerId);
                 server.startConnection();
 
                 Store store = new Store((JSONObject)stores.get(i));
@@ -188,16 +264,32 @@ public class Master extends Thread {
                 msg.setRequest(RequestCode.INIT_MEMORY);
                 server.sendMessage(msg);
 
-                storeToWorkerMemory.put(store.getStoreName(), workerID);
+                storeToWorkerMemory.put(store.getStoreName(), workerId);
+                nameToStore.put(store.getStoreName(), store);
             }
-            // ===========
-            // backup
-            // ===========
+            int[] hashingVariance = new int[n_workers];
+
+            for (var set: storeToWorkerMemory.entrySet()){
+                workerId = (set.getValue() + (++hashingVariance[set.getValue()])) % n_workers;
+                if (workerId == set.getValue())
+                    workerId = (workerId + 1) % n_workers;
+                TCPServer server = serverWorker.get(workerId);
+                server.startConnection();
+
+                Store store = nameToStore.get(set.getKey());
+                msg = new Message<>(store);
+                msg.setRequest(RequestCode.INIT_BACKUP);
+                server.sendMessage(msg);
+
+                storeToWorkerBackup.put(store.getStoreName(), workerId);
+            }
+
             for (int i = 0; i < n_workers; i++){ // end Initialization
                 serverWorker.get(i).startConnection();
                 msg = new Message<>();
                 msg.setRequest(RequestCode.END_INIT_MEMORY);
                 serverWorker.get(i).sendMessage(msg);
+                activeWorkers[i] = true;
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -215,7 +307,7 @@ public class Master extends Thread {
         final String DATA_PATH = "./src/Data/Stores.json";
         final Scanner on = new Scanner(System.in);
         Process[] workers = new Process[n_workers];
-
+        activeWorkers = new boolean[n_workers];
         // a server for each Worker
         Master server = new Master();
         server.connectWorkers(n_workers);
