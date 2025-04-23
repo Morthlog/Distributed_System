@@ -1,6 +1,3 @@
-
-import org.json.simple.JSONObject;
-
 import java.io.Serializable;
 
 public class Product implements Serializable {

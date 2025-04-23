@@ -1,279 +1,211 @@
 import java.io.*;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Scanner;
 import java.util.Map;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.*;
+import java.net.InetAddress;
 
-public class ManagerConsoleApp {
-    private static final String DATA_PATH = "src/Data/Stores.json";
+public class ManagerConsoleApp extends Communication {
     private static final Scanner scanner = new Scanner(System.in);
-    final List<Store> stores = new ArrayList<>();
-    final Map<String, Map<String, Integer>> productSales = new HashMap<>();
 
     public ManagerConsoleApp() {
-        loadStoresFromJson();
     }
 
-    private void loadStoresFromJson() {
-        File file = new File(DATA_PATH);
-        if (!file.exists()) {
-            System.out.println("No store found");
-            return;
-        }
-        JSONArray storesArray;
+    private <T> Message <String> sendRequest(Message<T> request) {
         try {
-            Object temp = new JSONParser().parse(new FileReader(DATA_PATH));
-            storesArray = (JSONArray) ((JSONObject) temp).get("Stores");
-            for (Object obj : storesArray) {
-                Store store = new Store((JSONObject) obj);
-                stores.add(store);
-                productSales.put(store.getStoreName(), new HashMap<>());
-
-                for (Product product : store.getProducts()) {
-                    productSales.get(store.getStoreName()).put(product.getProductType(), 0);
-                }
-            }
-        } catch (Exception exception) {
-            System.out.println("Error reading store data: " + exception.getMessage());
+            String ip = InetAddress.getLocalHost().getHostAddress();
+            startConnection(ip, TCPServer.basePort);
+            sendMessage(request);
+            Message <String> response = receiveMessage();
+            stopConnection();
+            return response;
+        } catch (Exception e) {
+            System.err.println("Failed send request: " + e.getMessage());
+            throw new RuntimeException();
         }
     }
 
-    //Use of json in currentstore.toJSONObject() conflicts with serializable
-    private void saveStore() { 
-//        JSONArray allStores = new JSONArray();
-//
-//        for (Store currentstore : stores) {
-//            allStores.add(currentstore.toJSONObject());
-//        }
-//        try (FileWriter file = new FileWriter(DATA_PATH)) {
-//            file.write(allStores.toJSONString());
-//        } catch (IOException exception) {
-//            System.err.println("Save failed: " + exception.getMessage());
-//        }
+    private Map<String, ExtendedStore> getStores() {
+        Map<String, ExtendedStore> stores = new HashMap<>();
+        try {
+            String ip = InetAddress.getLocalHost().getHostAddress();
+            startConnection(ip, TCPServer.basePort);
+            Message<String> request = new Message<>("getStores", Client.Manager, RequestCode.GET_STORES);
+            sendMessage(request);
+            Message<Map<String, ExtendedStore>> response = receiveMessage();
+            stores = response.getValue();
+            stopConnection();
+            return stores;
+        } catch (Exception e) {
+            System.err.println("Error getting stores: " + e.getMessage());
+            throw new RuntimeException();
+        }
     }
 
     private void addStore() {
-        System.out.print("Enter path to JSON file: ");
+        System.out.print("Enter json path of the new store you want to add: ");
         String path = scanner.nextLine();
 
         try (FileReader reader = new FileReader(path)) {
             JSONObject storeJson = (JSONObject) new JSONParser().parse(reader);
-            Store newStore = new Store(storeJson);
-
-            for (Store existingStore : stores) {
-                if (existingStore.getStoreName().equals(newStore.getStoreName())) {
-                    System.out.println("Store already exists.");
-                    return;
-                }
-            }
-            stores.add(newStore);
-            productSales.put(newStore.getStoreName(), new HashMap<>());
-            for (Product product : newStore.getProducts()) {
-                productSales.get(newStore.getStoreName()).put(product.getProductType(), 0);
-            }
-            saveStore();
-            System.out.println("Store added");
-        } catch (Exception exception) {
-            System.out.println("Error adding store: " + exception.getMessage());
+            ExtendedStore newStore = new ExtendedStore(storeJson);
+            Message<ExtendedStore> request = new Message<>(newStore, Client.Manager, RequestCode.ADD_STORE);
+            Message<String> response = sendRequest(request);
+            System.out.println(response.getValue());
+        } catch (Exception e) {
+            System.err.println("Error adding store: " + e.getMessage());
         }
     }
 
     private void addProduct() {
-        if (stores.isEmpty()) {
-            System.out.println("No stores have been loaded yet.");
-            return;
-        }
-        System.out.print("Enter store name: ");
-        String storeName = scanner.nextLine();
-        System.out.print("Product name: ");
-        String productName = scanner.nextLine();
-        System.out.print("Product type: ");
-        String productType = scanner.nextLine();
-        System.out.print("Available amount: ");
-        int availableAmount = scanner.nextInt();
-        System.out.print("Price: ");
-        double price = scanner.nextDouble();
-        scanner.nextLine();
+        try {
+            System.out.print("Enter the name of the store you want to add a product: ");
+            String storeName = scanner.nextLine();
+            System.out.print("Enter product name: ");
+            String productName = scanner.nextLine();
+            System.out.print("Enter product type: ");
+            String productType = scanner.nextLine();
+            System.out.print("Enter available amount: ");
+            int availableAmount = scanner.nextInt();
+            System.out.print("Enter price: ");
+            double price = scanner.nextDouble();
+            scanner.nextLine();
 
-        for (Store store : stores) {
-            if (store.getStoreName().equalsIgnoreCase(storeName)) {
-                Product newProduct= new Product(productName, productType, availableAmount, price);
-                store.addProduct(newProduct);
-                saveStore();
-                System.out.println("Product added");
-                return;
-            }
+            Product newProduct = new Product(productName, productType, availableAmount, price);
+            ProductAddition addData =new ProductAddition(storeName, newProduct);
+            Message<ProductAddition> request = new Message<>(addData, Client.Manager, RequestCode.ADD_PRODUCT);
+            Message<String> response = sendRequest(request);
+            System.out.println(response.getValue());
+        } catch (Exception e) {
+            System.err.println("Error adding product: " + e.getMessage());
         }
-        System.out.println("Store not found!");
     }
 
     private void removeProduct() {
-        System.out.print("Enter store name: ");
-        String storeName = scanner.nextLine();
-        System.out.print("Enter product name to remove: ");
-        String productName = scanner.nextLine();
+        try {
+            System.out.print("Enter the name of the store you want to remove a product from: ");
+            String storeName = scanner.nextLine();
+            System.out.print("Enter the name of the product you want to remove: ");
+            String productName = scanner.nextLine();
 
-        for (Store store : stores) {
-            if (store.getStoreName().equalsIgnoreCase(storeName)) {
-                List<Product> products = store.getProducts();
-                Product productToRemove =null;
-                for (Product product : products) {
-                    if (product.getProductName().equalsIgnoreCase(productName)) {
-                        productToRemove = product;
-                        break;
-                    }
-                }
-                if (productToRemove != null) {
-                    productToRemove.setHidden(true);
-                    saveStore();
-                    System.out.println("Product removed successfully.");
-                    return;
-                }
-            }
+            ProductRemoval removeData = new ProductRemoval(storeName, productName);
+            Message<ProductRemoval> request = new Message<>(removeData, Client.Manager, RequestCode.REMOVE_PRODUCT);
+            Message<String> response = sendRequest(request);
+            System.out.println(response.getValue());
+        } catch (Exception e) {
+            System.err.println("Error removing product: " + e.getMessage());
         }
-        System.out.println("Store not found!");
     }
 
     private void manageStock() {
-        System.out.print("Enter store name: ");
-        String storeName = scanner.nextLine();
-        System.out.print("Enter product name: ");
-        String productName = scanner.nextLine();
-        System.out.print("Enter new available amount: ");
-        int newAmount = scanner.nextInt();
-        scanner.nextLine();
-
-       for (Store store : stores) {
-            if (store.getStoreName().equalsIgnoreCase(storeName)) {
-                store.manageStock(productName, newAmount);
-                saveStore();
-                System.out.println("Stock updated successfully!");
-                return;
-            }
-        }
-        System.out.println("Store not found.");
-    }
-
-    private void saveSales() {
-        System.out.print("Enter store name: ");
-        String storeName = scanner.nextLine();
-        System.out.print("Enter product name: ");
-        String productName = scanner.nextLine();
-        Store store = null;
-        for (Store s : stores) {
-            if (s.getStoreName().equalsIgnoreCase(storeName)) {
-                store = s;
-                break;
-            }
-        }
-        if (store == null) {
-            System.out.println("Store not found.");
-            return;
-        }
-        Product product = null;
-        for (Product p : store.getProducts()) {
-            if (p.getProductName().equalsIgnoreCase(productName) && !p.isHidden()) {
-                product = p;
-                break;
-            }
-        }
-        if (product == null) {
-            System.out.println("Product not found.");
-            return;
-        }
-        System.out.print("Enter quantity that have been sold: ");
-        int quantity = scanner.nextInt();
-        scanner.nextLine();
-        int newAmount = product.getAvailableAmount() - quantity;
-        if (newAmount < 0) {
-            System.out.println("Insufficient stock. Available: " + product.getAvailableAmount());
-            return;
-        }
-        product.setAvailableAmount(newAmount);
-        String productType = product.getProductType();
-        Map<String, Integer> storeSales = productSales.get(storeName);
-        if (storeSales == null) {
-            storeSales = new HashMap<>();
-            productSales.put(storeName, storeSales);
-        }
-        int currentSales = storeSales.getOrDefault(productType, 0);
-        storeSales.put(productType, currentSales + quantity);
-        saveStore();
-    }
-
-    private void displaySalesByProduct() {
-        System.out.print("Enter product category: ");
-        String category = scanner.nextLine();
-
-        System.out.println("\nSales by Product: " + category );
-        Map<String, Integer> salesByStore = new HashMap<>();
-        int total = 0;
-        boolean found = false;
-        for (Store store : stores) {
-            String storeName = store.getStoreName();
-            Map<String, Integer> storeSales = productSales.get(storeName);
-
-            if (storeSales != null && storeSales.containsKey(category)) {
-                found = true;
-                int sales = storeSales.get(category);
-                salesByStore.put(storeName, sales);
-                total += sales;
-            }
-        }
-        if (found) {
-            for (Map.Entry<String, Integer> entry : salesByStore.entrySet()) {
-                System.out.println("\"" + entry.getKey() + "\": " + entry.getValue());
-            }
-            System.out.println("\"total\": " + total);
-        } else {
-            System.out.println("No products found in " + category + " category.");
-        }
-    }
-    public static void main(String[] args) {
-        ManagerConsoleApp manager = new ManagerConsoleApp();
-        boolean app_running = true;
-        while (app_running) {
-            System.out.print("Enter your choice: ");
-            System.out.println("1. Add new store");
-            System.out.println("2. Add new product to store");
-            System.out.println("3. Remove product from store");
-            System.out.println("4. Manage stock");
-            System.out.println("5. Save a sale");
-            System.out.println("6. Display sales by product");
-            System.out.println("7. Exit");
-            int choice = scanner.nextInt();
+        try {
+            System.out.print("Enter the name of the store you want to manage stock: ");
+            String storeName = scanner.nextLine();
+            System.out.print("Enter the name of the product you want to manage stock: ");
+            String productName = scanner.nextLine();
+            System.out.print("Enter quantity you want to add or remove: ");
+            int quantityChange = scanner.nextInt();
             scanner.nextLine();
 
-            switch (choice) {
-                case 1:
-                    manager.addStore();
-                    break;
-                case 2:
-                    manager.addProduct();
-                    break;
-                case 3:
-                    manager.removeProduct();
-                    break;
-                case 4:
-                    manager.manageStock();
-                    break;
-                case 5:
-                    manager.saveSales();
-                    break;
-                case 6:
-                    manager.displaySalesByProduct();
-                    break;
-                case 7:
-                    app_running = false;
-                    break;
-                default:
-                    System.out.println("Invalid option, please try again.");
-            }
+            StockChange stockData = new StockChange(storeName, productName, quantityChange);
+            Message<StockChange> request = new Message<>(stockData, Client.Manager, RequestCode.MANAGE_STOCK);
+            Message<String> response = sendRequest(request);
+            System.out.println(response.getValue());
+        } catch (Exception e) {
+            System.err.println("Error managing stock: " + e.getMessage());
         }
-        scanner.close();
     }
+    
+    private void displaySalesStatistics() {
+        System.out.println("\n Sales statistics option:");
+        System.out.println("1. By store type");
+        System.out.println("2. By product category");
+        System.out.println("3. For a specific store");
+
+        int option = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (option) {
+            case 1:
+                displaySalesByStoreType();
+                break;
+            case 2:
+                displaySalesByProductType();
+                break;
+            case 3:
+                displaySalesByStore();
+                break;
+            default:
+                System.out.println("Invalid option selected");
+        }
+    }
+
+    private void displaySalesByStoreType() {
+        System.out.print("Enter store type you want to display sales: ");
+        String storeType = scanner.nextLine();
+        Message<String> request = new Message<>(storeType, Client.Manager, RequestCode.GET_SALES_BY_STORE_TYPE);
+        Message<String> response = sendRequest(request);
+        System.out.println(response.getValue());
+    }
+
+    private void displaySalesByProductType() {
+        System.out.print("Enter product category you are interested in displaying sales: ");
+        String category = scanner.nextLine();
+        Message<String> request = new Message<>(category, Client.Manager, RequestCode.GET_SALES_BY_PRODUCT_TYPE);
+        Message<String> response = sendRequest(request);
+        System.out.println(response.getValue());
+    }
+
+    private void displaySalesByStore() {
+        System.out.print("Enter the name of the store you want to display sales: ");
+        String storeName = scanner.nextLine();
+        Message<String> request = new Message<>(storeName, Client.Manager, RequestCode.GET_SALES_BY_STORE);
+        Message<String> response = sendRequest(request);
+        System.out.println(response.getValue());
+    }
+
+
+        public static void main (String[]args){
+            ManagerConsoleApp manager = new ManagerConsoleApp();
+            boolean app_running = true;
+
+            while (app_running) {
+                System.out.println("\n Enter your choice between 1-7: ");
+                System.out.println("1. Add new store");
+                System.out.println("2. Add new product to store");
+                System.out.println("3. Remove product from store");
+                System.out.println("4. Manage stock");
+                System.out.println("5. Display sales by product");
+                System.out.println("6. Exit");
+
+                int choice = scanner.nextInt();
+                scanner.nextLine();
+
+                switch (choice) {
+                    case 1:
+                        manager.addStore();
+                        break;
+                    case 2:
+                        manager.addProduct();
+                        break;
+                    case 3:
+                        manager.removeProduct();
+                        break;
+                    case 4:
+                        manager.manageStock();
+                        break;
+                    case 5:
+                        manager.displaySalesStatistics();
+                        break;
+                    case 6:
+                        app_running = false;
+                        System.out.println("Exiting...");
+                        break;
+                    default:
+                        System.out.println("Invalid option, please choose a number from 1 to 7.");
+                }
+            }
+            scanner.close();
+        }
 }

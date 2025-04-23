@@ -1,14 +1,20 @@
+import java.io.*;
+import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.*;
-
 import static java.lang.Thread.sleep;
 
 public class Worker extends Communication {
 
     // Hashmap<String, Store> for memory and backup
-    private static final Map<String, Store> memory = new HashMap<>(); // should be extendedStore
-    private static final Map<String, Store> backup = new HashMap<>(); // should be extendedStore
+    private static final Map<String, ExtendedStore> memory = new HashMap<>(); // should be extendedStore
+    private static final Map<String, ExtendedStore> backup = new HashMap<>(); // should be extendedStore
     /**
      * actionTable for every way the {@link Worker} should respond
      * current actions are not permanent
@@ -29,8 +35,12 @@ public class Worker extends Communication {
                 }
             };
             case Manager -> switch (code) {
-                case ADD_STORE -> null;
-                case REMOVE_PRODUCT -> null;
+                case 1 -> addStore(val);
+                case 2 -> addProduct(val);
+                case 3 -> removeProduct(val);
+                case 4 -> manageStock(val);
+                case 5 -> saveSale(val);
+                case 6 -> displaySales(val);
                 default -> {
                     System.err.println("Unknown manager code: " + code);
                     throw new RuntimeException();
@@ -45,6 +55,118 @@ public class Worker extends Communication {
             };
         };
 
+    }
+
+    private static <T> T addStore(T val) {
+        JSONObject storeJson = (JSONObject) val;
+        ExtendedStore store = new ExtendedStore(storeJson);
+
+        synchronized (memory) {
+            if (memory.containsKey(store.getStoreName())) {
+                return (T) "Store already exists";
+            }
+
+            memory.put(store.getStoreName(), store);
+            backup.put(store.getStoreName(), store);
+        }
+        return (T) "Store added successfully";
+    }
+
+    private static <T> T addProduct(T val) {
+        Map<String, Object> parameters = (Map<String, Object>) val;
+        String storeName = (String) parameters.get("storeName");
+        Product product = (Product) parameters.get("product");
+
+        synchronized (memory) {
+            ExtendedStore store = memory.get(storeName);
+            if (store == null) {
+                return (T) "Store not found";
+            }
+
+            store.addProduct(product);
+            backup.put(storeName, store);
+        }
+        return (T) "Product added successfully";
+    }
+
+    private static <T> T removeProduct(T val) {
+        Map<String, Object> parameters = (Map<String, Object>) val;
+        String storeName = (String) parameters.get("storeName");
+        String productName = (String) parameters.get("productName");
+
+        synchronized (memory) {
+            ExtendedStore store = memory.get(storeName);
+            if (store == null) {
+                return (T) "Store not found";
+            }
+            store.removeProduct(productName);
+            backup.put(storeName, store);
+        }
+        return (T) "Product removed successfully";
+    }
+
+
+    private static <T> T manageStock(T val) {
+        Map<String, Object> parameters = (Map<String, Object>) val;
+        String storeName = (String) parameters.get("storeName");
+        String productName = (String) parameters.get("productName");
+        Integer newAmount = (Integer) parameters.get("newAmount");
+
+        synchronized (memory) {
+            ExtendedStore store = memory.get(storeName);
+            if (store == null) {
+                return (T) "Store not found";
+            }
+
+            boolean updated = store.manageStock(productName, newAmount);
+            if (!updated) {
+                return (T) "Product not found";
+            }
+
+            backup.put(storeName, store);
+        }
+        return (T) "Stock updated successfully";
+    }
+
+    private static <T> T saveSale(T val) {
+        Map<String, Object> parameters = (Map<String, Object>) val;
+        String storeName = (String) parameters.get("storeName");
+        String productName = (String) parameters.get("productName");
+        Integer quantity = (Integer) parameters.get("quantity");
+
+        synchronized (memory) {
+            ExtendedStore store = memory.get(storeName);
+            if (store == null) {
+                return (T) "Store not found";
+            }
+            Product product = store.getProducts().get(productName);
+            if (product == null) {
+                return (T) "Product not found";
+            }
+            if (product.getAvailableAmount() < quantity) {
+                return (T) ("Insufficient stock. Available: " + product.getAvailableAmount());
+            }
+            store.recordSale(productName, quantity);
+            backup.put(storeName, store);
+        }
+        return (T) "Sale recorded successfully";
+    }
+
+    private static <T> T  displaySales(T val) {
+        String category = (String) val;
+        Map<String, Integer> salesByStore = new HashMap<>();
+        int total = 0;
+        synchronized (memory) {
+            for (ExtendedStore store : memory.values()) {
+                int sales = store.getSalesByProductType(category);
+                if (sales > 0) {
+                    salesByStore.put(store.getStoreName(), sales);
+                    total += sales;
+                }
+            }
+        }
+        salesByStore.put("total", total);
+        return (T) salesByStore;
     }
 
     private static <T> T transferToMemory(T val){

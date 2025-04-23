@@ -1,23 +1,23 @@
-
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-public class Store implements Serializable, StoreNameProvider {
-    final String storeName;
-    final double latitude;
-    final double longitude;
-    final String foodCategory;
-    final int stars;
-    final int noOfVotes;
-    final String storeLogo;
-    private String priceCategory;
-    private List<Product> products;
+public class Store implements Serializable, StoreNameProvider{
+    protected String storeName;
+    protected double latitude;
+    protected double longitude;
+    protected String foodCategory;
+    protected int stars;
+    protected int noOfVotes;
+    protected String storeLogo;
+    protected String priceCategory;
+
+    protected Map<String, Product> visibleProducts;
 
     public Store(String storeName, double latitude, double longitude, String foodCategory,
-                 int stars, int noOfVotes, String storeLogo, List<Product> products) {
+                 int stars, int noOfVotes, String storeLogo) {
         this.storeName = storeName;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -25,7 +25,8 @@ public class Store implements Serializable, StoreNameProvider {
         this.stars = stars;
         this.noOfVotes = noOfVotes;
         this.storeLogo = storeLogo;
-        this.products = products;
+
+        this.visibleProducts = new HashMap<>();
         calculatePriceCategory();
     }
 
@@ -38,122 +39,79 @@ public class Store implements Serializable, StoreNameProvider {
         this.noOfVotes = ((Number) jsonObject.get("NoOfVotes")).intValue();
         this.storeLogo = (String) jsonObject.get("StoreLogo");
 
-        this.products = new ArrayList<>();
-        JSONArray productsArray = (JSONArray) jsonObject.get("Products");
-        if (productsArray != null) {
-            for (Object productObj : productsArray) {
+        this.visibleProducts = new HashMap<>();
+
+        JSONArray productList = (JSONArray) jsonObject.get("Products");
+
+        if (productList != null) {
+            for (Object productObj : productList) {
                 JSONObject productJson = (JSONObject) productObj;
-                Product product = new Product(
-                        (String) productJson.get("ProductName"),
-                        (String) productJson.get("ProductType"),
-                        ((Number) productJson.get("Available Amount")).intValue(),
-                        ((Number) productJson.get("Price")).doubleValue()
-                );
-                addProduct(product);// correct add product
+
+                String productName = (String) productJson.get("ProductName");
+                String productType = (String) productJson.get("ProductType");
+                int availableAmount = ((Number) productJson.get("Available Amount")).intValue();
+                double price = ((Number) productJson.get("Price")).doubleValue();
+
+                Product product = new Product(productName, productType, availableAmount, price);
+
+                if (!product.isHidden()) {
+                    visibleProducts.put(productName, product);
+                }
             }
         }
+        calculatePriceCategory();
     }
 
-    private void calculatePriceCategory() {
-        double sum = 0;
-        for (Product product : products) {
-            sum += product.getPrice();
+    protected void calculatePriceCategory() {
+        double sum = 0.0;
+        for (Product p : visibleProducts.values()) {
+            sum += p.getPrice();
         }
-        double avgPrice = sum / products.size();
-        if (avgPrice <= 5) {
+        double averagePrice = sum / visibleProducts.size();
+        if (averagePrice <= 5) {
             this.priceCategory = "$";
-        } else if (avgPrice <= 15) {
+        } else if (averagePrice <= 15) {
             this.priceCategory = "$$";
         } else {
             this.priceCategory = "$$$";
         }
     }
 
-    public void addProduct(Product product) {
-        if (products == null) {
-            products = new ArrayList<>();
-        }
-        products.add(product);
-        calculatePriceCategory();
-    }
-
-    public void removeProduct(String productName) {
-        for (int i = 0; i < products.size(); i++) {
-            if (products.get(i).getProductName().equals(productName)) {
-                products.remove(i);
-                break;
-            }
-        }
-        calculatePriceCategory();
-    }
-    
-    public boolean manageStock(String productName, int newAmount) {
-        if (products == null) {
-            return false;
-        }
-        for (Product product : products) {
-            if (product.getProductName().equals(productName)) {
-                product.setAvailableAmount(newAmount);
-                return true;
-            }
-        }
-        return false;
-    }
-
-//    public JSONObject toJSONObject() {
-//        JSONObject json = new JSONObject();
-//        json.put("StoreName", storeName);
-//        json.put("Latitude", latitude);
-//        json.put("Longitude", longitude);
-//        json.put("FoodCategory", foodCategory);
-//        json.put("Stars", stars);
-//        json.put("NoOfVotes", noOfVotes);
-//        json.put("StoreLogo", storeLogo);
-//        json.put("PriceCategory", priceCategory);
-//
-//        JSONArray productsArray = new JSONArray();
-//        for (Product product : products) {
-//            productsArray.add(product.toJSONObject());
-//        }
-//        json.put("Products", productsArray);
-//
-//        return json;
-//    }
-
     public String getStoreName() {
         return storeName;
     }
-
-    public List<Product> getProducts() {
-        return products;
+    
+    public Map<String, Product> getVisibleProducts() {
+        return visibleProducts;
     }
     @Override
     public String toString() {
-        String result = "{"
-                + "\"StoreName\": \"" + storeName + "\", "
-                + "\"Latitude\": " + latitude + ", "
-                + "\"Longitude\": " + longitude + ", "
-                + "\"FoodCategory\": \"" + foodCategory + "\", "
-                + "\"Stars\": " + stars + ", "
-                + "\"NoOfVotes\": " + noOfVotes + ", "
-                + "\"StoreLogo\": \"" + storeLogo + "\", "
-                + "\"Products\": [";
+        StringBuilder result = new StringBuilder();
+        result.append("{")
+                .append("\"StoreName\": \"").append(storeName).append("\", ")
+                .append("\"Latitude\": ").append(latitude).append(", ")
+                .append("\"Longitude\": ").append(longitude).append(", ")
+                .append("\"FoodCategory\": \"").append(foodCategory).append("\", ")
+                .append("\"Stars\": ").append(stars).append(", ")
+                .append("\"NoOfVotes\": ").append(noOfVotes).append(", ")
+                .append("\"StoreLogo\": \"").append(storeLogo).append("\", ")
+                .append("\"Products\": [");
 
-        for (int i = 0; i < products.size(); i++) {
-            Product p = products.get(i);
-            result += "{"
-                    + "\"ProductName\": \"" + p.getProductName() + "\", "
-                    + "\"ProductType\": \"" + p.getProductType() + "\", "
-                    + "\"Available Amount\": " + p.getAvailableAmount() + ", "
-                    + "\"Price\": " + p.getPrice()
-                    + "}";
-
-            if (i < products.size() - 1) {
-                result += ", ";
+        int i = 0;
+        for (Product p : visibleProducts.values()) {
+            result.append("{")
+                    .append("\"ProductName\": \"").append(p.getProductName()).append("\", ")
+                    .append("\"ProductType\": \"").append(p.getProductType()).append("\", ")
+                    .append("\"Available Amount\": ").append(p.getAvailableAmount()).append(", ")
+                    .append("\"Price\": ").append(p.getPrice())
+                    .append("}");
+            if (i < visibleProducts.size() - 1) {
+                result.append(", ");
             }
+            i++;
         }
-        result += "]}";
-        return result;
+        result.append("]}");
+        return result.toString();
     }
 
     public String getFoodCategory()

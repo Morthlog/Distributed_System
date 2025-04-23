@@ -1,0 +1,172 @@
+import java.util.HashMap;
+import java.util.Map;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
+
+class ExtendedStore extends Store {
+    private Map<String, Product> products;
+    private Map<String, Double> productSales;
+
+    public ExtendedStore(String storeName, double latitude, double longitude, String foodCategory,
+                         int stars, int noOfVotes, String storeLogo, Map<String, Product> products) {
+        super(storeName, latitude, longitude, foodCategory, stars, noOfVotes, storeLogo);
+
+        this.products = products;
+        this.productSales = new HashMap<>();
+
+        for (Product product : products.values()) {
+            String productName = product.getProductName();
+            productSales.put(productName, 0.0);
+
+            if (!product.isHidden()) {
+                visibleProducts.put(product.getProductName(), product);
+            }
+        }
+        calculatePriceCategory();
+    }
+
+    public ExtendedStore(JSONObject jsonObject) {
+        super(jsonObject);
+
+        this.products = new HashMap<>();
+        this.productSales = new HashMap<>();
+
+        JSONArray productList = (JSONArray) jsonObject.get("Products");
+
+        if (productList != null) {
+            for (Object productObj : productList) {
+                JSONObject productJson = (JSONObject) productObj;
+
+                String productName = (String) productJson.get("ProductName");
+                String productType = (String) productJson.get("ProductType");
+                int availableAmount = ((Number) productJson.get("Available Amount")).intValue();
+                double price = ((Number) productJson.get("Price")).doubleValue();
+                boolean hidden = productJson.containsKey("Hidden") && (boolean) productJson.get("Hidden");
+
+                Product product = new Product(productName, productType, availableAmount, price, hidden);
+                products.put(productName, product);
+
+                if (!product.isHidden()) {
+                    visibleProducts.put(productName, product);
+                }
+
+                productSales.put(productName, 0.0);
+            }
+        }
+        calculatePriceCategory();
+    }
+
+    public void addProduct(Product product) {
+        products.put(product.getProductName(), product);
+
+        if (!product.isHidden()) {
+            visibleProducts.put(product.getProductName(), product);
+        }
+
+        productSales.put(product.getProductName(), 0.0);
+
+        calculatePriceCategory();
+    }
+
+    public void removeProduct(String productName) {
+        Product product = products.get(productName);
+        if (product != null) {
+            product.setHidden(true);
+            visibleProducts.remove(productName);
+        }
+        calculatePriceCategory();
+    }
+
+    public boolean manageStock(String productName, int amountChange, boolean bypassChecks) {
+        if (products == null) {
+            return false;
+        }
+        Product product = products.get(productName);
+        if (product == null) {
+            return false;
+        }
+
+        synchronized (product) {
+            int currentAmount = product.getAvailableAmount();
+            int newAmount = currentAmount + amountChange;
+
+            if (!bypassChecks && newAmount < 0) {
+                return false;
+            }
+
+            product.setAvailableAmount(newAmount);
+            return true;
+        }
+    }
+
+    public boolean manageStock(String productName, int amountChange) {
+        return manageStock(productName,amountChange,false);
+    }
+
+    public boolean saveSale(String productName, int quantity, boolean bypassChecks) {
+        if (!products.containsKey(productName)) {
+            return false;
+        }
+
+        Product product = products.get(productName);
+        synchronized (product) {
+            int currentAmount = product.getAvailableAmount();
+
+            if (!bypassChecks && currentAmount < quantity) {
+                return false;
+            }
+            product.setAvailableAmount(currentAmount - quantity);
+
+            double salesIncome = product.getPrice() * quantity;
+            double currentSales = productSales.getOrDefault(productName, 0.0);
+            productSales.put(productName, currentSales + salesIncome);
+
+            return true;
+        }
+    }
+    public boolean saveSale(String productName, int quantity) {
+        return saveSale(productName,quantity,false);
+    }
+
+    public double getSales(String productType) {
+        double totalSales = 0.0;
+
+        for (Map.Entry<String, Product> entry : products.entrySet()) {
+            Product product = entry.getValue();
+            String productName = product.getProductName();
+
+            if (product.getProductType().equals(productType)) {
+                totalSales += productSales.getOrDefault(productName, 0.0);
+            }
+        }
+        return totalSales;
+    }
+
+
+    public Map<String, Product> getProducts() {
+        return new HashMap<>(products);
+    }
+
+    public Map<String, Double> getProductSales() {
+        return new HashMap<>(productSales);
+    }
+
+    public Store toCustomerStore() {
+        Store customerStore = new Store(
+                this.storeName,
+                this.latitude,
+                this.longitude,
+                this.foodCategory,
+                this.stars,
+                this.noOfVotes,
+                this.storeLogo
+        );
+
+        for (Product product : this.visibleProducts.values()) {
+            customerStore.visibleProducts.put(product.getProductName(), product);
+        }
+        customerStore.calculatePriceCategory();
+        return customerStore;
+    }
+}
