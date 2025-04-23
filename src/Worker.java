@@ -1,8 +1,6 @@
 import java.io.*;
 import java.math.BigDecimal;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,12 +35,14 @@ public class Worker extends Communication {
                 }
             };
             case Manager -> switch (code) {
-                case 1 -> addStore(val);
-                case 2 -> addProduct(val);
-                case 3 -> removeProduct(val);
-                case 4 -> manageStock(val);
-                case 5 -> saveSale(val);
-                case 6 -> displaySales(val);
+                case ADD_STORE -> addStore(val);
+                case ADD_PRODUCT -> addProduct(val);
+                case REMOVE_PRODUCT -> removeProduct(val);
+                case MANAGE_STOCK -> manageStock(val);
+                case GET_SALES_BY_STORE_TYPE -> getSalesByStoreType(val);
+                case GET_SALES_BY_PRODUCT_TYPE -> getSalesByProductType(val);
+                case GET_SALES_BY_STORE -> getSalesByStore(val);
+                case GET_STORES -> (T) getAllStores();
                 default -> {
                     System.err.println("Unknown manager code: " + code);
                     throw new RuntimeException();
@@ -60,8 +60,7 @@ public class Worker extends Communication {
     }
 
     private static <T> T addStore(T val) {
-        JSONObject storeJson = (JSONObject) val;
-        ExtendedStore store = new ExtendedStore(storeJson);
+        ExtendedStore store = (ExtendedStore) val;
 
         synchronized (memory) {
             if (memory.containsKey(store.getStoreName())) {
@@ -75,14 +74,14 @@ public class Worker extends Communication {
     }
 
     private static <T> T addProduct(T val) {
-        Map<String, Object> parameters = (Map<String, Object>) val;
-        String storeName = (String) parameters.get("storeName");
-        Product product = (Product) parameters.get("product");
+        ProductAddition addData= (ProductAddition) val;
+        String storeName = addData.getStoreName();
+        Product product = addData.getProduct();
 
         synchronized (memory) {
             ExtendedStore store = memory.get(storeName);
             if (store == null) {
-                return (T) "Store not found";
+                return (T) "Didn't find store";
             }
 
             store.addProduct(product);
@@ -92,14 +91,14 @@ public class Worker extends Communication {
     }
 
     private static <T> T removeProduct(T val) {
-        Map<String, Object> parameters = (Map<String, Object>) val;
-        String storeName = (String) parameters.get("storeName");
-        String productName = (String) parameters.get("productName");
+        ProductRemoval removeData = (ProductRemoval) val;
+        String storeName = removeData.getStoreName();
+        String productName = removeData.getProductName();
 
         synchronized (memory) {
             ExtendedStore store = memory.get(storeName);
             if (store == null) {
-                return (T) "Store not found";
+                return (T) "Didn't find store";
             }
             store.removeProduct(productName);
             backup.put(storeName, store);
@@ -109,66 +108,107 @@ public class Worker extends Communication {
 
 
     private static <T> T manageStock(T val) {
-        Map<String, Object> parameters = (Map<String, Object>) val;
-        String storeName = (String) parameters.get("storeName");
-        String productName = (String) parameters.get("productName");
-        Integer newAmount = (Integer) parameters.get("newAmount");
+        StockChange stockData = (StockChange) val;
+        String storeName = stockData.getStoreName();
+        String productName = stockData.getProductName();
+        Integer quantityChange = stockData.getQuantityChange();
 
         synchronized (memory) {
             ExtendedStore store = memory.get(storeName);
             if (store == null) {
-                return (T) "Store not found";
+                return (T) "Didn't find store";
             }
-
-            boolean updated = store.manageStock(productName, newAmount);
+            boolean updated = store.manageStock(productName, quantityChange;
             if (!updated) {
                 return (T) "Product not found";
             }
-
             backup.put(storeName, store);
         }
         return (T) "Stock updated successfully";
     }
 
-    private static <T> T saveSale(T val) {
-        Map<String, Object> parameters = (Map<String, Object>) val;
-        String storeName = (String) parameters.get("storeName");
-        String productName = (String) parameters.get("productName");
-        Integer quantity = (Integer) parameters.get("quantity");
 
-        synchronized (memory) {
-            ExtendedStore store = memory.get(storeName);
-            if (store == null) {
-                return (T) "Store not found";
-            }
-            Product product = store.getProducts().get(productName);
-            if (product == null) {
-                return (T) "Product not found";
-            }
-            if (product.getAvailableAmount() < quantity) {
-                return (T) ("Insufficient stock. Available: " + product.getAvailableAmount());
-            }
-            store.recordSale(productName, quantity);
-            backup.put(storeName, store);
-        }
-        return (T) "Sale recorded successfully";
-    }
-
-    private static <T> T  displaySales(T val) {
-        String category = (String) val;
+    private static <T> T getSalesByStoreType(T val) {
+        String storeType = (String) val;
         Map<String, Integer> salesByStore = new HashMap<>();
         int total = 0;
+
         synchronized (memory) {
             for (ExtendedStore store : memory.values()) {
-                int sales = store.getSalesByProductType(category);
+                if (store.getFoodCategory().equalsIgnoreCase(storeType)) {
+                    int storeSales = 0;
+                    for (Map.Entry<String, Double> entry : store.getProductSales().entrySet()) {
+                        storeSales += entry.getValue().intValue();
+                    }
+
+                    if (storeSales > 0) {
+                        salesByStore.put(store.getStoreName(), storeSales);
+                        total += storeSales;
+                    }
+                }
+            }
+        }
+
+        salesByStore.put("total", total);
+        return (T) salesByStore;
+    }
+
+    private static <T> T getSalesByProductType(T val) {
+        String productType = (String) val;
+        Map<String, Integer> salesByStore = new HashMap<>();
+        int total = 0;
+
+        synchronized (memory) {
+            for (ExtendedStore store : memory.values()) {
+                int sales = 0;
+                for (Map.Entry<String, Product> productEntry : store.getProducts().entrySet()) {
+                    Product product = productEntry.getValue();
+                    if (product.getProductType().equals(productType)) {
+                        Double productSales = store.getProductSales().get(product.getProductName());
+                        if (productSales != null) {
+                            sales += productSales.intValue();
+                        }
+                    }
+                }
                 if (sales > 0) {
                     salesByStore.put(store.getStoreName(), sales);
                     total += sales;
                 }
             }
         }
+
         salesByStore.put("total", total);
         return (T) salesByStore;
+    }
+
+    private static <T> T getSalesByStore(T val) {
+        String storeName = (String) val;
+        Map<String, Integer> salesByProduct = new HashMap<>();
+        int total = 0;
+
+        synchronized (memory) {
+            ExtendedStore store = memory.get(storeName);
+            if (store == null) {
+                return (T) "Store not found";
+            }
+
+            for (Map.Entry<String, Double> entry : store.getProductSales().entrySet()) {
+                int sales = entry.getValue().intValue();
+                if (sales > 0) {
+                    salesByProduct.put(entry.getKey(), sales);
+                    total += sales;
+                }
+            }
+        }
+
+        salesByProduct.put("total", total);
+        return (T) salesByProduct;
+    }
+
+    private static <T> Map<String, ExtendedStore> getAllStores() {
+        synchronized (memory) {
+            return new HashMap<>(memory);
+        }
     }
 
     private static <T> T transferToMemory(T val){
