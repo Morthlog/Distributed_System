@@ -1,7 +1,6 @@
+import java.io.Serializable;
 
-import org.json.simple.JSONObject;
-
-class Product {
+public class Product implements Serializable {
     private String productName;
     private String productType;
     private int availableAmount;
@@ -20,15 +19,15 @@ class Product {
         this.hidden = hidden;
     }
 
-    public JSONObject toJSONObject() {
-        JSONObject json = new JSONObject();
-        json.put("ProductName", productName);
-        json.put("ProductType", productType);
-        json.put("Available Amount", availableAmount);
-        json.put("Price", price);
-        json.put("Hidden", hidden);
-        return json;
-    }
+//    public JSONObject toJSONObject() {
+//        JSONObject json = new JSONObject();
+//        json.put("ProductName", productName);
+//        json.put("ProductType", productType);
+//        json.put("Available Amount", availableAmount);
+//        json.put("Price", price);
+//        json.put("Hidden", hidden);
+//        return json;
+//    }
 
     public String getProductName() {
         return productName;

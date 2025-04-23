@@ -1,42 +1,151 @@
 {
   "Stores": [
     {
-      "StoreName": "storeName",
-      "Latitude": 37.9932963,
-      "Longitude": 23.733413,
-      "FoodCategory": "pizzeria",
-      "Stars": 3,
-      "NoOfVotes": 15,
-      "StoreLogo": "/usr/bin/images/storeLogo.png",
+      "StoreName": "storeName1",
+      "Latitude": 38.0215722,
+      "Longitude": 23.7568216,
+      "FoodCategory": "burgers",
+      "Stars": 2,
+      "NoOfVotes": 10,
+      "StoreLogo": "/usr/bin/images/storeLogo1.png",
       "Products": [
         {
-          "ProductName": "margarita",
-          "ProductType": "pizza",
-          "Available Amount": 5000,
-          "Price": 9.2
+          "ProductName": "classic burger",
+          "ProductType": "burger",
+          "Available Amount": 500,
+          "Price": 7.5
         },
         {
-          "ProductName": "special",
-          "ProductType": "pizza",
-          "Available Amount": 1000,
-          "Price": 12
-        },
-        {
-          "ProductName": "chef’s Salad",
-          "ProductType": "salad",
-          "Available Amount": 100,
-          "Price": 5
+          "ProductName": "cheeseburger",
+          "ProductType": "burger",
+          "Available Amount": 300,
+          "Price": 8.5
         }
       ]
     },
     {
       "StoreName": "storeName2",
-      "Latitude": 37.9932963,
-      "Longitude": 23.733413,
-      "FoodCategory": "pizzeria",
+      "Latitude": 38.0335718,
+      "Longitude": 23.7686561,
+      "FoodCategory": "burgers",
+      "Stars": 4,
+      "NoOfVotes": 42,
+      "StoreLogo": "/usr/bin/images/storeLogo2.png",
+      "Products": [
+        {
+          "ProductName": "vegetarian burger",
+          "ProductType": "burger",
+          "Available Amount": 100,
+          "Price": 6
+        },
+        {
+          "ProductName": "double cheeseburger",
+          "ProductType": "burger",
+          "Available Amount": 200,
+          "Price": 9
+        }
+      ]
+    },
+    {
+      "StoreName": "storeName3",
+      "Latitude": 38.0194234,
+      "Longitude": 23.774526,
+      "FoodCategory": "pastry",
+      "Stars": 1,
+      "NoOfVotes": 51,
+      "StoreLogo": "/usr/bin/images/storeLogo3.png",
+      "Products": [
+        {
+          "ProductName": "spinach pie",
+          "ProductType": "pastry",
+          "Available Amount": 200,
+          "Price": 4
+        },
+        {
+          "ProductName": "cheese pie",
+          "ProductType": "pastry",
+          "Available Amount": 150,
+          "Price": 3.5
+        }
+      ]
+    },
+    {
+      "StoreName": "storeName4",
+      "Latitude": 37.9763038,
+      "Longitude": 23.6938764,
+      "FoodCategory": "pastry",
       "Stars": 3,
-      "NoOfVotes": 15,
-      "StoreLogo": "/usr/bin/images/storeLogo.png",
+      "NoOfVotes": 41,
+      "StoreLogo": "/usr/bin/images/storeLogo4.png",
+      "Products": [
+        {
+          "ProductName": "baklava",
+          "ProductType": "pastry",
+          "Available Amount": 100,
+          "Price": 4.5
+        },
+        {
+          "ProductName": "muffin",
+          "ProductType": "pastry",
+          "Available Amount": 150,
+          "Price": 2
+        }
+      ]
+    },
+    {
+      "StoreName": "storeName5",
+      "Latitude": 38.0153471,
+      "Longitude": 23.7426714,
+      "FoodCategory": "coffee",
+      "Stars": 2,
+      "NoOfVotes": 38,
+      "StoreLogo": "/usr/bin/images/storeLogo5.png",
+      "Products": [
+        {
+          "ProductName": "frappe",
+          "ProductType": "coffee",
+          "Available Amount": 1000,
+          "Price": 3.5
+        },
+        {
+          "ProductName": "americano",
+          "ProductType": "coffee",
+          "Available Amount": 600,
+          "Price": 2.5
+        }
+      ]
+    },
+    {
+      "StoreName": "storeName6",
+      "Latitude": 38.0551742,
+      "Longitude": 23.7322283,
+      "FoodCategory": "coffee",
+      "Stars": 4,
+      "NoOfVotes": 99,
+      "StoreLogo": "/usr/bin/images/storeLogo6.png",
+      "Products": [
+        {
+          "ProductName": "espresso",
+          "ProductType": "coffee",
+          "Available Amount": 500,
+          "Price": 2
+        },
+        {
+          "ProductName": "latte",
+          "ProductType": "coffee",
+          "Available Amount": 400,
+          "Price": 3.5
+        }
+      ]
+    },
+    {
+      "StoreName": "storeName7",
+      "Latitude": 38.0490079,
+      "Longitude": 23.7809415,
+      "FoodCategory": "pizza",
+      "Stars": 5,
+      "NoOfVotes": 150,
+      "StoreLogo": "/usr/bin/images/storeLogo7.png",
       "Products": [
         {
           "ProductName": "margarita",
@@ -45,16 +154,79 @@
           "Price": 9.2
         },
         {
-          "ProductName": "special",
+          "ProductName": "four cheeses",
           "ProductType": "pizza",
-          "Available Amount": 1000,
+          "Available Amount": 500,
+          "Price": 11
+        }
+      ]
+    },
+    {
+      "StoreName": "storeName8",
+      "Latitude": 38.049647,
+      "Longitude": 23.8193058,
+      "FoodCategory": "pizza",
+      "Stars": 4,
+      "NoOfVotes": 99,
+      "StoreLogo": "/usr/bin/images/storeLogo8.png",
+      "Products": [
+        {
+          "ProductName": "pepperoni",
+          "ProductType": "pizza",
+          "Available Amount": 300,
           "Price": 12
         },
         {
-          "ProductName": "chef’s Salad",
-          "ProductType": "salad",
-          "Available Amount": 100,
-          "Price": 5
+          "ProductName": "athlete's",
+          "ProductType": "pizza",
+          "Available Amount": 700,
+          "Price": 10
+        }
+      ]
+    },
+    {
+      "StoreName": "storeName9",
+      "Latitude": 38.0752074,
+      "Longitude": 23.8080153,
+      "FoodCategory": "souvlakia",
+      "Stars": 3,
+      "NoOfVotes": 18,
+      "StoreLogo": "/usr/bin/images/storeLogo9.png",
+      "Products": [
+        {
+          "ProductName": "souvlaki with pita",
+          "ProductType": "souvlaki",
+          "Available Amount": 500,
+          "Price": 6
+        },
+        {
+          "ProductName": "chicken souvlaki",
+          "ProductType": "souvlaki",
+          "Available Amount": 300,
+          "Price": 7
+        }
+      ]
+    },
+    {
+      "StoreName": "storeName10",
+      "Latitude": 38.0490079,
+      "Longitude": 23.7809415,
+      "FoodCategory": "souvlakia",
+      "Stars": 4,
+      "NoOfVotes": 99,
+      "StoreLogo": "/usr/bin/images/storeLogo10.png",
+      "Products": [
+        {
+          "ProductName": "pork souvlaki",
+          "ProductType": "souvlaki",
+          "Available Amount": 200,
+          "Price": 6.5
+        },
+        {
+          "ProductName": "lamb souvlaki",
+          "ProductType": "souvlaki",
+          "Available Amount": 150,
+          "Price": 7.5
         }
       ]
     }
