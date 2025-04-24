@@ -118,7 +118,7 @@ public class Worker extends Communication {
             if (store == null) {
                 return (T) "Didn't find store";
             }
-            boolean updated = store.manageStock(productName, quantityChange;
+            boolean updated = store.manageStock(productName, quantityChange);
             if (!updated) {
                 return (T) "Product not found";
             }
@@ -404,7 +404,7 @@ public class Worker extends Communication {
     private void init(String ip, int id) {
         System.out.println("Starting memory/backup initialization");
         while(true){
-            Message<Store> request; // should be extended store
+            Message<ExtendedStore> request; // should be extended store
             startConnection(ip, TCPServer.basePort + 1 + id);
             System.out.println("Connection established");
             try{

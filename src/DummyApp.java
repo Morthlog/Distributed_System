@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class DummyApp
 {
@@ -100,7 +97,7 @@ public class DummyApp
         System.out.println("Default filters set: " + filter);
     }
 
-    public void displayStores(List<Store> stores)
+    public void displayStores(List<ExtendedStore> stores)
     {
         if (stores == null || stores.isEmpty())
         {
@@ -110,7 +107,7 @@ public class DummyApp
         System.out.println("Available stores:");
         for (int i = 0; i < stores.size(); i++)
         {
-            Store store = stores.get(i);
+            ExtendedStore store = stores.get(i);
             System.out.println(i + ": " + store.getStoreName()
                     + ". Food Category: " + store.getFoodCategory()
                     + ". Stars: " + store.getStars()
@@ -118,16 +115,17 @@ public class DummyApp
         }
     }
 
-    public Store chooseStore(List<Store> stores)
+    public ExtendedStore chooseStore(List<ExtendedStore> stores)
     {
         System.out.println("Enter the number of the store you want to view products for:");
         int storeIndex = getIntInput();
         return stores.get(storeIndex);
     }
 
-    public void displayStoreProducts(Store store)
+    public void displayStoreProducts(ExtendedStore store)
     {
-        List<Product> products = store.getProducts();
+
+        Map<String, Product> products = store.getProducts();
         System.out.println("Products in " + store.getStoreName() + ":");
         for (int i = 0; i < products.size(); i++)
         {
@@ -136,9 +134,9 @@ public class DummyApp
         }
     }
 
-    public void chooseProducts(Store store)
+    public void chooseProducts(ExtendedStore store)
     {
-        List<Product> products = store.getProducts();
+        Map<String, Product> products = store.getProducts();
         customer.addStoreNameToCart(store.getStoreName());
         while (true)
         {
@@ -202,7 +200,7 @@ public class DummyApp
         }
     }
 
-    private void handleSearchResults(List<Store> stores)
+    private void handleSearchResults(List<ExtendedStore> stores)
     {
         loading = false;
         displayStores(stores);
@@ -214,7 +212,7 @@ public class DummyApp
             return;
         }
 
-        Store selectedStore = chooseStore(stores);
+        ExtendedStore selectedStore = chooseStore(stores);
         chooseProducts(selectedStore);
         finalizeOrder();
     }
