@@ -241,10 +241,17 @@ public class Master extends Thread {
     // different port for each Worker
     public void connectWorkers(int size){
         for (int i = 0; i < size; i++)
-        {
-            serverWorker.add(new TCPServer(TCPServer.basePort + i + 1, true));
+            serverWorker.add(new TCPServer(TCPServer.basePort + i + 1));
+        for (int i = 0; i < size; i++){
+            try{
+                System.out.println("Pinging " + i);
+                serverWorker.get(i).startConnection(); // simple ping
+                System.out.println("Ping successful");
+            }catch (IOException e){
+            }
             System.out.println(TCPServer.basePort + i + 1);
         }
+
     }
 
     private void initWorkerMemory(String DATA_PATH){
@@ -312,23 +319,6 @@ public class Master extends Thread {
         Master server = new Master();
         server.connectWorkers(n_workers);
 
-        // Initialize workers
-        for (int i = 0; i < n_workers; i++)
-        {
-            try
-            {
-                System.out.println("Starting worker #" + i + "...");
-                // during use, every worker will be on the same system with the same IP
-                // using a different port should stop all connectivity issues
-                ProcessBuilder pb = new ProcessBuilder(
-                        "cmd", "/c", "start", "cmd", "/k", "cd ./src && java  -cp .;jar/json-simple-1.1.1.jar  Worker " + i);
-                workers[i] = pb.start();
-            }
-            catch(IOException e)
-            {
-                System.err.printf("Could not start worker #%d\n", i);
-            }
-        }
 
         server.initWorkerMemory(DATA_PATH);
 

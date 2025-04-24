@@ -369,8 +369,15 @@ public class Worker extends Communication {
         }
         Worker client = new Worker();
 
-        client.init(ip, Integer.parseInt(args[0]));
+        try{
+            System.out.println("Waiting for ping");
+            client.startConnection(ip, TCPServer.basePort + 1 + Integer.parseInt(args[0]));
+            client.stopConnection(); // simple ping
+            System.out.println("Ping successful");
+        }catch (Exception e) {
+        }
 
+        client.init(ip, Integer.parseInt(args[0]));
         while (true)
         {
             client = new Worker();
