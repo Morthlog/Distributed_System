@@ -114,6 +114,9 @@ public class Store implements Serializable, StoreNameProvider{
         return result.toString();
     }
 
+    public Map<String, Product> getProducts() {
+        return new HashMap<>(visibleProducts);
+    }
     public String getFoodCategory()
     {
         return foodCategory;
