@@ -25,14 +25,14 @@ public class Customer extends stubUser
         ip = InetAddress.getLocalHost().getHostAddress();
     }
 
-    public void search(Filter filter, Callback<List<ExtendedStore>> callback)
+    public void search(Filter filter, Callback<List<Store>> callback)
     {
         startConnection(ip, TCPServer.basePort);
         Message<Filter> msg = new Message<>(filter, Client.Customer, RequestCode.SEARCH);
         sendMessage(msg);
 
-        Message<List<ExtendedStore>> responseMsg = receiveMessage();
-        List<ExtendedStore> stores = responseMsg.getValue();
+        Message<List<Store>> responseMsg = receiveMessage();
+        List<Store> stores = responseMsg.getValue();
         stopConnection();
         callback.onComplete(stores);
     }

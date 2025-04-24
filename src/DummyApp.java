@@ -97,7 +97,7 @@ public class DummyApp
         System.out.println("Default filters set: " + filter);
     }
 
-    public void displayStores(List<ExtendedStore> stores)
+    public void displayStores(List<Store> stores)
     {
         if (stores == null || stores.isEmpty())
         {
@@ -107,7 +107,7 @@ public class DummyApp
         System.out.println("Available stores:");
         for (int i = 0; i < stores.size(); i++)
         {
-            ExtendedStore store = stores.get(i);
+            Store store = stores.get(i);
             System.out.println(i + ": " + store.getStoreName()
                     + ". Food Category: " + store.getFoodCategory()
                     + ". Stars: " + store.getStars()
@@ -115,32 +115,36 @@ public class DummyApp
         }
     }
 
-    public ExtendedStore chooseStore(List<ExtendedStore> stores)
+    public Store chooseStore(List<Store> stores)
     {
         System.out.println("Enter the number of the store you want to view products for:");
         int storeIndex = getIntInput();
         return stores.get(storeIndex);
     }
 
-    public void displayStoreProducts(ExtendedStore store)
+    public String[] displayStoreProducts(Store store)
     {
 
         Map<String, Product> products = store.getProducts();
         System.out.println("Products in " + store.getStoreName() + ":");
-        for (int i = 0; i < products.size(); i++)
+        int i = 0;
+        String[] keyMapping = new String[products.size()];
+        for (Product product : products.values())
         {
-            System.out.println(i + ": " + products.get(i).getProductName()
-                    + ". Price: " + products.get(i).getPrice());
+            System.out.println(i + ": " + product.getProductName()
+                    + ". Price: " + product.getPrice());
+            keyMapping[i++] = product.getProductName();
         }
+        return keyMapping;
     }
 
-    public void chooseProducts(ExtendedStore store)
+    public void chooseProducts(Store store)
     {
         Map<String, Product> products = store.getProducts();
         customer.addStoreNameToCart(store.getStoreName());
         while (true)
         {
-            displayStoreProducts(store);
+            String[] keyMapping = displayStoreProducts(store);
             System.out.println("Type product number to add to cart (or -1 to finish):");
             int productIndex = getIntInput();
 
@@ -149,7 +153,7 @@ public class DummyApp
                 break;
             }
 
-            String selectedProductName = products.get(productIndex).getProductName();
+            String selectedProductName = products.get(keyMapping[productIndex]).getProductName();
             System.out.println("Type quantity for '" + selectedProductName + "':");
             int quantity = getIntInput();
             customer.addToCart(selectedProductName, quantity);
@@ -200,7 +204,7 @@ public class DummyApp
         }
     }
 
-    private void handleSearchResults(List<ExtendedStore> stores)
+    private void handleSearchResults(List<Store> stores)
     {
         loading = false;
         displayStores(stores);
@@ -212,7 +216,7 @@ public class DummyApp
             return;
         }
 
-        ExtendedStore selectedStore = chooseStore(stores);
+        Store selectedStore = chooseStore(stores);
         chooseProducts(selectedStore);
         finalizeOrder();
     }
