@@ -249,17 +249,17 @@ public class Master extends Thread {
 
     private void initWorkerMemory(String DATA_PATH){
         try {
-            Map<String, Store> nameToStore = new HashMap<>(); // should be extended store
+            Map<String, ExtendedStore> nameToStore = new HashMap<>(); // should be extended store
             Object temp = new JSONParser().parse(new FileReader(DATA_PATH));
             JSONArray stores = (JSONArray) ((JSONObject)temp).get("Stores");
-            Message<Store> msg; // should be extended store
+            Message<ExtendedStore> msg; // should be extended store
             int workerId;
             for (int i = 0; i < stores.size(); i++){
                 workerId = i % n_workers;
                 TCPServer server = serverWorker.get(workerId);
                 server.startConnection();
 
-                Store store = new Store((JSONObject)stores.get(i));
+                ExtendedStore store = new ExtendedStore((JSONObject)stores.get(i));
                 msg = new Message<>(store);
                 msg.setRequest(RequestCode.INIT_MEMORY);
                 server.sendMessage(msg);
@@ -276,7 +276,7 @@ public class Master extends Thread {
                 TCPServer server = serverWorker.get(workerId);
                 server.startConnection();
 
-                Store store = nameToStore.get(set.getKey());
+                ExtendedStore store = nameToStore.get(set.getKey());
                 msg = new Message<>(store);
                 msg.setRequest(RequestCode.INIT_BACKUP);
                 server.sendMessage(msg);
