@@ -159,7 +159,7 @@ public class Master extends Thread {
         try{
             return switch (client) {
                 case Customer -> switch (code) { // replace with appropriate cases
-                    case STUB_TEST_1,BUY -> findCorrectWorker(msg);
+                    case STUB_TEST_1,BUY, RATE_STORE -> findCorrectWorker(msg);
                     case STUB_TEST_2, SEARCH -> broadcast(msg);
                     default -> {
                         System.err.println("Unknown customer code: " + code);
@@ -303,8 +303,6 @@ public class Master extends Thread {
             System.err.println("Couldn't initialize Worker memory: " + e.getMessage());
             throw new RuntimeException();
         }
-
-
     }
 
 

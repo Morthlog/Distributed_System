@@ -6,12 +6,12 @@ public class DummyApp
     private Scanner keyboard;
     private Customer customer;
     Filter filter;
+    Store selectedStore;
 
     public DummyApp()
     {
         keyboard = new Scanner(System.in);
         filter = new Filter();
-        setDefaultFilters();
     }
 
     public int getIntInput()
@@ -108,10 +108,13 @@ public class DummyApp
         for (int i = 0; i < stores.size(); i++)
         {
             Store store = stores.get(i);
-            System.out.println(i + ": " + store.getStoreName()
-                    + ". Food Category: " + store.getFoodCategory()
-                    + ". Stars: " + store.getStars()
-                    + ". Price Category: " + store.getPriceCategory());
+            System.out.printf("%d: %s. Food Category: %s. Stars: %.1f. Price Category: %s%n",
+                    i,
+                    store.getStoreName(),
+                    store.getFoodCategory(),
+                    store.getStars(),
+                    store.getPriceCategory());
+
         }
     }
 
@@ -124,36 +127,35 @@ public class DummyApp
 
     public String[] displayStoreProducts(Store store)
     {
-
         Map<String, Product> products = store.getProducts();
         System.out.println("Products in " + store.getStoreName() + ":");
         int i = 0;
         String[] keyMapping = new String[products.size()];
         for (Product product : products.values())
         {
-            System.out.println(i + ": " + product.getProductName()
-                    + ". Price: " + product.getPrice());
-            keyMapping[i++] = product.getProductName();
+            System.out.println(i + ": " + product.getProductName() + ". Price: " + product.getPrice());
+            keyMapping[i] = product.getProductName();
+            i++;
         }
         return keyMapping;
     }
 
     public void chooseProducts(Store store)
     {
-        Map<String, Product> products = store.getProducts();
         customer.addStoreNameToCart(store.getStoreName());
+        String[] keyMapping = displayStoreProducts(store);
         while (true)
         {
-            String[] keyMapping = displayStoreProducts(store);
-            System.out.println("Type product number to add to cart (or -1 to finish):");
-            int productIndex = getIntInput();
 
-            if (productIndex == -1)
+            System.out.println("Type product number to add to cart (or -1 to finish):");
+            int chosenIndex = getIntInput();
+
+            if (chosenIndex == -1)
             {
                 break;
             }
 
-            String selectedProductName = products.get(keyMapping[productIndex]).getProductName();
+            String selectedProductName = keyMapping[chosenIndex];
             System.out.println("Type quantity for '" + selectedProductName + "':");
             int quantity = getIntInput();
             customer.addToCart(selectedProductName, quantity);
@@ -168,17 +170,16 @@ public class DummyApp
         System.out.println("2. Cancel and start again");
         System.out.println("3. Close the app");
         int choice = getIntInput();
-        
+
         if (choice == 1)
         {
             new Thread(() -> customer.buy(this::handleBuyResult)).start();
-            loading = true;
             playAnimation();// loading must be put after the call or in new thread, else the thread will get stuck
         }
         else if (choice == 2)
         {
             System.out.println("Order canceled. Restarting...");
-            main(null);
+            runShopping();
         }
         else
         {
@@ -188,6 +189,7 @@ public class DummyApp
 
     public void playAnimation()
     {
+        loading = true;
         StringBuilder text = new StringBuilder("Loading.");
         long start = System.currentTimeMillis();
         long end;
@@ -212,11 +214,11 @@ public class DummyApp
         if (stores.isEmpty())
         {
             System.out.println("Try with new filters. Restarting...");
-            main(null);
+            runShopping();
             return;
         }
 
-        Store selectedStore = chooseStore(stores);
+        selectedStore = chooseStore(stores);
         chooseProducts(selectedStore);
         finalizeOrder();
     }
@@ -225,28 +227,64 @@ public class DummyApp
     {
         loading = false;
         System.out.println("Purchase response: " + confirmation);
+        rateStore();
     }
 
-    public static void main(String[] args)
+    private void handleRatingResult(String confirmation)
     {
-        DummyApp app = new DummyApp();
-        app.inputCustomerName();
+        loading = false;
+        System.out.println("Rating response: " + confirmation);
+
+        System.out.println("How do you want to continue?");
+        System.out.println("1. Make new order");
+        System.out.println("2. Close the app");
+        int choice = getIntInput();
+
+        if (choice == 1)
+        {
+            runShopping();
+        }
+        else
+        {
+            System.out.println("Closing app...");
+        }
+    }
+
+    private void rateStore()
+    {
+        System.out.println("Rate store from 1 to 5.");
+        int rating = getIntInput();
+        new Thread(() -> customer.rateStore(this::handleRatingResult, selectedStore.getStoreName(), rating)).start();
+
+        playAnimation();
+    }
+
+    public void sendFilters()
+    {
+        //send filter to the server and use callback for the answer
+        new Thread(() -> customer.search(filter, this::handleSearchResults)).start();
+        playAnimation();
+    }
+
+    private void runShopping()
+    {
+        setDefaultFilters();
         int choice;
 
-        System.out.println("Coordinates detected: latitude = " + app.filter.getLatitude() + ", longitude = " + app.filter.getLongitude());
+        System.out.println("Coordinates detected: latitude = " + filter.getLatitude() + ", longitude = " + filter.getLongitude());
         System.out.println("Do you want to enter new coordinates?");
         System.out.println("1. Yes");
         System.out.println("2. No");
-        choice = app.getIntInput();
+        choice = getIntInput();
         if (choice == 1)
         {
-            app.inputCoordinates();
+            inputCoordinates();
         }
 
         System.out.println("Do you want to filter the stores?");
         System.out.println("1. Yes");
         System.out.println("2. No");
-        choice = app.getIntInput();
+        choice = getIntInput();
 
         if (choice == 1)
         {
@@ -258,18 +296,18 @@ public class DummyApp
                 System.out.println("2. Choose stars");
                 System.out.println("3. Choose price category");
                 System.out.println("4. Continue");
-                choice = app.getIntInput();
+                choice = getIntInput();
 
                 switch (choice)
                 {
                     case 1:
-                        app.chooseFoodCategories();
+                        chooseFoodCategories();
                         break;
                     case 2:
-                        app.chooseLeastStars();
+                        chooseLeastStars();
                         break;
                     case 3:
-                        app.choosePriceCategories();
+                        choosePriceCategories();
                         break;
                     case 4:
                         continueFiltering = false;
@@ -280,10 +318,13 @@ public class DummyApp
             }
         }
 
-        //send the filter to the server
-        new Thread(() ->
-                app.customer.search(app.filter, app::handleSearchResults)).start();
-        loading = true;
-        app.playAnimation();
+        sendFilters();
+    }
+
+    public static void main(String[] args)
+    {
+        DummyApp app = new DummyApp();
+        app.inputCustomerName();
+        app.runShopping();
     }
 }

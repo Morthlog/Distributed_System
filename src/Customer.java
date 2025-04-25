@@ -1,11 +1,14 @@
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Customer extends stubUser
 {
     private final ShoppingCart shoppingCart = new ShoppingCart();
-    String ip;
+    private String ip;
+    private final Map<String, Integer> storeRatings = new HashMap<>();
 
     public Customer(String name)
     {
@@ -61,4 +64,23 @@ public class Customer extends stubUser
     {
         shoppingCart.setStoreName(storeName);
     }
+
+    public void rateStore(Callback<String> callback, String storeName, int rating)
+    {
+        startConnection(ip, TCPServer.basePort);
+
+        int oldRating = storeRatings.getOrDefault(storeName, 0);
+
+        RatingChange ratingChange = new RatingChange(storeName, oldRating, rating);
+        Message<RatingChange> msg = new Message<>(ratingChange, Client.Customer, RequestCode.RATE_STORE);
+        sendMessage(msg);
+
+        Message<String> responseMsg = receiveMessage();
+        String verification = responseMsg.getValue();
+        callback.onComplete(verification);
+        stopConnection();
+
+        storeRatings.put(storeName, rating);
+    }
+
 }

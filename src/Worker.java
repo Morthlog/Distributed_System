@@ -1,14 +1,9 @@
-import java.io.*;
-import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.*;
-import static java.lang.Thread.sleep;
 
 public class Worker extends Communication {
 
@@ -29,12 +24,14 @@ public class Worker extends Communication {
                 case STUB_TEST_2 -> sendNum(val);
                 case SEARCH -> (T) mapSearch((Filter) val);
                 case BUY -> (T) buy((ShoppingCart) val);
+                case RATE_STORE -> (T) addRatingToStore((RatingChange) val);
                 default -> {
                     System.err.println("Unknown customer code: " + code);
                     throw new RuntimeException();
                 }
             };
             case Manager -> switch (code) {
+
                 case ADD_STORE -> addStore(val);
                 case ADD_PRODUCT -> addProduct(val);
                 case REMOVE_PRODUCT -> removeProduct(val);
@@ -316,6 +313,14 @@ public class Worker extends Communication {
         double distance = Math.sqrt(deltaLon * deltaLon + deltaLat * deltaLat) *6371; // (6371 = Earth's radius approximation)
 
         return distance;
+    }
+
+    public static String addRatingToStore(RatingChange ratingChange)
+    {
+        Store store = memory.get(ratingChange.getStoreName());
+        float newRating = store.addRating(ratingChange);
+
+        return String.format("Rating completed. New store rating: %.1f", newRating);
     }
 
     private static <T> T sendString(T val){
