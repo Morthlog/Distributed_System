@@ -45,9 +45,10 @@ public class Customer extends stubUser
 
         // Receive purchase confirmation
         Message<String> responseMsg = receiveMessage();
-        String value = responseMsg.getValue();
+        String verification = responseMsg.getValue();
         stopConnection();
-        callback.onComplete(value);
+
+        callback.onComplete(verification);
         shoppingCart.clear();
     }
 

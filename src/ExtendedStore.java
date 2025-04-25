@@ -1,11 +1,11 @@
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 
 class ExtendedStore extends Store {
-    private Map<String, Product> products;
+    private final Map<String, Product> products;
     private Map<String, Double> productSales;
 
     public ExtendedStore(String storeName, double latitude, double longitude, String foodCategory,
@@ -125,6 +125,7 @@ class ExtendedStore extends Store {
             return true;
         }
     }
+
     public boolean saveSale(String productName, int quantity) {
         return saveSale(productName,quantity,false);
     }
@@ -143,7 +144,7 @@ class ExtendedStore extends Store {
         return totalSales;
     }
 
-
+    @Override
     public Map<String, Product> getProducts() {
         return new HashMap<>(products);
     }
@@ -168,5 +169,44 @@ class ExtendedStore extends Store {
         }
         customerStore.calculatePriceCategory();
         return customerStore;
+    }
+
+    private record SaleRecord(String productName, int quantity) {}
+
+    public boolean tryPurchase(ShoppingCart cart)
+    {
+        Deque<SaleRecord> localQueue = new ArrayDeque<>();
+
+        for (Map.Entry<String,Integer> entry : cart.getProducts().entrySet())
+        {
+            String name = entry.getKey();
+            int quantity = entry.getValue();
+
+            boolean saveCompleted = saveSale(name, quantity);
+            if (!saveCompleted)
+            {
+                revertLocalSales(localQueue);
+                return false;
+            }
+
+            localQueue.addLast(new SaleRecord(name, quantity));
+        }
+        return true;
+    }
+
+    private void revertLocalSales(Deque<SaleRecord> queue)
+    {
+        while (!queue.isEmpty())
+        {
+            SaleRecord record = queue.removeLast();
+            Product product = products.get(record.productName);
+            synchronized (product)
+            {
+                product.setAvailableAmount(product.getAvailableAmount() + record.quantity);
+                double productTotalSales = productSales.get(record.productName);
+                double currentProductRevenue=record.quantity*product.getPrice();
+                productSales.put(record.productName, productTotalSales - currentProductRevenue);
+            }
+        }
     }
 }

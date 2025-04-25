@@ -228,27 +228,15 @@ public class Worker extends Communication {
         {
             throw new RuntimeException(e);
         }
-        Store store = memory.get(shoppingCart.getStoreName());
+        ExtendedStore store = memory.get(shoppingCart.getStoreName());
 
-        synchronized (store)
+        boolean purchaseCompleted = store.tryPurchase(shoppingCart);
+        String state="completed";
+        if (!purchaseCompleted)
         {
-//            double cartValue = 0;
-//
-//            for (Map.Entry<String, Integer> entry : shoppingCart.getProducts().entrySet())
-//            {
-//                String productName = entry.getKey();
-//                int quantity = entry.getValue();
-//
-//                store.recordSale(productName, quantity);
-//
-//                double price = store.getProductPrice(productName);
-//                cartValue += price * quantity;
-//            }
-//
-//            store.addRevenue(cartValue);
-
-            return "Purchase completed for store: "+ store.getStoreName()+ " and products "+ shoppingCart.getProducts();
+            state="failed";
         }
+        return String.format("Purchase %s for store: %s and products %s", state, store.getStoreName(), shoppingCart.getProducts());
     }
 
 
