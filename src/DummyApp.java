@@ -144,10 +144,9 @@ public class DummyApp
     {
         customer.clearShoppingCart();
         customer.addStoreNameToCart(store.getStoreName());
-        String[] keyMapping = displayStoreProducts(store);
         while (true)
         {
-
+            String[] keyMapping = displayStoreProducts(store);
             System.out.println("Type product number to add to cart (or -1 to finish):");
             int chosenIndex = getIntInput();
 
