@@ -142,6 +142,7 @@ public class DummyApp
 
     public void chooseProducts(Store store)
     {
+        customer.clearShoppingCart();
         customer.addStoreNameToCart(store.getStoreName());
         String[] keyMapping = displayStoreProducts(store);
         while (true)

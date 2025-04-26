@@ -52,7 +52,6 @@ public class Customer extends stubUser
         stopConnection();
 
         callback.onComplete(verification);
-        shoppingCart.clear();
     }
 
     public void addToCart(String productName, int count)
@@ -81,6 +80,10 @@ public class Customer extends stubUser
         stopConnection();
 
         storeRatings.put(storeName, rating);
+    }
+
+    public void clearShoppingCart(){
+        shoppingCart.clear();
     }
 
 }
