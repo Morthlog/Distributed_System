@@ -6,7 +6,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.*;
 import java.net.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Thread.sleep;
 
@@ -34,7 +33,7 @@ public class Master extends Thread {
 
     private static <T,T1> T1 broadcast(BackendMessage<T> msg) throws SocketTimeoutException{
         List<Thread> threads = new ArrayList<>();
-        AtomicBoolean gotException = new AtomicBoolean(false);
+        Holder<Boolean> gotException = new Holder<>(false);
         for (int i = 0; i < n_workers; i++){
             if (!activeWorkers[i])
                 continue;
