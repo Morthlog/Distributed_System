@@ -1,1 +1,28 @@
-{"StoreName": "storeName", "Latitude": 37.9932963, "Longitude": 23.733413, "FoodCategory": "pizzeria", "Stars": 3, "NoOfVotes": 15, "StoreLogo": "/usr/bin/images/storeLogo.png", "Products": [{"ProductName": "margarita", "ProductType": "pizza", "Available Amount": 5000, "Price": 9.2}, {"ProductName": "special", "ProductType": "pizza", "Available Amount": 1000, "Price": 12.0}, {"ProductName": "chef’s Salad", "ProductType": "salad", "Available Amount": 100, "Price": 5.0}]}
+{
+  "Stores": [
+    {
+      "StoreName": "TESTER",
+      "Latitude": 38.0153471,
+      "Longitude": 23.7426714,
+      "FoodCategory": "burgers",
+      "Stars": 2,
+      "NoOfVotes": 10,
+      "StoreLogo": "/usr/bin/images/storeLogoTESTER.png",
+      "Products": [
+        {
+          "ProductName": "crazy burger",
+          "ProductType": "burger",
+          "Available Amount": 300,
+          "Price": 10.5
+        },
+        {
+          "ProductName": "cheeseburger",
+          "ProductType": "burger",
+          "Available Amount": 300,
+          "Price": 8.5
+        }
+      ]
+    }
+  ]
+}
+  

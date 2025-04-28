@@ -64,7 +64,6 @@ public class Worker extends Communication {
                 return (T) "Store already exists";
             }
             memory.put(storeName, store);
-            backup.put(storeName, store);
         }
         return (T) "Store added successfully";
     }
@@ -74,7 +73,6 @@ public class Worker extends Communication {
         ExtendedStore store = memory.get(data.getStoreName());
         synchronized (store) {
             store.addProduct(data.getProduct());
-            backup.put(store.getStoreName(), store);
         }
         return (T) "Product added successfully";
     }
@@ -84,7 +82,6 @@ public class Worker extends Communication {
         ExtendedStore store = memory.get(data.getStoreName());
         synchronized (store) {
             store.removeProduct(data.getProductName());
-            backup.put(store.getStoreName(), store);
         }
         return (T) "Product removed successfully";
     }
@@ -93,13 +90,9 @@ public class Worker extends Communication {
     private static <T> T manageStock(T val) {
         StockChange data = (StockChange) val;
         ExtendedStore store = memory.get(data.getStoreName());
-        synchronized (store) {
-            boolean updated = store.manageStock(data.getProductName(), data.getQuantityChange());
-            if (!updated) {
-                return (T) "Product not found";
-            }
-            backup.put(store.getStoreName(), store);
-        }
+        boolean updated = store.manageStock(data.getProductName(), data.getQuantityChange());
+        if (!updated)
+            return (T) "Product not found";
         return (T) "Stock updated successfully";
     }
 
