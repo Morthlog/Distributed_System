@@ -11,6 +11,8 @@ import static java.lang.Thread.sleep;
 
 public class Master extends Thread {
     private static Integer id = 0;
+    private static Integer nextWorkerId;
+    private static int[] hashingVariance;
 
     private static int n_workers;
     private static final HashMap<String, Integer> storeToWorkerMemory = new HashMap<>();
@@ -134,18 +136,32 @@ public class Master extends Thread {
     }
 
     /**
-     * Remove if when stub is no longer needed
+     * Remove first "if" when stub is no longer needed
      *
      */
     private <T,T1> T1 findCorrectWorker(BackendMessage<T> msg) throws SocketTimeoutException{
-        int workerId;
+        Integer workerId;
         if (msg.getRequest() == RequestCode.STUB_TEST_1 || msg.getRequest() == RequestCode.STUB_TEST_2)
-            workerId = 0; // only for stub, should be removed with stub
-        else{
-            workerId = storeToWorkerMemory.get(((StoreNameProvider) msg.getValue()).getStoreName());
-            if (!activeWorkers[workerId])
-                workerId = storeToWorkerBackup.get(((StoreNameProvider) msg.getValue()).getStoreName());
+            return singleWorker(msg, 0); // only for stub, should be removed with stub
+
+        String storeName = ((StoreNameProvider) msg.getValue()).getStoreName();
+        workerId = storeToWorkerMemory.get(storeName);
+
+        if (workerId == null) // case of new store
+        {
+            workerId = getNextWorkerId();
+            synchronized (storeToWorkerMemory){
+                storeToWorkerMemory.put(storeName, workerId);
+            }
+            int backupWorkerId = createBackupId(workerId);
+
+            synchronized (storeToWorkerBackup){
+                storeToWorkerBackup.put(storeName, backupWorkerId);
+            }
         }
+        if (!activeWorkers[workerId])
+            workerId = storeToWorkerBackup.get(storeName);
+
         return singleWorker(msg, workerId);
     }
 
@@ -232,6 +248,17 @@ public class Master extends Thread {
         msg.setId(++id);
     }
 
+    private synchronized int getNextWorkerId(){
+        return nextWorkerId++;
+    }
+
+    private synchronized int createBackupId(int workerId){
+        int backupWorkerId = (workerId + (++hashingVariance[workerId])) % n_workers;
+        if (backupWorkerId == workerId)
+            backupWorkerId = (workerId + 1) % n_workers;
+        return backupWorkerId;
+    }
+
 	public void run()
 	{
 		this.startForClient();
@@ -260,7 +287,7 @@ public class Master extends Thread {
             Object temp = new JSONParser().parse(new FileReader(DATA_PATH));
             JSONArray stores = (JSONArray) ((JSONObject)temp).get("Stores");
             Message<ExtendedStore> msg; // should be extended store
-            int workerId;
+            int workerId = 0;
             for (int i = 0; i < stores.size(); i++){
                 workerId = i % n_workers;
                 TCPServer server = serverWorker.get(workerId);
@@ -274,12 +301,12 @@ public class Master extends Thread {
                 storeToWorkerMemory.put(store.getStoreName(), workerId);
                 nameToStore.put(store.getStoreName(), store);
             }
-            int[] hashingVariance = new int[n_workers];
+            nextWorkerId = (workerId + 1) % n_workers; // initialize value
+            hashingVariance = new int[n_workers];
 
             for (var set: storeToWorkerMemory.entrySet()){
-                workerId = (set.getValue() + (++hashingVariance[set.getValue()])) % n_workers;
-                if (workerId == set.getValue())
-                    workerId = (workerId + 1) % n_workers;
+                workerId = createBackupId(set.getValue());
+
                 TCPServer server = serverWorker.get(workerId);
                 server.startConnection();
 
