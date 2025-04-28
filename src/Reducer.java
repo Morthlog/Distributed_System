@@ -22,8 +22,9 @@ public class Reducer {
                 }
             };
             case Manager -> switch (code) { // only add cases where broadcast is being used
-                case ADD_STORE -> null;
-                case REMOVE_PRODUCT -> null;
+                case GET_SALES_BY_STORE_TYPE -> (T1) reducerSalesByStoreType(list);
+                case GET_SALES_BY_PRODUCT_TYPE -> (T1) reducerSalesByProductType(list);
+                case GET_STORES -> (T1) getStores(list);
                 default -> {
                     System.err.println("Unknown manager code: " + code);
                     throw new RuntimeException();
@@ -31,6 +32,49 @@ public class Reducer {
             };
             case MASTER -> null; // MASTER never requires reduce
         };
+    }
+
+    private static Map<String, Double> reducerSalesByType(List<Object> mappedResults) {
+        Map<String, Double> combinedSales = new HashMap<>();
+        double total = 0.0;
+        if (mappedResults != null) {
+            for (Object result : mappedResults) {
+                if (result instanceof Map) {
+                    Map<String, Double> salesMap = (Map<String, Double>) result;
+                    Double resultTotal = salesMap.remove("total");
+                    if (resultTotal != null) {
+                        total += resultTotal;
+                    }
+                    for (String key : salesMap.keySet()) {
+                        Double value = salesMap.get(key);
+                        combinedSales.put(key, combinedSales.getOrDefault(key, 0.0) + value);
+                    }
+                }
+            }
+        }
+        combinedSales.put("total", total);
+        return combinedSales;
+    }
+
+    private static Map<String, Double> reducerSalesByStoreType(List<Object> mappedResults) {
+        return reducerSalesByType(mappedResults);
+    }
+
+    private static Map<String, Double> reducerSalesByProductType(List<Object> mappedResults) {
+        return reducerSalesByType(mappedResults);
+    }
+
+    private static Map<String, ExtendedStore> getStores(List<Object> mappedResults) {
+        Map<String, ExtendedStore> combinedStores = new HashMap<>();
+
+        if (mappedResults != null) {
+            for (Object result : mappedResults) {
+                if (result instanceof Map) {
+                    combinedStores.putAll((Map<String, ExtendedStore>) result);
+                }
+            }
+        }
+        return combinedStores;
     }
 
     private static List<Store> getFilteredStores(List<Object> mappedResults)
