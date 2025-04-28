@@ -1,11 +1,14 @@
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Customer extends stubUser
 {
     private final ShoppingCart shoppingCart = new ShoppingCart();
-    String ip;
+    private String ip;
+    private final Map<String, Integer> storeRatings = new HashMap<>();
 
     public Customer(String name)
     {
@@ -25,14 +28,14 @@ public class Customer extends stubUser
         ip = InetAddress.getLocalHost().getHostAddress();
     }
 
-    public void search(Filter filter, Callback<List<ExtendedStore>> callback)
+    public void search(Filter filter, Callback<List<Store>> callback)
     {
         startConnection(ip, TCPServer.basePort);
         Message<Filter> msg = new Message<>(filter, Client.Customer, RequestCode.SEARCH);
         sendMessage(msg);
 
-        Message<List<ExtendedStore>> responseMsg = receiveMessage();
-        List<ExtendedStore> stores = responseMsg.getValue();
+        Message<List<Store>> responseMsg = receiveMessage();
+        List<Store> stores = responseMsg.getValue();
         stopConnection();
         callback.onComplete(stores);
     }
@@ -45,10 +48,10 @@ public class Customer extends stubUser
 
         // Receive purchase confirmation
         Message<String> responseMsg = receiveMessage();
-        String value = responseMsg.getValue();
+        String verification = responseMsg.getValue();
         stopConnection();
-        callback.onComplete(value);
-        shoppingCart.clear();
+
+        callback.onComplete(verification);
     }
 
     public void addToCart(String productName, int count)
@@ -60,4 +63,27 @@ public class Customer extends stubUser
     {
         shoppingCart.setStoreName(storeName);
     }
+
+    public void rateStore(Callback<String> callback, String storeName, int rating)
+    {
+        startConnection(ip, TCPServer.basePort);
+
+        int oldRating = storeRatings.getOrDefault(storeName, 0);
+
+        RatingChange ratingChange = new RatingChange(storeName, oldRating, rating);
+        Message<RatingChange> msg = new Message<>(ratingChange, Client.Customer, RequestCode.RATE_STORE);
+        sendMessage(msg);
+
+        Message<String> responseMsg = receiveMessage();
+        String verification = responseMsg.getValue();
+        callback.onComplete(verification);
+        stopConnection();
+
+        storeRatings.put(storeName, rating);
+    }
+
+    public void clearShoppingCart(){
+        shoppingCart.clear();
+    }
+
 }

@@ -2,7 +2,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ShoppingCart implements Serializable
+public class ShoppingCart implements Serializable, StoreNameProvider
 {
     private String storeName;
     private Map<String,Integer> products = new HashMap<>();//product Name and count

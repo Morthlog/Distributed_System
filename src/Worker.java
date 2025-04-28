@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
-import static java.lang.Thread.sleep;
-
 public class Worker extends Communication {
 
     // Hashmap<String, Store> for memory and backup
@@ -26,12 +24,14 @@ public class Worker extends Communication {
                 case STUB_TEST_2 -> sendNum(val);
                 case SEARCH -> (T) mapSearch((Filter) val);
                 case BUY -> (T) buy((ShoppingCart) val);
+                case RATE_STORE -> (T) addRatingToStore((RatingChange) val);
                 default -> {
                     System.err.println("Unknown customer code: " + code);
                     throw new RuntimeException();
                 }
             };
             case Manager -> switch (code) {
+
                 case ADD_STORE -> addStore(val);
                 case ADD_PRODUCT -> addProduct(val);
                 case REMOVE_PRODUCT -> removeProduct(val);
@@ -184,27 +184,15 @@ public class Worker extends Communication {
         {
             throw new RuntimeException(e);
         }
-        Store store = memory.get(shoppingCart.getStoreName());
+        ExtendedStore store = memory.get(shoppingCart.getStoreName());
 
-        synchronized (store)
+        boolean purchaseCompleted = store.tryPurchase(shoppingCart);
+        String state="completed";
+        if (!purchaseCompleted)
         {
-//            double cartValue = 0;
-//
-//            for (Map.Entry<String, Integer> entry : shoppingCart.getProducts().entrySet())
-//            {
-//                String productName = entry.getKey();
-//                int quantity = entry.getValue();
-//
-//                store.recordSale(productName, quantity);
-//
-//                double price = store.getProductPrice(productName);
-//                cartValue += price * quantity;
-//            }
-//
-//            store.addRevenue(cartValue);
-
-            return "Purchase completed for store: "+ store.getStoreName()+ " and products "+ shoppingCart.getProducts();
+            state="failed";
         }
+        return String.format("Purchase %s for store: %s and products %s", state, store.getStoreName(), shoppingCart.getProducts());
     }
 
 
@@ -286,6 +274,14 @@ public class Worker extends Communication {
         return distance;
     }
 
+    public static String addRatingToStore(RatingChange ratingChange)
+    {
+        Store store = memory.get(ratingChange.getStoreName());
+        float newRating = store.addRating(ratingChange);
+
+        return String.format("Rating completed. New store rating: %.1f", newRating);
+    }
+
     private static <T> T sendString(T val){
         return (T) (val + " changed");
     }
@@ -325,8 +321,15 @@ public class Worker extends Communication {
         }
         Worker client = new Worker();
 
-        client.init(ip, Integer.parseInt(args[0]));
+        try{
+            System.out.println("Waiting for ping");
+            client.startConnection(ip, TCPServer.basePort + 1 + Integer.parseInt(args[0]));
+            client.stopConnection(); // simple ping
+            System.out.println("Ping successful");
+        }catch (Exception e) {
+        }
 
+        client.init(ip, Integer.parseInt(args[0]));
         while (true)
         {
             client = new Worker();

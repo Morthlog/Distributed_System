@@ -9,7 +9,7 @@ public class Store implements Serializable, StoreNameProvider{
     protected double latitude;
     protected double longitude;
     protected String foodCategory;
-    protected int stars;
+    protected float stars;
     protected int noOfVotes;
     protected String storeLogo;
     protected String priceCategory;
@@ -17,7 +17,7 @@ public class Store implements Serializable, StoreNameProvider{
     protected Map<String, Product> visibleProducts;
 
     public Store(String storeName, double latitude, double longitude, String foodCategory,
-                 int stars, int noOfVotes, String storeLogo) {
+                 float stars, int noOfVotes, String storeLogo) {
         this.storeName = storeName;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -35,7 +35,7 @@ public class Store implements Serializable, StoreNameProvider{
         this.latitude = ((Number) jsonObject.get("Latitude")).doubleValue();
         this.longitude = ((Number) jsonObject.get("Longitude")).doubleValue();
         this.foodCategory = (String) jsonObject.get("FoodCategory");
-        this.stars = ((Number) jsonObject.get("Stars")).intValue();
+        this.stars = ((Number) jsonObject.get("Stars")).floatValue();
         this.noOfVotes = ((Number) jsonObject.get("NoOfVotes")).intValue();
         this.storeLogo = (String) jsonObject.get("StoreLogo");
 
@@ -84,6 +84,7 @@ public class Store implements Serializable, StoreNameProvider{
     public Map<String, Product> getVisibleProducts() {
         return visibleProducts;
     }
+
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder();
@@ -114,14 +115,19 @@ public class Store implements Serializable, StoreNameProvider{
         return result.toString();
     }
 
+    public Map<String, Product> getProducts() {
+        return new HashMap<>(visibleProducts);
+    }
     public String getFoodCategory()
     {
         return foodCategory;
     }
+
     public  String getPriceCategory () {
         return priceCategory;
     }
-    public int getStars()
+
+    public float getStars()
     {
         return stars;
     }
@@ -134,5 +140,22 @@ public class Store implements Serializable, StoreNameProvider{
     public double getLongitude()
     {
         return longitude;
+    }
+
+    public synchronized float addRating(RatingChange ratingChange)
+    {
+        float totalStars = stars * noOfVotes;
+        int oldRating = ratingChange.getOldRating();
+        if(oldRating!=0)
+        {
+            totalStars-=oldRating;
+            noOfVotes--;
+        }
+
+        totalStars += ratingChange.getNewRating();
+        noOfVotes ++;
+
+        stars= totalStars/noOfVotes;
+        return stars;
     }
 }

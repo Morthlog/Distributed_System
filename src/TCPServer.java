@@ -20,15 +20,9 @@ public class TCPServer extends Communication {
     }
 
     public TCPServer(int port) {
-        this(port, false);
-    }
-
-    public TCPServer(int port, boolean timeout) {
         this.port = port;
         try{
             serverSocket = new ServerSocket(port);
-            if (timeout)
-                serverSocket.setSoTimeout(5000);
         }catch(IOException e){
 
         }
