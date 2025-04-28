@@ -51,5 +51,19 @@ public class TCPServer extends Communication {
         in = new ObjectInputStream(socket.getInputStream());
     }
 
+    public void setSocketTOState(boolean state) {
+        try{
+            if (state)
+                serverSocket.setSoTimeout(10000);
+            else
+                serverSocket.setSoTimeout(0);
+        }catch(IOException e){
+            System.err.println("Couldn't set socket timeout");
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+
+    }
+
 
 }

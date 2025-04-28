@@ -109,12 +109,11 @@ public class Master extends Thread {
         return null;
     }
 
-    private static void disableWorker(int workerId){
-        synchronized (activeWorkers){
-            if (!activeWorkers[workerId])
-                return;
-            activeWorkers[workerId] = false;
-        }
+    private static synchronized void disableWorker(int workerId){
+        if (!activeWorkers[workerId])
+            return;
+        activeWorkers[workerId] = false;
+        serverWorker.get(workerId).setSocketTOState(false);
         try{
             for (var set : storeToWorkerMemory.entrySet()){
                 if (!set.getValue().equals(workerId))
@@ -274,7 +273,9 @@ public class Master extends Thread {
                 System.out.println("Pinging " + i);
                 serverWorker.get(i).startConnection(); // simple ping
                 System.out.println("Ping successful");
+                serverWorker.get(i).setSocketTOState(true);
             }catch (IOException e){
+                e.printStackTrace();
             }
             System.out.println(TCPServer.basePort + i + 1);
         }
