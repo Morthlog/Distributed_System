@@ -200,9 +200,8 @@ public class Master extends Thread {
 
     public <T,T1> Message<T1> startForBroker(BackendMessage<T> msg) {
         T1 reduced = callAppropriateWorker(msg);
-        BackendMessage<T1> response = new BackendMessage<>(reduced);
+        Message<T1> response = new Message<>(reduced);
 
-        response.setId(msg.getId());
         response.setClient(msg.getClient());
         response.setRequest(msg.getRequest());
 

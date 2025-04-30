@@ -57,7 +57,8 @@ public class ManagerConsoleApp extends Communication {
         String[] keyMapping = new String[products.size()];
 
         for (Product product : products.values()){
-            System.out.println(i + ": " + product.getProductName() + ". Category: " + product.getProductType()+ ". Price: " + product.getPrice() + ". Available Amount: " + product.getAvailableAmount());
+            System.out.printf("%d: %s. Category: %s. Price: %.2f. Available Amount: %d. Purchasable: %b%n",
+                    i, product.getProductName(), product.getProductType(), product.getPrice(), product.getAvailableAmount(), !product.isHidden());
             keyMapping[i] = product.getProductName();
             i++;
         }
@@ -73,12 +74,13 @@ public class ManagerConsoleApp extends Communication {
     }
 
 
-    private <T, R> R sendRequest(BackendMessage<T> request) {
+    private <T, R> R sendRequest(Message<T> request) {
         try {
             String ip = InetAddress.getLocalHost().getHostAddress();
             startConnection(ip, TCPServer.basePort);
+            request.setClient(Client.Manager);
             sendMessage(request);
-            BackendMessage<R> response = (BackendMessage<R>) receiveMessage();
+            Message<R> response = receiveMessage();
             stopConnection();
             return response.getValue();
         } catch (Exception e) {
@@ -89,8 +91,8 @@ public class ManagerConsoleApp extends Communication {
 
     private Map<String, ExtendedStore> getStores() {
         try {
-            BackendMessage<String> request = new BackendMessage<>("");
-            request.setClient(Client.Manager);
+            Message<String> request = new Message<>("");
+            
             request.setRequest(RequestCode.GET_STORES);
             Map<String, ExtendedStore> stores = sendRequest(request);
             return stores;
@@ -107,9 +109,8 @@ public class ManagerConsoleApp extends Communication {
         try (FileReader reader = new FileReader(path)) {
             JSONObject storeJson = (JSONObject) new JSONParser().parse(reader);
             ExtendedStore newStore = new ExtendedStore(storeJson);
-
-            BackendMessage<ExtendedStore> request = new BackendMessage<>(newStore);
-            request.setClient(Client.Manager);
+            Message<ExtendedStore> request = new Message<>(newStore);
+            
             request.setRequest(RequestCode.ADD_STORE);
 
             String response= sendRequest(request);
@@ -138,8 +139,8 @@ public class ManagerConsoleApp extends Communication {
             Product newProduct = new Product(productName, productType, availableAmount, price);
             ProductAddition addData = new ProductAddition(storeName, newProduct);
 
-            BackendMessage<ProductAddition> request = new BackendMessage<>(addData);
-            request.setClient(Client.Manager);
+            Message<ProductAddition> request = new Message<>(addData);
+            
             request.setRequest(RequestCode.ADD_PRODUCT);
             String response = sendRequest(request);
             System.out.println(response);
@@ -155,8 +156,8 @@ public class ManagerConsoleApp extends Communication {
             String productName = chooseProduct(selectedStore);
 
             ProductRemoval removeData = new ProductRemoval(storeName, productName);
-            BackendMessage<ProductRemoval> request = new BackendMessage<>(removeData);
-            request.setClient(Client.Manager);
+            Message<ProductRemoval> request = new Message<>(removeData);
+            
             request.setRequest(RequestCode.REMOVE_PRODUCT);
             String response = sendRequest(request);
             System.out.println(response);
@@ -176,8 +177,8 @@ public class ManagerConsoleApp extends Communication {
             int quantityChange = getIntInput();
 
             StockChange stockData = new StockChange(storeName, productName, quantityChange);
-            BackendMessage<StockChange> request = new BackendMessage<>(stockData);
-            request.setClient(Client.Manager);
+            Message<StockChange> request = new Message<>(stockData);
+            
             request.setRequest(RequestCode.MANAGE_STOCK);
 
             String response = sendRequest(request);
@@ -214,8 +215,8 @@ public class ManagerConsoleApp extends Communication {
         String storeType = scanner.nextLine();
 
 
-        BackendMessage<String> request = new BackendMessage<>(storeType);
-        request.setClient(Client.Manager);
+        Message<String> request = new Message<>(storeType);
+        
         request.setRequest(RequestCode.GET_SALES_BY_STORE_TYPE);
 
         Map<String, Double> salesData = sendRequest(request);
@@ -230,8 +231,8 @@ public class ManagerConsoleApp extends Communication {
         System.out.print("Enter product category you are interested in displaying sales (e.g. 'pizza'): ");
         String category = scanner.nextLine();
 
-        BackendMessage<String> request = new BackendMessage<>(category);
-        request.setClient(Client.Manager);
+        Message<String> request = new Message<>(category);
+        
         request.setRequest(RequestCode.GET_SALES_BY_PRODUCT_TYPE);
 
         Map<String, Double> salesData = sendRequest(request);
@@ -248,8 +249,8 @@ public class ManagerConsoleApp extends Communication {
         String storeName = chooseStore(stores);
         System.out.println("Sales for Store: " + storeName);
 
-        BackendMessage<String> request = new BackendMessage<>(storeName);
-        request.setClient(Client.Manager);
+        Message<String> request = new Message<>(storeName);
+        
         request.setRequest(RequestCode.GET_SALES_BY_STORE);
 
         Map<String, Double> salesData = sendRequest(request);
