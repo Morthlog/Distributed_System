@@ -71,10 +71,13 @@ public class Worker extends Communication {
     private static <T> T addProduct(T val) {
         ProductAddition data= (ProductAddition) val;
         ExtendedStore store = memory.get(data.getStoreName());
+        boolean result;
         synchronized (store) {
-            store.addProduct(data.getProduct());
+            result = store.addProduct(data.getProduct());
         }
-        return (T) "Product added successfully";
+        if (result)
+            return (T) "Product added successfully";
+        return (T) "Product already exists";
     }
 
     private static <T> T removeProduct(T val) {

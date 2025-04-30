@@ -57,7 +57,9 @@ class ExtendedStore extends Store {
         calculatePriceCategory();
     }
 
-    public void addProduct(Product product) {
+    public boolean addProduct(Product product) {
+        if (products.containsKey(product.getProductName()))
+            return false;
         products.put(product.getProductName(), product);
 
         if (!product.isHidden()) {
@@ -67,6 +69,7 @@ class ExtendedStore extends Store {
         productSales.put(product.getProductName(), 0.0);
 
         calculatePriceCategory();
+        return true;
     }
 
     public void removeProduct(String productName) {
