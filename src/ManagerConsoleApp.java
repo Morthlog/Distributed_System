@@ -221,10 +221,11 @@ public class ManagerConsoleApp extends Communication {
 
         Map<String, Double> salesData = sendRequest(request);
         System.out.println("Sales by Store Type: " + storeType);
-
+        Double total = salesData.remove("total");
         for (Map.Entry<String, Double> entry : salesData.entrySet()) {
             System.out.printf("Store: %s - Sales: $%.2f%n", entry.getKey(), entry.getValue());
         }
+        System.out.println("Total sales: " + total);
     }
 
     private void displaySalesByProductType() {
@@ -237,10 +238,11 @@ public class ManagerConsoleApp extends Communication {
 
         Map<String, Double> salesData = sendRequest(request);
         System.out.println("Sales by Product Type: " + category);
-
+        Double total = salesData.remove("total");
         for (Map.Entry<String, Double> entry : salesData.entrySet()) {
             System.out.printf("Store: %s - Sales: $%.2f%n", entry.getKey(), entry.getValue());
         }
+        System.out.println("Total sales: " + total);
     }
 
 
@@ -254,10 +256,11 @@ public class ManagerConsoleApp extends Communication {
         request.setRequest(RequestCode.GET_SALES_BY_STORE);
 
         Map<String, Double> salesData = sendRequest(request);
-
+        Double total = salesData.remove("total");
         for (Map.Entry<String, Double> entry : salesData.entrySet()) {
             System.out.printf("Store: %s - Sales: $%.2f%n", entry.getKey(), entry.getValue());
         }
+        System.out.println("Total sales: " + total);
     }
 
 
