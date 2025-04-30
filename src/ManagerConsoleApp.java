@@ -17,37 +17,36 @@ public class ManagerConsoleApp extends Communication {
         return num;
     }
 
-    private void displayStores(Map<String, ExtendedStore> stores) {
+    private String[] displayStores(Map<String, ExtendedStore> stores) {
         if (stores == null || stores.isEmpty()) {
             System.out.println("No stores available.");
-            return;
+            return new String[0];
         }
         System.out.println("Available stores: ");
         int i = 0;
-        for (String storeName : stores.keySet()) {
-            ExtendedStore store = stores.get(storeName);
+        String[] keyMapping = new String[stores.size()];
+        for (ExtendedStore store : stores.values()) {
             System.out.printf("%d: %s. Food Category: %s. Stars: %.1f. Price Category: %s%n",
                     i,
                     store.getStoreName(),
                     store.getFoodCategory(),
                     store.getStars(),
                     store.getPriceCategory());
-            i++;
+            keyMapping[i++] = store.getStoreName();
         }
+        return keyMapping;
     }
 
     private String chooseStore(Map<String, ExtendedStore> stores) {
-        displayStores(stores);
+        String[] keyMapping =  displayStores(stores);
         System.out.println("Enter the number of the store you want to view products for: ");
         int storeIndex = getIntInput();
-        int i = 0;
-        for (String storeName : stores.keySet()) {
-            if (i == storeIndex) {
-                return storeName;
-            }
-            i++;
+        if (storeIndex < 0 || storeIndex > keyMapping.length){
+            System.out.println("Invalid input.");
+            return chooseStore(stores);
         }
-        return chooseStore(stores);
+
+        return keyMapping[storeIndex];
     }
 
     private String[] displayStoreProducts(ExtendedStore store) {
