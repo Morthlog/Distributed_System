@@ -1,5 +1,3 @@
-{
-  "Stores": [
     {
       "StoreName": "TESTER",
       "Latitude": 38.0153471,
@@ -23,6 +21,4 @@
         }
       ]
     }
-  ]
-}
   
