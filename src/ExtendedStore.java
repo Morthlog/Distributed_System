@@ -4,7 +4,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 
-class ExtendedStore extends Store {
+public class ExtendedStore extends Store {
     private final Map<String, Product> products;
     private Map<String, Double> productSales;
 
@@ -114,6 +114,8 @@ class ExtendedStore extends Store {
 
         Product product = products.get(productName);
         synchronized (product) {
+            if (!bypassChecks && product.isHidden())
+                return false;
             int currentAmount = product.getAvailableAmount();
 
             if (!bypassChecks && currentAmount < quantity) {

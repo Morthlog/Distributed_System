@@ -128,7 +128,7 @@ public class ManagerConsoleApp extends Communication {
 
             System.out.print("Enter the name of the product you want to add: ");
             String productName = scanner.nextLine();
-            System.out.print("Enter they type of the product: ");
+            System.out.print("Enter the type of the product: ");
             String productType = scanner.nextLine();
             System.out.print("Enter available amount: ");
             int availableAmount = getIntInput();
