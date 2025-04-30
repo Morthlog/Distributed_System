@@ -86,9 +86,9 @@ public class Reducer {
             {
                 for (Object store : (List<?>) result)
                 {
-                    if (store instanceof Store)
+                    if (store instanceof ExtendedStore)
                     {
-                        combinedStores.add((Store) store);
+                        combinedStores.add(((ExtendedStore) store).toCustomerStore());
                     }
                 }
             }
