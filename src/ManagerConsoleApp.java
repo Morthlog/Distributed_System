@@ -1,4 +1,5 @@
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -210,10 +211,10 @@ public class ManagerConsoleApp extends Communication {
 
         switch (option) {
             case 1:
-                displaySalesByStoreType();
+                displaySalesByEnum(FoodCategory.values(), RequestCode.GET_SALES_BY_STORE_TYPE, "Food Category");
                 break;
             case 2:
-                displaySalesByProductType();
+                displaySalesByEnum(ProductType.values(), RequestCode.GET_SALES_BY_PRODUCT_TYPE, "Product Type");
                 break;
             case 3:
                 displaySalesByStore();
@@ -223,77 +224,37 @@ public class ManagerConsoleApp extends Communication {
         }
     }
 
-    private void displaySalesByStoreType()
+    private <T extends Enum<T>> void displaySalesByEnum(T[] enumValues, RequestCode requestCode, String label)
     {
-        FoodCategory[] categories = FoodCategory.values();
-        System.out.println("Choose from the available food categories by typing the category's number separated by space (e.g., 0 2 3):");
-        for (int i = 0; i < categories.length; i++)
+        System.out.println("Choose from the available " + label.toLowerCase() + "s by typing the number separated by space (e.g., 0 2 3):");
+
+        for (int i = 0; i < enumValues.length; i++)
         {
-            System.out.println(i + ": " + categories[i]);
+            System.out.println(i + ": " + enumValues[i]);
         }
 
-        String chosenCategories = scanner.nextLine();
-        String[] categoryIndexes = chosenCategories.split("\\s+");
-        List<FoodCategory> selectedCategories = new ArrayList<>();
-        for (String indexString : categoryIndexes)
+        String chosen = scanner.nextLine();
+        String[] indexes = chosen.split("\\s+");
+        List<T> selected = new ArrayList<>();
+        for (String indexString : indexes)
         {
             int index = Integer.parseInt(indexString);
-            selectedCategories.add(categories[index]);
+            selected.add(enumValues[index]);
         }
 
-        Message<FoodCategory[]> request = new Message<>(selectedCategories.toArray(new FoodCategory[0]));
-        request.setRequest(RequestCode.GET_SALES_BY_STORE_TYPE);
+        Class<?> enumElementType  = enumValues.getClass().getComponentType();
+        Message<T[]> request = new Message<>((T[]) selected.toArray((T[]) Array.newInstance(enumElementType , 0)));
+        request.setRequest(requestCode);
 
         Map<String, Map<String, Double>> salesData = sendRequest(request);
 
-        for (FoodCategory category : selectedCategories)
+        for (T item : selected)
         {
-            String categoryName = category.name();
-            Map<String, Double> perStore = salesData.get(categoryName);
+            String itemName = item.name();
+            Map<String, Double> perStore = salesData.get(itemName);
             if (perStore != null && !perStore.isEmpty())
             {
-                System.out.println("Food Category: " + categoryName);
-                double total = 0.0;
-                for (Map.Entry<String, Double> entry : perStore.entrySet())
-                {
-                    System.out.printf("\"%s\": %.0f,%n", entry.getKey(), entry.getValue());
-                    total += entry.getValue();
-                }
-                System.out.printf("\"total\": %.0f%n%n", total);
-            }
-        }
-    }
-
-    private void displaySalesByProductType()
-    {
-        ProductType[] types = ProductType.values();
-        System.out.println("Choose from the available product types by typing the product type's number separated by space (e.g., 1 5 2):");
-        for (int i = 0; i < types.length; i++)
-        {
-            System.out.println(i + ": " + types[i]);
-        }
-
-        String chosenTypes = scanner.nextLine();
-        String[] typeIndexes = chosenTypes.split("\\s+");
-        List<ProductType> selectedTypes = new ArrayList<>();
-        for (String indexString : typeIndexes)
-        {
-            int index = Integer.parseInt(indexString);
-            selectedTypes.add(types[index]);
-        }
-
-        Message<ProductType[]> request = new Message<>(selectedTypes.toArray(new ProductType[0]));
-        request.setRequest(RequestCode.GET_SALES_BY_PRODUCT_TYPE);
-
-        Map<String, Map<String, Double>> salesData = sendRequest(request);
-
-        for (ProductType type : selectedTypes)
-        {
-            String typeName = type.name();
-            Map<String, Double> perStore = salesData.get(typeName);
-            if (perStore != null && !perStore.isEmpty())
-            {
-                System.out.println("Product Type: " + typeName);
+                System.out.println(label + ": " + itemName);
                 double total = 0.0;
                 for (Map.Entry<String, Double> entry : perStore.entrySet())
                 {
