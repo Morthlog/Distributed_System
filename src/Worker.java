@@ -1,9 +1,6 @@
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Worker extends Communication {
 
@@ -17,24 +14,25 @@ public class Worker extends Communication {
     private static <T> BackendMessage<T> actionTable(BackendMessage<T> msg) {
         Client client = msg.getClient();
         RequestCode code = msg.getRequest();
+        SaveState saveState = msg.getSaveState();
         T val = msg.getValue();
         BackendMessage<T> response = switch (client) {
             case Customer -> switch (code) {
                 case STUB_TEST_1-> (BackendMessage<T>) sendString((String) val);
                 case STUB_TEST_2 -> (BackendMessage<T>) sendNum((Integer) val);
                 case SEARCH -> (BackendMessage<T>) mapSearch((Filter) val);
-                case BUY -> (BackendMessage<T>) buy((ShoppingCart) val);
-                case RATE_STORE -> (BackendMessage<T>) addRatingToStore((RatingChange) val);
+                case BUY -> (BackendMessage<T>) buy((ShoppingCart) val, saveState);
+                case RATE_STORE -> (BackendMessage<T>) addRatingToStore((RatingChange) val, saveState);
                 default -> {
                     System.err.println("Unknown customer code: " + code);
                     throw new RuntimeException();
                 }
             };
             case Manager -> switch (code) {
-                case ADD_STORE -> (BackendMessage<T>) addStore((ExtendedStore) val);
-                case ADD_PRODUCT -> (BackendMessage<T>) addProduct((ProductAddition) val);
-                case REMOVE_PRODUCT -> (BackendMessage<T>) removeProduct((ProductRemoval) val);
-                case MANAGE_STOCK -> (BackendMessage<T>) manageStock((StockChange) val);
+                case ADD_STORE -> (BackendMessage<T>) addStore((ExtendedStore) val, saveState);
+                case ADD_PRODUCT -> (BackendMessage<T>) addProduct((ProductAddition) val, saveState);
+                case REMOVE_PRODUCT -> (BackendMessage<T>) removeProduct((ProductRemoval) val, saveState);
+                case MANAGE_STOCK -> (BackendMessage<T>) manageStock((StockChange) val, saveState);
                 case GET_SALES_BY_STORE_TYPE -> (BackendMessage<T>) getSalesByStoreType((String) val);
                 case GET_SALES_BY_PRODUCT_TYPE -> (BackendMessage<T>) getSalesByProductType((String) val);
                 case GET_SALES_BY_STORE -> (BackendMessage<T>) getSalesByStore((String) val);
@@ -58,31 +56,36 @@ public class Worker extends Communication {
         return response;
     }
 
-    private static BackendMessage<String> addStore(ExtendedStore store) {
+    private static BackendMessage<String> addStore(ExtendedStore store, SaveState saveState) {
         String storeName = store.getStoreName();
 
         BackendMessage<String> msg = new BackendMessage<>();
-        synchronized (memory) {
-            if (memory.containsKey(storeName)) {
+        Map<String, ExtendedStore> database = getDatabaseFor(saveState);
+        synchronized (database) {
+            if (database.containsKey(storeName)) {
                 msg.setValue("Store already exists");
             }
             else
             {
                 msg.setValue("Store added successfully");
-                memory.put(storeName, store);
+                database.put(storeName, store);
             }
         }
-
+        setupForBackup(msg, saveState);
         return msg;
     }
 
-    private static BackendMessage<String> addProduct(ProductAddition data) {
+    private static BackendMessage<String> addProduct(ProductAddition data, SaveState saveState) {
 
-        ExtendedStore store = memory.get(data.getStoreName());
+        Map<String, ExtendedStore> database = getDatabaseFor(saveState);
+        ExtendedStore store;
+        synchronized (database) {
+            store = database.get(data.getStoreName());
+        }
         boolean result;
         BackendMessage<String> msg = new BackendMessage<>();
         synchronized (store) {
-            result = store.addProduct(data.getProduct());
+            result = store.addProduct(data.getProduct(), saveState == SaveState.BACKUP);
             if (result)
             {
                 msg.setValue("Product added successfully");
@@ -91,13 +94,17 @@ public class Worker extends Communication {
             {
                 msg.setValue("Product already exists");
             }
-
         }
+        setupForBackup(msg, saveState);
         return msg;
     }
 
-    private static BackendMessage<String> removeProduct(ProductRemoval data) {
-        ExtendedStore store = memory.get(data.getStoreName());
+    private static BackendMessage<String> removeProduct(ProductRemoval data, SaveState saveState) {
+        Map<String, ExtendedStore> database = getDatabaseFor(saveState);
+        ExtendedStore store;
+        synchronized (database) {
+            store = database.get(data.getStoreName());
+        }
         BackendMessage<String> msg = new BackendMessage<>();
         synchronized (store) {
             boolean result = store.removeProduct(data.getProductName());
@@ -110,14 +117,19 @@ public class Worker extends Communication {
                 msg.setValue("Product does not exist");
             }
         }
+        setupForBackup(msg, saveState);
         return msg;
     }
 
 
-    private static BackendMessage<String> manageStock(StockChange data) {
-        ExtendedStore store = memory.get(data.getStoreName());
+    private static BackendMessage<String> manageStock(StockChange data, SaveState saveState) {
+        Map<String, ExtendedStore> database = getDatabaseFor(saveState);
+        ExtendedStore store;
+        synchronized (database) {
+            store = database.get(data.getStoreName());
+        }
         BackendMessage<String> msg = new BackendMessage<>();
-        boolean updated = store.manageStock(data.getProductName(), data.getQuantityChange());
+        boolean updated = store.manageStock(data.getProductName(), data.getQuantityChange(), saveState == SaveState.BACKUP);
         if (updated)
         {
             msg.setValue("Stock updated successfully");
@@ -126,6 +138,7 @@ public class Worker extends Communication {
         {
             msg.setValue("Stock does not exist");
         }
+        setupForBackup(msg, saveState);
         return msg;
     }
 
@@ -133,7 +146,13 @@ public class Worker extends Communication {
         Map<String, Double> salesByStoreType = new HashMap<>();
         double total = 0.0;
 
-        for (ExtendedStore store : memory.values()) {
+        Map<String, ExtendedStore> database = getDatabaseFor(SaveState.MEMORY);
+        Collection<ExtendedStore> stores;
+        synchronized (database) {
+            stores = database.values();
+        }
+
+        for (ExtendedStore store : stores) {
             if (store.getFoodCategory().equalsIgnoreCase(storeType)) {
                 synchronized (store) {
                     double sales = 0.0;
@@ -157,7 +176,13 @@ public class Worker extends Communication {
         Map<String, Double> salesByProductType = new HashMap<>();
         double total = 0.0;
 
-        for (ExtendedStore store : memory.values()) {
+        Map<String, ExtendedStore> database = getDatabaseFor(SaveState.MEMORY);
+        Collection<ExtendedStore> stores;
+        synchronized (database) {
+            stores = database.values();
+        }
+
+        for (ExtendedStore store : stores) {
             synchronized (store) {
                 double sales = store.getSales(productType);
                 if (sales > 0) {
@@ -177,6 +202,12 @@ public class Worker extends Communication {
         Map<String, Double> salesByStore = new HashMap<>();
         double total = 0.0;
 
+        Map<String, ExtendedStore> database = getDatabaseFor(SaveState.MEMORY);
+        Collection<ExtendedStore> stores;
+        synchronized (database) {
+            stores = database.values();
+        }
+
         synchronized (store) {
             for (Map.Entry<String, Double> entry : store.getProductSales().entrySet()) {
                 double sales = entry.getValue();
@@ -193,7 +224,10 @@ public class Worker extends Communication {
     }
 
     private static Map<String, ExtendedStore> getAllStores() {
-        return new HashMap<>(memory);
+        synchronized (memory) {
+            return new HashMap<>(memory);
+        }
+
     }
 
     private static BackendMessage<String> transferToMemory(String storeName){
@@ -205,7 +239,7 @@ public class Worker extends Communication {
         return new BackendMessage<>("OK");
     }
 
-    private static BackendMessage<String> buy(ShoppingCart shoppingCart)
+    private static BackendMessage<String> buy(ShoppingCart shoppingCart, SaveState saveState)
     {
         try
         {
@@ -216,9 +250,14 @@ public class Worker extends Communication {
         {
             throw new RuntimeException(e);
         }
-        ExtendedStore store = memory.get(shoppingCart.getStoreName());
+        Map<String, ExtendedStore> database = getDatabaseFor(saveState);
+        ExtendedStore store;
+        synchronized (database) {
+            store = database.get(shoppingCart.getStoreName());
+        }
 
-        boolean purchaseCompleted = store.tryPurchase(shoppingCart);
+        boolean purchaseCompleted = store.tryPurchase(shoppingCart, saveState == SaveState.BACKUP);
+
         String state="completed";
         if (!purchaseCompleted)
         {
@@ -226,6 +265,7 @@ public class Worker extends Communication {
         }
         String result = String.format("Purchase %s for store: %s and products %s", state, store.getStoreName(), shoppingCart.getProducts());
         BackendMessage<String> msg = new BackendMessage<>(result);
+        setupForBackup(msg, saveState);
         return msg;
     }
 
@@ -243,7 +283,12 @@ public class Worker extends Communication {
             throw new RuntimeException(e);
         }
         List<Store> result = new ArrayList<>();
-        for (Store store : memory.values())
+        Map<String, ExtendedStore> database = getDatabaseFor(SaveState.MEMORY);
+        Collection<ExtendedStore> stores;
+        synchronized (database) {
+            stores = database.values();
+        }
+        for (Store store : stores)
         {
             if (storeMatchesFilter(store, filter))
             {
@@ -308,14 +353,18 @@ public class Worker extends Communication {
         return distance;
     }
 
-    public static BackendMessage<String> addRatingToStore(RatingChange ratingChange)
+    public static BackendMessage<String> addRatingToStore(RatingChange ratingChange, SaveState saveState)
     {
-        Store store = memory.get(ratingChange.getStoreName());
+        Map<String, ExtendedStore> database = getDatabaseFor(saveState);
+        ExtendedStore store;
+        synchronized (database) {
+            store = database.get(ratingChange.getStoreName());
+        }
         float newRating = store.addRating(ratingChange);
 
         String result = String.format("Rating completed. New store rating: %.1f", newRating);
         BackendMessage<String> msg = new BackendMessage<>(result);
-
+        setupForBackup(msg, saveState);
         return msg;
     }
 
@@ -327,6 +376,16 @@ public class Worker extends Communication {
         return new BackendMessage<>(val + 100);
     }
 
+    private static Map<String, ExtendedStore> getDatabaseFor(SaveState saveState){
+        if (saveState == SaveState.MEMORY)
+            return memory;
+        return backup;
+    }
+
+    private static void setupForBackup(BackendMessage<String> msg, SaveState saveState) {
+        if (saveState == SaveState.MEMORY)
+            msg.setSaveState(SaveState.REQUIRES_BACKUP);
+    }
 
     /**
      * Take the appropriate action based on the msg's value's type

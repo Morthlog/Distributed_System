@@ -57,8 +57,8 @@ public class ExtendedStore extends Store {
         calculatePriceCategory();
     }
 
-    public boolean addProduct(Product product) {
-        if (products.containsKey(product.getProductName()))
+    public boolean addProduct(Product product, boolean bypassChecks) {
+        if (!bypassChecks && products.containsKey(product.getProductName()))
             return false;
         products.put(product.getProductName(), product);
 
@@ -181,7 +181,7 @@ public class ExtendedStore extends Store {
 
     private record SaleRecord(String productName, int quantity) {}
 
-    public boolean tryPurchase(ShoppingCart cart)
+    public boolean tryPurchase(ShoppingCart cart, boolean bypassChecks)
     {
         Deque<SaleRecord> localQueue = new ArrayDeque<>();
 
@@ -190,7 +190,7 @@ public class ExtendedStore extends Store {
             String name = entry.getKey();
             int quantity = entry.getValue();
 
-            boolean saveCompleted = saveSale(name, quantity);
+            boolean saveCompleted = saveSale(name, quantity, bypassChecks);
             if (!saveCompleted)
             {
                 revertLocalSales(localQueue);
