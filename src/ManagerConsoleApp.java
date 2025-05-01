@@ -1,4 +1,6 @@
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Map;
 import org.json.simple.JSONObject;
@@ -127,8 +129,8 @@ public class ManagerConsoleApp extends Communication {
 
             System.out.print("Enter the name of the product you want to add: ");
             String productName = scanner.nextLine();
-            System.out.print("Enter the type of the product: ");
-            String productType = scanner.nextLine();
+
+            ProductType productType =chooseProductType();
             System.out.print("Enter available amount: ");
             int availableAmount = getIntInput();
             System.out.print("Enter price: ");
@@ -145,6 +147,18 @@ public class ManagerConsoleApp extends Communication {
             System.out.println(response);
     }
 
+    private ProductType chooseProductType()
+    {
+        System.out.println("Choose the product type by typing its number:");
+        ProductType[] productTypes = ProductType.values();
+        for (int i = 0; i < productTypes.length; i++)
+        {
+            System.out.println(i + ": " + productTypes[i]);
+        }
+
+        int choice = Integer.parseInt(scanner.nextLine());
+        return productTypes[choice];
+    }
 
     private void removeProduct() {
             Map<String, ExtendedStore> stores = getStores();
@@ -227,22 +241,41 @@ public class ManagerConsoleApp extends Communication {
         System.out.println("Total sales: " + total);
     }
 
-    private void displaySalesByProductType() {
-        System.out.print("Enter product category you are interested in displaying sales (e.g. 'pizza'): ");
-        String category = scanner.nextLine();
+    private void displaySalesByProductType()
+    {
+        ProductType[] types = ProductType.values();
+        System.out.println("Choose from the available product types by typing the product type's number separated by space (e.g., 1 5 2):");
+        for (int i = 0; i < types.length; i++)
+        {
+            System.out.println(i + ": " + types[i]);
+        }
 
-        Message<String> request = new Message<>(category);
-        
+        String chosenTypes = scanner.nextLine();
+        String[] typeIndexes = chosenTypes.split("\\s+");
+        List<ProductType> selectedTypes = new ArrayList<>();
+        for (String indexString : typeIndexes)
+        {
+            int index = Integer.parseInt(indexString);
+            selectedTypes.add(types[index]);
+        }
+
+        Message<ProductType[]> request = new Message<>(selectedTypes.toArray(new ProductType[0]));
         request.setRequest(RequestCode.GET_SALES_BY_PRODUCT_TYPE);
 
         Map<String, Double> salesData = sendRequest(request);
-        System.out.println("Sales by Product Type: " + category);
-        Double total = salesData.remove("total");
-        for (Map.Entry<String, Double> entry : salesData.entrySet()) {
-            System.out.printf("Store: %s - Sales: $%.2f%n", entry.getKey(), entry.getValue());
+
+        System.out.println("Total sales per selected product type:");
+        for (ProductType type : selectedTypes)
+        {
+            Double typeTotal = salesData.get(type.name());
+            if (typeTotal != null)
+            {
+                System.out.printf("Product Type: %s - Total Sales: $%.2f%n", type, typeTotal);
+            }
         }
-        System.out.println("Total sales: " + total);
     }
+
+
 
 
     private void displaySalesByStore() {

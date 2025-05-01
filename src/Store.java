@@ -48,7 +48,7 @@ public class Store implements Serializable, StoreNameProvider{
                 JSONObject productJson = (JSONObject) productObj;
 
                 String productName = (String) productJson.get("ProductName");
-                String productType = (String) productJson.get("ProductType");
+                ProductType productType =ProductType.fromString((String) productJson.get("ProductType")) ;
                 int availableAmount = ((Number) productJson.get("Available Amount")).intValue();
                 double price = ((Number) productJson.get("Price")).doubleValue();
 
