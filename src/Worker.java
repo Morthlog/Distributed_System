@@ -226,9 +226,9 @@ public class Worker extends Communication {
         return msg;
     }
 
-    private static Map<String, ExtendedStore> getAllStores() {
+    private static BackendMessage<Map<String, ExtendedStore>> getAllStores() {
         synchronized (memory) {
-            return new HashMap<>(memory);
+            return new BackendMessage<>(new HashMap<>(memory));
         }
 
     }

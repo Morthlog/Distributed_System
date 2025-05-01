@@ -2,20 +2,20 @@
       "StoreName": "TESTER",
       "Latitude": 38.0153471,
       "Longitude": 23.7426714,
-      "FoodCategory": "burgers",
+      "FoodCategory": "burger",
       "Stars": 2,
       "NoOfVotes": 10,
       "StoreLogo": "/usr/bin/images/storeLogoTESTER.png",
       "Products": [
         {
           "ProductName": "crazy burger",
-          "ProductType": "burger",
+          "ProductType": "BEEF_BURGER",
           "Available Amount": 300,
           "Price": 10.5
         },
         {
           "ProductName": "cheeseburger",
-          "ProductType": "burger",
+          "ProductType": "BEEF_BURGER",
           "Available Amount": 300,
           "Price": 8.5
         }
