@@ -35,7 +35,7 @@ public class Worker extends Communication {
                 case MANAGE_STOCK -> (BackendMessage<T>) manageStock((StockChange) val, saveState);
                 case GET_SALES_BY_STORE_TYPE -> (BackendMessage<T>) getSalesByStoreType((FoodCategory[]) val);
                 case GET_SALES_BY_PRODUCT_TYPE -> (BackendMessage<T>) getSalesByProductType((ProductType[]) val);
-                case GET_SALES_BY_STORE -> (BackendMessage<T>) getSalesByStore((String) val);
+                case GET_SALES_BY_STORE -> (BackendMessage<T>) getSalesByStore((ExtendedStore) val);
                 case GET_STORES -> (BackendMessage<T>) getAllStores();
                 default -> {
                     System.err.println("Unknown manager code: " + code);
@@ -225,15 +225,14 @@ public class Worker extends Communication {
     }
 
 
-
-    private static BackendMessage<Map<String, Double>> getSalesByStore(String storeName) {
+    private static BackendMessage<Map<String, Double>> getSalesByStore(ExtendedStore storeProvided) {
         Map<String, Double> salesByStore = new HashMap<>();
         double total = 0.0;
 
         Map<String, ExtendedStore> database = getDatabaseFor(SaveState.MEMORY);
         ExtendedStore store;
         synchronized (database) {
-            store = database.get(storeName);
+            store = database.get(storeProvided.getStoreName());
         }
 
         synchronized (store) {
@@ -251,9 +250,9 @@ public class Worker extends Communication {
         return msg;
     }
 
-    private static Map<String, ExtendedStore> getAllStores() {
+    private static BackendMessage<Map<String, ExtendedStore>> getAllStores() {
         synchronized (memory) {
-            return new HashMap<>(memory);
+            return new BackendMessage<>(new HashMap<>(memory));
         }
 
     }

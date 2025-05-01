@@ -127,6 +127,10 @@ public class Master extends Thread {
                 msg.setClient(Client.MASTER);
                 msg.setRequest(RequestCode.TRANSFER_BACKUP);
                 currentConnection.sendMessage(msg);
+            }
+            for (var set : storeToWorkerBackup.entrySet()){
+                if (!set.getValue().equals(workerId))
+                    continue;
                 storeToWorkerBackup.replace(set.getKey(), -1);
             }
         } catch (Exception e) {
@@ -181,7 +185,7 @@ public class Master extends Thread {
                     }
                 };
                 case Manager -> switch (code) { // replace with appropriate cases
-                    case ADD_STORE, ADD_PRODUCT, REMOVE_PRODUCT, MANAGE_STOCK -> findCorrectWorker(msg);
+                    case ADD_STORE, ADD_PRODUCT, REMOVE_PRODUCT, MANAGE_STOCK, GET_SALES_BY_STORE -> findCorrectWorker(msg);
                     case GET_SALES_BY_STORE_TYPE, GET_SALES_BY_PRODUCT_TYPE, GET_STORES -> broadcast(msg);
                     default -> {
                         System.err.println("Unknown manager code: " + code);

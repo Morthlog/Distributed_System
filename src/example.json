@@ -9,13 +9,13 @@
       "Products": [
         {
           "ProductName": "crazy burger",
-          "ProductType": "burger",
+          "ProductType": "BEEF_BURGER",
           "Available Amount": 300,
           "Price": 10.5
         },
         {
           "ProductName": "cheeseburger",
-          "ProductType": "burger",
+          "ProductType": "BEEF_BURGER",
           "Available Amount": 300,
           "Price": 8.5
         }

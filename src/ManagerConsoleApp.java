@@ -271,16 +271,16 @@ public class ManagerConsoleApp extends Communication {
         String storeName = chooseStore(stores);
         System.out.println("Sales for Store: " + storeName);
 
-        Message<String> request = new Message<>(storeName);
+        Message<ExtendedStore> request = new Message<>(stores.get(storeName));
         
         request.setRequest(RequestCode.GET_SALES_BY_STORE);
 
         Map<String, Double> salesData = sendRequest(request);
         Double total = salesData.remove("total");
         for (Map.Entry<String, Double> entry : salesData.entrySet()) {
-            System.out.printf("Store: %s - Sales: $%.2f%n", entry.getKey(), entry.getValue());
+            System.out.printf("Store: %s - Sales: %.2f€%n", entry.getKey(), entry.getValue());
         }
-        System.out.println("Total sales: " + total);
+        System.out.printf("Total sales: %.2f€%n", total);
     }
 
 
