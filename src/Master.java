@@ -127,6 +127,10 @@ public class Master extends Thread {
                 msg.setClient(Client.MASTER);
                 msg.setRequest(RequestCode.TRANSFER_BACKUP);
                 currentConnection.sendMessage(msg);
+            }
+            for (var set : storeToWorkerBackup.entrySet()){
+                if (!set.getValue().equals(workerId))
+                    continue;
                 storeToWorkerBackup.replace(set.getKey(), -1);
             }
         } catch (Exception e) {
