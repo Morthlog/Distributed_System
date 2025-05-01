@@ -283,7 +283,7 @@ public class ManagerConsoleApp extends Communication {
         String storeName = chooseStore(stores);
         System.out.println("Sales for Store: " + storeName);
 
-        Message<String> request = new Message<>(storeName);
+        Message<ExtendedStore> request = new Message<>(stores.get(storeName));
         
         request.setRequest(RequestCode.GET_SALES_BY_STORE);
 
