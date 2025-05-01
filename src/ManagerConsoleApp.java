@@ -236,9 +236,9 @@ public class ManagerConsoleApp extends Communication {
         System.out.println("Sales by Store Type: " + storeType);
         Double total = salesData.remove("total");
         for (Map.Entry<String, Double> entry : salesData.entrySet()) {
-            System.out.printf("Store: %s - Sales: $%.2f%n", entry.getKey(), entry.getValue());
+            System.out.printf("Store: %s - Sales: %.2f€%n", entry.getKey(), entry.getValue());
         }
-        System.out.println("Total sales: " + total);
+        System.out.printf("Total sales: %.2f€%n", total);
     }
 
     private void displaySalesByProductType()
@@ -270,7 +270,7 @@ public class ManagerConsoleApp extends Communication {
             Double typeTotal = salesData.get(type.name());
             if (typeTotal != null)
             {
-                System.out.printf("Product Type: %s - Total Sales: $%.2f%n", type, typeTotal);
+                System.out.printf("Product Type: %s - Total Sales: %.2f€%n", type, typeTotal);
             }
         }
     }
@@ -290,9 +290,9 @@ public class ManagerConsoleApp extends Communication {
         Map<String, Double> salesData = sendRequest(request);
         Double total = salesData.remove("total");
         for (Map.Entry<String, Double> entry : salesData.entrySet()) {
-            System.out.printf("Store: %s - Sales: $%.2f%n", entry.getKey(), entry.getValue());
+            System.out.printf("Store: %s - Sales: %.2f€%n", entry.getKey(), entry.getValue());
         }
-        System.out.println("Total sales: " + total);
+        System.out.printf("Total sales: %.2f€%n", total);
     }
 
 
