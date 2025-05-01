@@ -2,7 +2,8 @@ import java.util.*;
 
 public class DummyApp
 {
-    private static boolean loading;
+    private static volatile boolean loading;
+    private static volatile boolean animationIsDone;
     private Scanner keyboard;
     private Customer customer;
     Filter filter;
@@ -189,6 +190,7 @@ public class DummyApp
 
     public void playAnimation()
     {
+        animationIsDone = false;
         loading = true;
         StringBuilder text = new StringBuilder("Loading.");
         long start = System.currentTimeMillis();
@@ -200,15 +202,16 @@ public class DummyApp
             {
                 text.append(".");
                 start = end;
+                System.out.print(text + "\r");
             }
-
-            System.out.print(text + "\r");
         }
+        System.out.print(" ".repeat(text.length()) + "\r");
+        animationIsDone = true;
     }
 
     private void handleSearchResults(List<Store> stores)
     {
-        loading = false;
+        stopAnimation();
         displayStores(stores);
 
         if (stores.isEmpty())
@@ -225,14 +228,14 @@ public class DummyApp
 
     private void handleBuyResult(String confirmation)
     {
-        loading = false;
+        stopAnimation();
         System.out.println("Purchase response: " + confirmation);
         rateStore();
     }
 
     private void handleRatingResult(String confirmation)
     {
-        loading = false;
+        stopAnimation();
         System.out.println("Rating response: " + confirmation);
 
         System.out.println("How do you want to continue?");
@@ -319,6 +322,13 @@ public class DummyApp
         }
 
         sendFilters();
+    }
+
+    private void stopAnimation(){
+        loading = false;
+        while (!animationIsDone) {
+            Thread.onSpinWait();
+        }
     }
 
     public static void main(String[] args)
