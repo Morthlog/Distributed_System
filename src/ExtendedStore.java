@@ -6,7 +6,7 @@ import org.json.simple.JSONObject;
 
 public class ExtendedStore extends Store {
     private final Map<String, Product> products;
-    private Map<String, Double> productSales;
+    private final Map<String, Double> productSales;
 
     public ExtendedStore(String storeName, double latitude, double longitude, String foodCategory,
                          int stars, int noOfVotes, String storeLogo, Map<String, Product> products) {
@@ -39,7 +39,7 @@ public class ExtendedStore extends Store {
                 JSONObject productJson = (JSONObject) productObj;
 
                 String productName = (String) productJson.get("ProductName");
-                String productType = (String) productJson.get("ProductType");
+                ProductType productType = ProductType.fromString((String) productJson.get("ProductType")) ;
                 int availableAmount = ((Number) productJson.get("Available Amount")).intValue();
                 double price = ((Number) productJson.get("Price")).doubleValue();
                 boolean hidden = productJson.containsKey("Hidden") && (boolean) productJson.get("Hidden");
@@ -135,19 +135,24 @@ public class ExtendedStore extends Store {
         return saveSale(productName,quantity,false);
     }
 
-    public double getSales(String productType) {
-        double totalSales = 0.0;
+    public double getSalesByProductType(ProductType requestedType) {
+        double totalSales = 0;
 
-        for (Map.Entry<String, Product> entry : products.entrySet()) {
-            Product product = entry.getValue();
-            String productName = product.getProductName();
+        for (Product product : products.values())
+        {
+            if (product.getProductType().equals(requestedType))
+            {
+                    String name = product.getProductName();
+                    synchronized (productSales)
+                    {
 
-            if (product.getProductType().equals(productType)) {
-                totalSales += productSales.getOrDefault(productName, 0.0);
+                        totalSales += productSales.getOrDefault(name, 0.0);
+                    }
             }
         }
         return totalSales;
     }
+
 
     @Override
     public Map<String, Product> getProducts() {

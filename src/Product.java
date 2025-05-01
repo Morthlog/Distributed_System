@@ -2,16 +2,16 @@ import java.io.Serializable;
 
 public class Product implements Serializable {
     private String productName;
-    private String productType;
+    private ProductType productType;
     private int availableAmount;
     private double price;
     private boolean hidden; // Hidden products when empty from customer but visible to manager
 
-    public Product(String productName, String productType, int availableAmount, double price) {
+    public Product(String productName, ProductType productType, int availableAmount, double price) {
         this(productName, productType, availableAmount, price, false);
     }
 
-    public Product(String productName, String productType, int availableAmount, double price, boolean hidden) {
+    public Product(String productName, ProductType productType, int availableAmount, double price, boolean hidden) {
         this.productName = productName;
         this.productType = productType;
         this.availableAmount = availableAmount;
@@ -33,7 +33,7 @@ public class Product implements Serializable {
         return productName;
     }
 
-    public String getProductType() {
+    public ProductType getProductType() {
         return productType;
     }
     public int getAvailableAmount() {

@@ -37,7 +37,7 @@ public class Worker extends Communication {
                 case REMOVE_PRODUCT -> removeProduct(val);
                 case MANAGE_STOCK -> manageStock(val);
                 case GET_SALES_BY_STORE_TYPE -> getSalesByStoreType(val);
-                case GET_SALES_BY_PRODUCT_TYPE -> getSalesByProductType(val);
+                case GET_SALES_BY_PRODUCT_TYPE -> (T) getSalesByProductType((ProductType[]) val);
                 case GET_SALES_BY_STORE -> getSalesByStore(val);
                 case GET_STORES -> (T) getAllStores();
                 default -> {
@@ -122,23 +122,27 @@ public class Worker extends Communication {
         return (T) salesByStoreType;
     }
 
-    private static <T> T getSalesByProductType(T val) {
-        String productType = (String) val;
-        Map<String, Double> salesByProductType = new HashMap<>();
-        double total = 0.0;
+    private static Map<String, Double> getSalesByProductType(ProductType[] types)
+    {
+        Map<String, Double> totalsPerType = new HashMap<>();
 
-        for (ExtendedStore store : memory.values()) {
-            synchronized (store) {
-                double sales = store.getSales(productType);
-                if (sales > 0) {
-                    salesByProductType.put(store.getStoreName(), sales);
-                    total += sales;
+        for (ExtendedStore store : memory.values())
+        {
+            for (ProductType productType : types)
+            {
+                double sales = store.getSalesByProductType(productType);
+                if (sales > 0)
+                {
+                    totalsPerType.put(productType.name(), totalsPerType.getOrDefault(productType.name(), 0.0) + sales);
                 }
             }
         }
-        salesByProductType.put("total", total);
-        return (T) salesByProductType;
+
+        return totalsPerType;
     }
+
+
+
 
     private static <T> T getSalesByStore(T val) {
         String storeName = (String) val;
