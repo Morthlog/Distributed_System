@@ -211,10 +211,10 @@ public class ManagerConsoleApp extends Communication {
 
         switch (option) {
             case 1:
-                displaySalesByEnum(FoodCategory.values(), RequestCode.GET_SALES_BY_STORE_TYPE, "Food Category");
+                displaySalesByEnum(FoodCategory.values(), RequestCode.GET_SALES_BY_STORE_TYPE, "food categories");
                 break;
             case 2:
-                displaySalesByEnum(ProductType.values(), RequestCode.GET_SALES_BY_PRODUCT_TYPE, "Product Type");
+                displaySalesByEnum(ProductType.values(), RequestCode.GET_SALES_BY_PRODUCT_TYPE, "product types");
                 break;
             case 3:
                 displaySalesByStore();
@@ -226,7 +226,7 @@ public class ManagerConsoleApp extends Communication {
 
     private <T extends Enum<T>> void displaySalesByEnum(T[] enumValues, RequestCode requestCode, String label)
     {
-        System.out.println("Choose from the available " + label.toLowerCase() + "s by typing the number separated by space (e.g., 0 2 3):");
+        System.out.println("Choose from the available " + label + " by typing the number separated by space (e.g., 0 2 3):");
 
         for (int i = 0; i < enumValues.length; i++)
         {
@@ -243,7 +243,7 @@ public class ManagerConsoleApp extends Communication {
         }
 
         Class<?> enumElementType  = enumValues.getClass().getComponentType();
-        Message<T[]> request = new Message<>((T[]) selected.toArray((T[]) Array.newInstance(enumElementType , 0)));
+        Message<T[]> request = new Message<>(selected.toArray((T[]) Array.newInstance(enumElementType , 0)));
         request.setRequest(requestCode);
 
         Map<String, Map<String, Double>> salesData = sendRequest(request);
