@@ -145,12 +145,11 @@ public class ExtendedStore extends Store {
         {
             if (product.getProductType().equals(requestedType))
             {
-                    String name = product.getProductName();
-                    synchronized (productSales)
-                    {
-
-                        totalSales += productSales.getOrDefault(name, 0.0);
-                    }
+                String name = product.getProductName();
+                synchronized (productSales)
+                {
+                    totalSales += productSales.getOrDefault(name, 0.0);
+                }
             }
         }
         return totalSales;

@@ -34,33 +34,49 @@ public class Reducer {
         };
     }
 
-    private static Map<String, Double> reducerSalesByType(List<Object> mappedResults) {
-        Map<String, Double> combinedSales = new HashMap<>();
-        double total = 0.0;
-        if (mappedResults != null) {
-            for (Object result : mappedResults) {
-                if (result instanceof Map) {
-                    Map<String, Double> salesMap = (Map<String, Double>) result;
-                    Double resultTotal = salesMap.remove("total");
-                    if (resultTotal != null) {
-                        total += resultTotal;
-                    }
-                    for (String key : salesMap.keySet()) {
-                        Double value = salesMap.get(key);
-                        combinedSales.put(key, combinedSales.getOrDefault(key, 0.0) + value);
+    private static Map<String, Map<String, Double>> reducerSalesByType(List<Object> mappedResults)
+    {
+        Map<String, Map<String, Double>> combinedSales = new HashMap<>();
+
+        if (mappedResults != null)
+        {
+            for (Object result : mappedResults)
+            {
+                if (result instanceof Map)
+                {
+                    Map<String, Map<String, Double>> typeMap = (Map<String, Map<String, Double>>) result;
+
+                    for (Map.Entry<String, Map<String, Double>> typeEntry : typeMap.entrySet())
+                    {
+                        String productType = typeEntry.getKey();
+                        Map<String, Double> storeSales = typeEntry.getValue();
+
+                        if (!combinedSales.containsKey(productType))
+                        {
+                            combinedSales.put(productType, new HashMap<>());
+                        }
+
+                        Map<String, Double> combinedStoreSales = combinedSales.get(productType);
+
+                        for (Map.Entry<String, Double> storeEntry : storeSales.entrySet())
+                        {
+                            String storeName = storeEntry.getKey();
+                            Double sales = storeEntry.getValue();
+                            combinedStoreSales.put(storeName, combinedStoreSales.getOrDefault(storeName, 0.0) + sales);
+                        }
                     }
                 }
             }
         }
-        combinedSales.put("total", total);
         return combinedSales;
     }
 
-    private static Map<String, Double> reducerSalesByStoreType(List<Object> mappedResults) {
+
+    private static Map<String, Map<String, Double>> reducerSalesByStoreType(List<Object> mappedResults) {
         return reducerSalesByType(mappedResults);
     }
 
-    private static Map<String, Double> reducerSalesByProductType(List<Object> mappedResults) {
+    private static Map<String, Map<String, Double>> reducerSalesByProductType(List<Object> mappedResults) {
         return reducerSalesByType(mappedResults);
     }
 

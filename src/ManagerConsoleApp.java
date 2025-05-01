@@ -86,7 +86,7 @@ public class ManagerConsoleApp extends Communication {
             return response.getValue();
         } catch (Exception e) {
             System.err.println("Failed send request: " + e.getMessage());
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 
@@ -99,7 +99,7 @@ public class ManagerConsoleApp extends Communication {
             return stores;
         } catch (Exception e) {
             System.err.println("Error getting stores: " + e.getMessage());
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 
@@ -223,22 +223,45 @@ public class ManagerConsoleApp extends Communication {
         }
     }
 
-    private void displaySalesByStoreType() {
-        System.out.print("Enter the type of the store you want to display sales for (e.g. 'burgers'): ");
-        String storeType = scanner.nextLine();
+    private void displaySalesByStoreType()
+    {
+        FoodCategory[] categories = FoodCategory.values();
+        System.out.println("Choose from the available food categories by typing the category's number separated by space (e.g., 0 2 3):");
+        for (int i = 0; i < categories.length; i++)
+        {
+            System.out.println(i + ": " + categories[i]);
+        }
 
+        String chosenCategories = scanner.nextLine();
+        String[] categoryIndexes = chosenCategories.split("\\s+");
+        List<FoodCategory> selectedCategories = new ArrayList<>();
+        for (String indexString : categoryIndexes)
+        {
+            int index = Integer.parseInt(indexString);
+            selectedCategories.add(categories[index]);
+        }
 
-        Message<String> request = new Message<>(storeType);
-        
+        Message<FoodCategory[]> request = new Message<>(selectedCategories.toArray(new FoodCategory[0]));
         request.setRequest(RequestCode.GET_SALES_BY_STORE_TYPE);
 
-        Map<String, Double> salesData = sendRequest(request);
-        System.out.println("Sales by Store Type: " + storeType);
-        Double total = salesData.remove("total");
-        for (Map.Entry<String, Double> entry : salesData.entrySet()) {
-            System.out.printf("Store: %s - Sales: $%.2f%n", entry.getKey(), entry.getValue());
+        Map<String, Map<String, Double>> salesData = sendRequest(request);
+
+        for (FoodCategory category : selectedCategories)
+        {
+            String categoryName = category.name();
+            Map<String, Double> perStore = salesData.get(categoryName);
+            if (perStore != null && !perStore.isEmpty())
+            {
+                System.out.println("Food Category: " + categoryName);
+                double total = 0.0;
+                for (Map.Entry<String, Double> entry : perStore.entrySet())
+                {
+                    System.out.printf("\"%s\": %.0f,%n", entry.getKey(), entry.getValue());
+                    total += entry.getValue();
+                }
+                System.out.printf("\"total\": %.0f%n%n", total);
+            }
         }
-        System.out.println("Total sales: " + total);
     }
 
     private void displaySalesByProductType()
@@ -262,21 +285,25 @@ public class ManagerConsoleApp extends Communication {
         Message<ProductType[]> request = new Message<>(selectedTypes.toArray(new ProductType[0]));
         request.setRequest(RequestCode.GET_SALES_BY_PRODUCT_TYPE);
 
-        Map<String, Double> salesData = sendRequest(request);
+        Map<String, Map<String, Double>> salesData = sendRequest(request);
 
-        System.out.println("Total sales per selected product type:");
         for (ProductType type : selectedTypes)
         {
-            Double typeTotal = salesData.get(type.name());
-            if (typeTotal != null)
+            String typeName = type.name();
+            Map<String, Double> perStore = salesData.get(typeName);
+            if (perStore != null && !perStore.isEmpty())
             {
-                System.out.printf("Product Type: %s - Total Sales: $%.2f%n", type, typeTotal);
+                System.out.println("Product Type: " + typeName);
+                double total = 0.0;
+                for (Map.Entry<String, Double> entry : perStore.entrySet())
+                {
+                    System.out.printf("\"%s\": %.0f,%n", entry.getKey(), entry.getValue());
+                    total += entry.getValue();
+                }
+                System.out.printf("\"total\": %.0f%n%n", total);
             }
         }
     }
-
-
-
 
     private void displaySalesByStore() {
         Map<String, ExtendedStore> stores = getStores();

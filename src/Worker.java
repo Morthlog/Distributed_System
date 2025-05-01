@@ -33,7 +33,7 @@ public class Worker extends Communication {
                 case ADD_PRODUCT -> (BackendMessage<T>) addProduct((ProductAddition) val, saveState);
                 case REMOVE_PRODUCT -> (BackendMessage<T>) removeProduct((ProductRemoval) val, saveState);
                 case MANAGE_STOCK -> (BackendMessage<T>) manageStock((StockChange) val, saveState);
-                case GET_SALES_BY_STORE_TYPE -> (BackendMessage<T>) getSalesByStoreType((String) val);
+                case GET_SALES_BY_STORE_TYPE -> (BackendMessage<T>) getSalesByStoreType((FoodCategory[]) val);
                 case GET_SALES_BY_PRODUCT_TYPE -> (BackendMessage<T>) getSalesByProductType((ProductType[]) val);
                 case GET_SALES_BY_STORE -> (BackendMessage<T>) getSalesByStore((String) val);
                 case GET_STORES -> (BackendMessage<T>) getAllStores();
@@ -142,62 +142,87 @@ public class Worker extends Communication {
         return msg;
     }
 
-    private static BackendMessage<Map<String, Double>> getSalesByStoreType(String storeType) {
-        Map<String, Double> salesByStoreType = new HashMap<>();
-        double total = 0.0;
+    private static BackendMessage<Map<String, Map<String, Double>>> getSalesByStoreType(FoodCategory[] categories)
+    {
+        Map<String, Map<String, Double>> result = new HashMap<>();
 
         Map<String, ExtendedStore> database = getDatabaseFor(SaveState.MEMORY);
         Collection<ExtendedStore> stores;
-        synchronized (database) {
+        synchronized (database)
+        {
             stores = database.values();
         }
 
-        for (ExtendedStore store : stores) {
-            if (store.getFoodCategory().equalsIgnoreCase(storeType)) {
-                synchronized (store) {
-                    double sales = 0.0;
-                    for (Double salesValue : store.getProductSales().values()) {
-                        sales += salesValue;
-                    }
-                    if (sales > 0) {
-                        salesByStoreType.put(store.getStoreName(), sales);
-                        total += sales;
+        for (ExtendedStore store : stores)
+        {
+            String storeName = store.getStoreName();
+            FoodCategory storeCategory = FoodCategory.valueOf(store.getFoodCategory().toUpperCase());
+
+            for (FoodCategory category : categories)
+            {
+                if (storeCategory == category)
+                {
+                    synchronized (store)
+                    {
+                        double sales = 0.0;
+                        for (Double salesValue : store.getProductSales().values())
+                        {
+                            sales += salesValue;
+                        }
+
+                        if (sales > 0)
+                        {
+                            String categoryName = category.name();
+                            if (!result.containsKey(categoryName))
+                            {
+                                result.put(categoryName, new HashMap<>());
+                            }
+                            result.get(categoryName).put(storeName, sales);
+                        }
                     }
                 }
             }
         }
-        salesByStoreType.put("total", total);
-        BackendMessage<Map<String, Double>> msg = new BackendMessage<>();
-        msg.setValue(salesByStoreType);
+
+        BackendMessage<Map<String, Map<String, Double>>> msg = new BackendMessage<>();
+        msg.setValue(result);
         return msg;
     }
 
-    private static BackendMessage<Map<String, Double>> getSalesByProductType(ProductType[] types) {
-        
-        Map<String, Double> totalsPerType = new HashMap<>();
-        double total = 0.0;
+
+    private static BackendMessage<Map<String, Map<String, Double>>> getSalesByProductType(ProductType[] types)
+    {
+        Map<String, Map<String, Double>> result = new HashMap<>();
 
         Map<String, ExtendedStore> database = getDatabaseFor(SaveState.MEMORY);
         Collection<ExtendedStore> stores;
-        synchronized (database) {
+        synchronized (database)
+        {
             stores = database.values();
         }
 
-        for (ExtendedStore store : stores) {
+        for (ExtendedStore store : stores)
+        {
+            String storeName = store.getStoreName();
             for (ProductType productType : types)
             {
                 double sales = store.getSalesByProductType(productType);
                 if (sales > 0)
                 {
-                    totalsPerType.put(productType.name(), totalsPerType.getOrDefault(productType.name(), 0.0) + sales);
+                    String typeName = productType.name();
+                    if (!result.containsKey(typeName))
+                    {
+                        result.put(typeName, new HashMap<>());
+                    }
+                    result.get(typeName).put(storeName, sales);
                 }
             }
         }
-        BackendMessage<Map<String, Double>> msg = new BackendMessage<>();
-        msg.setValue(totalsPerType);
+
+        BackendMessage<Map<String, Map<String, Double>>> msg = new BackendMessage<>();
+        msg.setValue(result);
         return msg;
     }
-
 
 
 
@@ -247,7 +272,7 @@ public class Worker extends Communication {
         try
         {
             // Simulate a delay so that the animation in DummyApp has time to play
-            sleep(2000);
+            sleep(1000);
         }
         catch (InterruptedException e)
         {
@@ -279,7 +304,7 @@ public class Worker extends Communication {
         try
         {
             // Simulate a delay so that the animation in DummyApp has time to play
-            sleep(2000);
+            sleep(1000);
         }
         catch (InterruptedException e)
         {
