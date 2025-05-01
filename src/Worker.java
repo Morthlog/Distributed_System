@@ -12,95 +12,124 @@ public class Worker extends Communication {
     private static final Map<String, ExtendedStore> backup = new HashMap<>(); // should be extendedStore
     /**
      * actionTable for every way the {@link Worker} should respond
-     * current actions are not permanent
      */
-    private static <T> T actionTable(BackendMessage<T> msg) {
+    @SuppressWarnings("unchecked")
+    private static <T> BackendMessage<T> actionTable(BackendMessage<T> msg) {
         Client client = msg.getClient();
         RequestCode code = msg.getRequest();
         T val = msg.getValue();
-        return switch (client) {
+        BackendMessage<T> response = switch (client) {
             case Customer -> switch (code) {
-                case STUB_TEST_1-> sendString(val);
-                case STUB_TEST_2 -> sendNum(val);
-                case SEARCH -> (T) mapSearch((Filter) val);
-                case BUY -> (T) buy((ShoppingCart) val);
-                case RATE_STORE -> (T) addRatingToStore((RatingChange) val);
+                case STUB_TEST_1-> (BackendMessage<T>) sendString((String) val);
+                case STUB_TEST_2 -> (BackendMessage<T>) sendNum((Integer) val);
+                case SEARCH -> (BackendMessage<T>) mapSearch((Filter) val);
+                case BUY -> (BackendMessage<T>) buy((ShoppingCart) val);
+                case RATE_STORE -> (BackendMessage<T>) addRatingToStore((RatingChange) val);
                 default -> {
                     System.err.println("Unknown customer code: " + code);
                     throw new RuntimeException();
                 }
             };
             case Manager -> switch (code) {
-
-                case ADD_STORE -> addStore(val);
-                case ADD_PRODUCT -> addProduct(val);
-                case REMOVE_PRODUCT -> removeProduct(val);
-                case MANAGE_STOCK -> manageStock(val);
-                case GET_SALES_BY_STORE_TYPE -> getSalesByStoreType(val);
-                case GET_SALES_BY_PRODUCT_TYPE -> getSalesByProductType(val);
-                case GET_SALES_BY_STORE -> getSalesByStore(val);
-                case GET_STORES -> (T) getAllStores();
+                case ADD_STORE -> (BackendMessage<T>) addStore((ExtendedStore) val);
+                case ADD_PRODUCT -> (BackendMessage<T>) addProduct((ProductAddition) val);
+                case REMOVE_PRODUCT -> (BackendMessage<T>) removeProduct((ProductRemoval) val);
+                case MANAGE_STOCK -> (BackendMessage<T>) manageStock((StockChange) val);
+                case GET_SALES_BY_STORE_TYPE -> (BackendMessage<T>) getSalesByStoreType((String) val);
+                case GET_SALES_BY_PRODUCT_TYPE -> (BackendMessage<T>) getSalesByProductType((String) val);
+                case GET_SALES_BY_STORE -> (BackendMessage<T>) getSalesByStore((String) val);
+                case GET_STORES -> (BackendMessage<T>) getAllStores();
                 default -> {
                     System.err.println("Unknown manager code: " + code);
                     throw new RuntimeException();
                 }
             };
             case MASTER -> switch (code){
-                case TRANSFER_BACKUP -> transferToMemory(val);
+                case TRANSFER_BACKUP -> (BackendMessage<T>) transferToMemory((String) val);
                 default -> {
                     System.err.println("Unknown MASTER code: " + code);
                     throw new RuntimeException();
                 }
             };
         };
-
+        response.setClient(client);
+        response.setRequest(code);
+        response.setId(msg.getId());
+        return response;
     }
 
-    private static <T> T addStore(T val) {
-        ExtendedStore store = (ExtendedStore) val;
+    private static BackendMessage<String> addStore(ExtendedStore store) {
         String storeName = store.getStoreName();
+
+        BackendMessage<String> msg = new BackendMessage<>();
         synchronized (memory) {
             if (memory.containsKey(storeName)) {
-                return (T) "Store already exists";
+                msg.setValue("Store already exists");
             }
-            memory.put(storeName, store);
+            else
+            {
+                msg.setValue("Store added successfully");
+                memory.put(storeName, store);
+            }
         }
-        return (T) "Store added successfully";
+
+        return msg;
     }
 
-    private static <T> T addProduct(T val) {
-        ProductAddition data= (ProductAddition) val;
+    private static BackendMessage<String> addProduct(ProductAddition data) {
+
         ExtendedStore store = memory.get(data.getStoreName());
         boolean result;
+        BackendMessage<String> msg = new BackendMessage<>();
         synchronized (store) {
             result = store.addProduct(data.getProduct());
+            if (result)
+            {
+                msg.setValue("Product added successfully");
+            }
+            else
+            {
+                msg.setValue("Product already exists");
+            }
+
         }
-        if (result)
-            return (T) "Product added successfully";
-        return (T) "Product already exists";
+        return msg;
     }
 
-    private static <T> T removeProduct(T val) {
-        ProductRemoval data = (ProductRemoval) val;
+    private static BackendMessage<String> removeProduct(ProductRemoval data) {
         ExtendedStore store = memory.get(data.getStoreName());
+        BackendMessage<String> msg = new BackendMessage<>();
         synchronized (store) {
-            store.removeProduct(data.getProductName());
+            boolean result = store.removeProduct(data.getProductName());
+            if (result)
+            {
+                msg.setValue("Product removed successfully");
+            }
+            else
+            {
+                msg.setValue("Product does not exist");
+            }
         }
-        return (T) "Product removed successfully";
+        return msg;
     }
 
 
-    private static <T> T manageStock(T val) {
-        StockChange data = (StockChange) val;
+    private static BackendMessage<String> manageStock(StockChange data) {
         ExtendedStore store = memory.get(data.getStoreName());
+        BackendMessage<String> msg = new BackendMessage<>();
         boolean updated = store.manageStock(data.getProductName(), data.getQuantityChange());
-        if (!updated)
-            return (T) "Product not found";
-        return (T) "Stock updated successfully";
+        if (updated)
+        {
+            msg.setValue("Stock updated successfully");
+        }
+        else
+        {
+            msg.setValue("Stock does not exist");
+        }
+        return msg;
     }
 
-    private static <T> T getSalesByStoreType(T val) {
-        String storeType = (String) val;
+    private static BackendMessage<Map<String, Double>> getSalesByStoreType(String storeType) {
         Map<String, Double> salesByStoreType = new HashMap<>();
         double total = 0.0;
 
@@ -119,11 +148,12 @@ public class Worker extends Communication {
             }
         }
         salesByStoreType.put("total", total);
-        return (T) salesByStoreType;
+        BackendMessage<Map<String, Double>> msg = new BackendMessage<>();
+        msg.setValue(salesByStoreType);
+        return msg;
     }
 
-    private static <T> T getSalesByProductType(T val) {
-        String productType = (String) val;
+    private static BackendMessage<Map<String, Double>> getSalesByProductType(String productType) {
         Map<String, Double> salesByProductType = new HashMap<>();
         double total = 0.0;
 
@@ -137,11 +167,12 @@ public class Worker extends Communication {
             }
         }
         salesByProductType.put("total", total);
-        return (T) salesByProductType;
+        BackendMessage<Map<String, Double>> msg = new BackendMessage<>();
+        msg.setValue(salesByProductType);
+        return msg;
     }
 
-    private static <T> T getSalesByStore(T val) {
-        String storeName = (String) val;
+    private static BackendMessage<Map<String, Double>> getSalesByStore(String storeName) {
         ExtendedStore store = memory.get(storeName);
         Map<String, Double> salesByStore = new HashMap<>();
         double total = 0.0;
@@ -156,20 +187,25 @@ public class Worker extends Communication {
             }
         }
         salesByStore.put("total", total);
-        return (T) salesByStore;
+        BackendMessage<Map<String, Double>> msg = new BackendMessage<>();
+        msg.setValue(salesByStore);
+        return msg;
     }
 
-    private static <T> Map<String, ExtendedStore> getAllStores() {
+    private static Map<String, ExtendedStore> getAllStores() {
         return new HashMap<>(memory);
     }
 
-    private static <T> T transferToMemory(T val){
-        String storeName = (String)val;
-        memory.put(storeName, backup.get(storeName));
-        backup.remove(storeName);
-        return (T)"OK";    }
+    private static BackendMessage<String> transferToMemory(String storeName){
+        synchronized (memory) {
+            synchronized (backup){
+                memory.put(storeName, backup.remove(storeName));
+            }
+        }
+        return new BackendMessage<>("OK");
+    }
 
-    private static String buy(ShoppingCart shoppingCart)
+    private static BackendMessage<String> buy(ShoppingCart shoppingCart)
     {
         try
         {
@@ -188,12 +224,14 @@ public class Worker extends Communication {
         {
             state="failed";
         }
-        return String.format("Purchase %s for store: %s and products %s", state, store.getStoreName(), shoppingCart.getProducts());
+        String result = String.format("Purchase %s for store: %s and products %s", state, store.getStoreName(), shoppingCart.getProducts());
+        BackendMessage<String> msg = new BackendMessage<>(result);
+        return msg;
     }
 
 
 
-    private static List<Store> mapSearch(Filter filter)
+    private static BackendMessage<List<Store>> mapSearch(Filter filter)
     {
         try
         {
@@ -212,7 +250,7 @@ public class Worker extends Communication {
                 result.add(store);
             }
         }
-        return result;
+        return new BackendMessage<>(result);
     }
 
 
@@ -270,20 +308,23 @@ public class Worker extends Communication {
         return distance;
     }
 
-    public static String addRatingToStore(RatingChange ratingChange)
+    public static BackendMessage<String> addRatingToStore(RatingChange ratingChange)
     {
         Store store = memory.get(ratingChange.getStoreName());
         float newRating = store.addRating(ratingChange);
 
-        return String.format("Rating completed. New store rating: %.1f", newRating);
+        String result = String.format("Rating completed. New store rating: %.1f", newRating);
+        BackendMessage<String> msg = new BackendMessage<>(result);
+
+        return msg;
     }
 
-    private static <T> T sendString(T val){
-        return (T) (val + " changed");
+    private static BackendMessage<String> sendString(String val){
+        return new BackendMessage<> ((val + " changed"));
     }
 
-    private static <T> T sendNum(T val){
-        return (T) Integer.valueOf((Integer) val + 100);
+    private static BackendMessage<Integer> sendNum(Integer val){
+        return new BackendMessage<>(val + 100);
     }
 
 
@@ -294,8 +335,8 @@ public class Worker extends Communication {
     public static <T> void ManageRequest(BackendMessage<T> msg, Worker client)
     {
         try{
-            T value = actionTable(msg);
-            msg.setValue(value);
+            msg = actionTable(msg);
+            //msg.setValue(value);
 
             client.sendMessage(msg);
             client.stopConnection();

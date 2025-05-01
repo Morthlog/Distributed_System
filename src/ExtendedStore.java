@@ -72,13 +72,16 @@ public class ExtendedStore extends Store {
         return true;
     }
 
-    public void removeProduct(String productName) {
+    public boolean removeProduct(String productName) {
+        if (!products.containsKey(productName))
+            return false;
         Product product = products.get(productName);
         if (product != null) {
             product.setHidden(true);
             visibleProducts.remove(productName);
         }
         calculatePriceCategory();
+        return true;
     }
 
     public boolean manageStock(String productName, int amountChange, boolean bypassChecks) {

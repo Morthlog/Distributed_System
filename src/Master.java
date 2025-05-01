@@ -229,7 +229,6 @@ public class Master extends Thread {
             setIdToRequest(msg);
             System.out.println("Client asked for: " + msg.getValue());
             initMapReduce(msg.getId());
-            msg.setSaveState(SaveState.MEMORY);
             response = startForBroker(msg);
             serverClient.sendMessage(response);
 

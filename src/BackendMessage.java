@@ -4,12 +4,18 @@ public class BackendMessage <T> extends Message<T> {
 
     public BackendMessage(T value){
         super(value);
+        setSaveState(SaveState.MEMORY);
     }
 
     public BackendMessage(Message<T> message){
+        this();
         setValue(message.getValue());
         setClient(message.getClient());
         setRequest(message.getRequest());
+    }
+
+    public BackendMessage() {
+        setSaveState(SaveState.MEMORY);
     }
 
     public int getId() {
