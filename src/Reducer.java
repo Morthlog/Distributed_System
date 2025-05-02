@@ -58,12 +58,8 @@ public class Reducer {
 
                         Map<String, Double> combinedStoreSales = combinedSales.get(categoryType);
 
-                        for (Map.Entry<String, Double> storeEntry : storeSales.entrySet())
-                        {
-                            String storeName = storeEntry.getKey();
-                            Double sales = storeEntry.getValue();
-                            combinedStoreSales.put(storeName, combinedStoreSales.getOrDefault(storeName, 0.0) + sales);
-                        }
+                        combinedStoreSales.putAll(storeSales);
+
                     }
                 }
             }

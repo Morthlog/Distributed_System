@@ -89,42 +89,10 @@ public class Store implements Serializable, StoreNameProvider{
         return storeName;
     }
     
-    public Map<String, Product> getVisibleProducts() {
-        return visibleProducts;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder result = new StringBuilder();
-        result.append("{")
-                .append("\"StoreName\": \"").append(storeName).append("\", ")
-                .append("\"Latitude\": ").append(latitude).append(", ")
-                .append("\"Longitude\": ").append(longitude).append(", ")
-                .append("\"FoodCategory\": \"").append(foodCategory).append("\", ")
-                .append("\"Stars\": ").append(stars).append(", ")
-                .append("\"NoOfVotes\": ").append(noOfVotes).append(", ")
-                .append("\"StoreLogo\": \"").append(storeLogo).append("\", ")
-                .append("\"Products\": [");
-
-        int i = 0;
-        for (Product p : visibleProducts.values()) {
-            result.append("{")
-                    .append("\"ProductName\": \"").append(p.getProductName()).append("\", ")
-                    .append("\"ProductType\": \"").append(p.getProductType()).append("\", ")
-                    .append("\"Available Amount\": ").append(p.getAvailableAmount()).append(", ")
-                    .append("\"Price\": ").append(p.getPrice())
-                    .append("}");
-            if (i < visibleProducts.size() - 1) {
-                result.append(", ");
-            }
-            i++;
-        }
-        result.append("]}");
-        return result.toString();
-    }
-
     public Map<String, Product> getProducts() {
-        return new HashMap<>(visibleProducts);
+        synchronized (visibleProducts) {
+            return new HashMap<>(visibleProducts);
+        }
     }
     public String getFoodCategory()
     {

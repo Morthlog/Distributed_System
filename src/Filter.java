@@ -60,13 +60,6 @@ public class Filter implements Serializable
         return foodCategories.clone();
     }
 
-    @Override
-    public String toString()
-    {
-        return "Filter [Stars=" + stars +
-                ", Price=" + java.util.Arrays.toString(priceCategories)  +
-                ", Categories=" + java.util.Arrays.toString(foodCategories)  + "]";
-    }
 
     public void setLatitude(double latitude)
     {

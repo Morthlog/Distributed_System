@@ -189,8 +189,8 @@ public class ExtendedStore extends Store {
         );
 
         Map<String, Product> productsStorage;
-        synchronized (products) {
-            productsStorage = getProducts();
+        synchronized (visibleProducts) {
+            productsStorage = super.getProducts();
         }
         for (Product product : productsStorage.values()) {
             synchronized (product) {

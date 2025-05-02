@@ -69,14 +69,5 @@ public class Product implements Serializable {
     public void setHidden(boolean hidden) {
         this.hidden = hidden;
     }
-    @Override
-    public String toString() {
-        return "Products{" +
-                "productName='" + productName + '\'' +
-                ", productType='" + productType + '\'' +
-                ", availableAmount=" + availableAmount +
-                ", price=" + price +
-                '}';
-    }
 }
 

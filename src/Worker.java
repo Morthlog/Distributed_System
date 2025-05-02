@@ -179,7 +179,7 @@ public class Worker extends Communication {
                         }
                         result.get(categoryName).put(storeName, sales);
                     }
-
+                    break;
                 }
             }
         }
