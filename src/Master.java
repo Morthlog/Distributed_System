@@ -87,7 +87,7 @@ public class Master extends Thread {
             if (((BackendMessage<T1>)response).getSaveState() == SaveState.REQUIRES_BACKUP)
             {
                 int workerId = storeToWorkerBackup.get(((StoreNameProvider) msg.getValue()).getStoreName());
-                if (workerId != -1){ // no secondary backup location exists
+                if (workerId !=-1 && workerId != worker){ // no secondary backup location exists
                     msg.setSaveState(SaveState.BACKUP);
                     server = serverWorker.get(workerId);
                     synchronized (server){
