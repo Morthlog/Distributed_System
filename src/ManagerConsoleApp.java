@@ -105,6 +105,7 @@ public class ManagerConsoleApp extends Communication {
     }
 
     private void addStore() {
+        System.out.println("Current path: " + System.getProperty("user.dir"));
         System.out.print("Enter json path of the new store you want to add: ");
         String path = scanner.nextLine();
 
