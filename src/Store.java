@@ -14,7 +14,7 @@ public class Store implements Serializable, StoreNameProvider{
     protected String storeLogo;
     protected String priceCategory;
 
-    protected Map<String, Product> visibleProducts;
+    protected final Map<String, Product> visibleProducts;
 
     public Store(String storeName, double latitude, double longitude, String foodCategory,
                  float stars, int noOfVotes, String storeLogo) {
@@ -64,10 +64,15 @@ public class Store implements Serializable, StoreNameProvider{
 
     protected void calculatePriceCategory() {
         double sum = 0.0;
-        for (Product p : visibleProducts.values()) {
-            sum += p.getPrice();
+        double averagePrice;
+        synchronized (visibleProducts)
+        {
+            for (Product p : visibleProducts.values()) {
+                sum += p.getPrice();
+            }
+            averagePrice= sum / visibleProducts.size();
         }
-        double averagePrice = sum / visibleProducts.size();
+
         if (averagePrice <= 5) {
             this.priceCategory = "$";
         } else if (averagePrice <= 15) {

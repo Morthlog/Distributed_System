@@ -84,17 +84,17 @@ public class Worker extends Communication {
         }
         boolean result;
         BackendMessage<String> msg = new BackendMessage<>();
-        synchronized (store) {
-            result = store.addProduct(data.getProduct(), saveState == SaveState.BACKUP);
-            if (result)
-            {
-                msg.setValue("Product added successfully");
-            }
-            else
-            {
-                msg.setValue("Product already exists");
-            }
+
+        result = store.addProduct(data.getProduct(), saveState == SaveState.BACKUP);
+        if (result)
+        {
+            msg.setValue("Product added successfully");
         }
+        else
+        {
+            msg.setValue("Product already exists");
+        }
+
         setupForBackup(msg, saveState);
         return msg;
     }
@@ -106,17 +106,17 @@ public class Worker extends Communication {
             store = database.get(data.getStoreName());
         }
         BackendMessage<String> msg = new BackendMessage<>();
-        synchronized (store) {
-            boolean result = store.removeProduct(data.getProductName());
-            if (result)
-            {
-                msg.setValue("Product removed successfully");
-            }
-            else
-            {
-                msg.setValue("Product does not exist");
-            }
+
+        boolean result = store.removeProduct(data.getProductName());
+        if (result)
+        {
+            msg.setValue("Product removed successfully");
         }
+        else
+        {
+            msg.setValue("Product does not exist");
+        }
+
         setupForBackup(msg, saveState);
         return msg;
     }
@@ -162,23 +162,20 @@ public class Worker extends Communication {
             {
                 if (storeCategory == category)
                 {
-                    synchronized (store)
+                    double sales = 0.0;
+                    for (Double salesValue : store.getProductSales().values())
                     {
-                        double sales = 0.0;
-                        for (Double salesValue : store.getProductSales().values())
-                        {
-                            sales += salesValue;
-                        }
+                        sales += salesValue;
+                    }
 
-                        if (sales > 0)
+                    if (sales > 0)
+                    {
+                        String categoryName = category.name();
+                        if (!result.containsKey(categoryName))
                         {
-                            String categoryName = category.name();
-                            if (!result.containsKey(categoryName))
-                            {
-                                result.put(categoryName, new HashMap<>());
-                            }
-                            result.get(categoryName).put(storeName, sales);
+                            result.put(categoryName, new HashMap<>());
                         }
+                        result.get(categoryName).put(storeName, sales);
                     }
                 }
             }
@@ -192,6 +189,7 @@ public class Worker extends Communication {
 
     private static BackendMessage<Map<String, Map<String, Double>>> getSalesByProductType(ProductType[] types)
     {
+        //  <productType, <storeName, salesByProduct>>
         Map<String, Map<String, Double>> result = new HashMap<>();
 
         Map<String, ExtendedStore> database = getDatabaseFor(SaveState.MEMORY);
@@ -235,13 +233,11 @@ public class Worker extends Communication {
             store = database.get(storeProvided.getStoreName());
         }
 
-        synchronized (store) {
-            for (Map.Entry<String, Double> entry : store.getProductSales().entrySet()) {
-                double sales = entry.getValue();
-                if (sales > 0) {
-                    salesByStore.put(entry.getKey(), sales);
-                    total += sales;
-                }
+        for (Map.Entry<String, Double> entry : store.getProductSales().entrySet()) {
+            double sales = entry.getValue();
+            if (sales > 0) {
+                salesByStore.put(entry.getKey(), sales);
+                total += sales;
             }
         }
         salesByStore.put("total", total);

@@ -56,29 +56,50 @@ public class ExtendedStore extends Store {
         }
         calculatePriceCategory();
     }
-
+    //CAUTION: Lock order matters. Try to keep locks within the same object to make them easier to manage.
     public boolean addProduct(Product product, boolean bypassChecks) {
-        if (!bypassChecks && products.containsKey(product.getProductName()))
-            return false;
-        products.put(product.getProductName(), product);
+        synchronized (products)
+        {
+            if (!bypassChecks && products.containsKey(product.getProductName()))
+                return false;
 
-        if (!product.isHidden()) {
-            visibleProducts.put(product.getProductName(), product);
+            products.put(product.getProductName(), product);
         }
 
-        productSales.put(product.getProductName(), 0.0);
+        if (!product.isHidden()) {
+            synchronized (visibleProducts)
+            {
+                visibleProducts.put(product.getProductName(), product);
+            }
+        }
+
+        synchronized (productSales)
+        {
+            productSales.put(product.getProductName(), 0.0);
+        }
 
         calculatePriceCategory();
         return true;
     }
 
     public boolean removeProduct(String productName) {
-        if (!products.containsKey(productName))
-            return false;
-        Product product = products.get(productName);
+        Product product;
+        synchronized (products)
+        {
+            if (!products.containsKey(productName))
+                return false;
+            product = products.get(productName);
+        }
+
         if (product != null) {
-            product.setHidden(true);
-            visibleProducts.remove(productName);
+            synchronized (product)
+            {
+                product.setHidden(true);
+            }
+            synchronized (visibleProducts)
+            {
+                visibleProducts.remove(productName);
+            }
         }
         calculatePriceCategory();
         return true;
@@ -111,11 +132,16 @@ public class ExtendedStore extends Store {
     }
 
     public boolean saveSale(String productName, int quantity, boolean bypassChecks) {
-        if (!products.containsKey(productName)) {
-            return false;
-        }
+        Product product;
+        synchronized (products)
+        {
+            if (!products.containsKey(productName)) {
+                return false;
+            }
 
-        Product product = products.get(productName);
+            product = products.get(productName);
+        }
+        double salesIncome;
         synchronized (product) {
             if (!bypassChecks && product.isHidden())
                 return false;
@@ -126,12 +152,15 @@ public class ExtendedStore extends Store {
             }
             product.setAvailableAmount(currentAmount - quantity);
 
-            double salesIncome = product.getPrice() * quantity;
+            salesIncome= product.getPrice() * quantity;
+        }
+        synchronized (productSales)
+        {
             double currentSales = productSales.getOrDefault(productName, 0.0);
             productSales.put(productName, currentSales + salesIncome);
+        }
 
             return true;
-        }
     }
 
     public boolean saveSale(String productName, int quantity) {
@@ -140,29 +169,36 @@ public class ExtendedStore extends Store {
 
     public double getSalesByProductType(ProductType requestedType) {
         double totalSales = 0;
-
-        for (Product product : products.values())
+        synchronized (products)
         {
-            if (product.getProductType().equals(requestedType))
+            for (Product product : products.values())
             {
-                String name = product.getProductName();
-                synchronized (productSales)
+                if (product.getProductType().equals(requestedType))
                 {
-                    totalSales += productSales.getOrDefault(name, 0.0);
+                    String name = product.getProductName();
+                    synchronized (productSales)
+                    {
+                        totalSales += productSales.getOrDefault(name, 0.0);
+                    }
                 }
             }
         }
+
         return totalSales;
     }
 
 
     @Override
     public Map<String, Product> getProducts() {
-        return new HashMap<>(products);
+        synchronized (products){
+            return new HashMap<>(products);
+        }
     }
 
     public Map<String, Double> getProductSales() {
-        return new HashMap<>(productSales);
+        synchronized (productSales) {
+            return new HashMap<>(productSales);
+        }
     }
 
     public Store toCustomerStore() {
@@ -210,14 +246,22 @@ public class ExtendedStore extends Store {
     {
         while (!queue.isEmpty())
         {
+            Product product;
             SaleRecord record = queue.removeLast();
-            Product product = products.get(record.productName);
+            synchronized (products)
+            {
+                product = products.get(record.productName);
+            }
+
             synchronized (product)
             {
                 product.setAvailableAmount(product.getAvailableAmount() + record.quantity);
-                double productTotalSales = productSales.get(record.productName);
-                double currentProductRevenue=record.quantity*product.getPrice();
-                productSales.put(record.productName, productTotalSales - currentProductRevenue);
+                synchronized (productSales)
+                {
+                    double productTotalSales = productSales.get(record.productName);
+                    double currentProductRevenue=record.quantity*product.getPrice();
+                    productSales.put(record.productName, productTotalSales - currentProductRevenue);
+                }
             }
         }
     }
