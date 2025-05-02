@@ -85,5 +85,4 @@ public class Customer extends stubUser
     public void clearShoppingCart(){
         shoppingCart.clear();
     }
-
 }

@@ -66,7 +66,8 @@ public class ExtendedStore extends Store {
             products.put(product.getProductName(), product);
         }
 
-        if (!product.isHidden()) {
+        if (!product.isHidden())
+        {
             synchronized (visibleProducts)
             {
                 visibleProducts.put(product.getProductName(), product);
@@ -106,12 +107,16 @@ public class ExtendedStore extends Store {
     }
 
     public boolean manageStock(String productName, int amountChange, boolean bypassChecks) {
+        Product product;
         if (products == null) {
             return false;
         }
-        Product product = products.get(productName);
-        if (product == null) {
-            return false;
+        synchronized (products)
+        {
+            product = products.get(productName);
+            if (product == null) {
+                return false;
+            }
         }
 
         synchronized (product) {
@@ -212,9 +217,13 @@ public class ExtendedStore extends Store {
                 this.storeLogo
         );
 
-        for (Product product : this.visibleProducts.values()) {
-            customerStore.visibleProducts.put(product.getProductName(), product);
+        synchronized (visibleProducts)
+        {
+            for (Product product : this.visibleProducts.values()) {
+                customerStore.visibleProducts.put(product.getProductName(), product);
+            }
         }
+
         customerStore.calculatePriceCategory();
         return customerStore;
     }

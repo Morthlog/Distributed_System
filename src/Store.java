@@ -85,10 +85,6 @@ public class Store implements Serializable, StoreNameProvider{
     public String getStoreName() {
         return storeName;
     }
-    
-    public Map<String, Product> getVisibleProducts() {
-        return visibleProducts;
-    }
 
     @Override
     public String toString() {
@@ -104,24 +100,31 @@ public class Store implements Serializable, StoreNameProvider{
                 .append("\"Products\": [");
 
         int i = 0;
-        for (Product p : visibleProducts.values()) {
-            result.append("{")
-                    .append("\"ProductName\": \"").append(p.getProductName()).append("\", ")
-                    .append("\"ProductType\": \"").append(p.getProductType()).append("\", ")
-                    .append("\"Available Amount\": ").append(p.getAvailableAmount()).append(", ")
-                    .append("\"Price\": ").append(p.getPrice())
-                    .append("}");
-            if (i < visibleProducts.size() - 1) {
-                result.append(", ");
+        synchronized (visibleProducts)
+        {
+            for (Product p : visibleProducts.values()) {
+                result.append("{")
+                        .append("\"ProductName\": \"").append(p.getProductName()).append("\", ")
+                        .append("\"ProductType\": \"").append(p.getProductType()).append("\", ")
+                        .append("\"Available Amount\": ").append(p.getAvailableAmount()).append(", ")
+                        .append("\"Price\": ").append(p.getPrice())
+                        .append("}");
+                if (i < visibleProducts.size() - 1) {
+                    result.append(", ");
+                }
+                i++;
             }
-            i++;
+            result.append("]}");
         }
-        result.append("]}");
+
         return result.toString();
     }
 
     public Map<String, Product> getProducts() {
-        return new HashMap<>(visibleProducts);
+        synchronized (visibleProducts)
+        {
+            return new HashMap<>(visibleProducts);
+        }
     }
     public String getFoodCategory()
     {
