@@ -231,7 +231,6 @@ public class Master extends Thread {
         try {
             BackendMessage<T> msg = new BackendMessage<>(serverClient.receiveMessage());
             setIdToRequest(msg);
-            System.out.println("Client asked for: " + msg.getValue());
             initMapReduce(msg.getId());
             response = startForBroker(msg);
             serverClient.sendMessage(response);
@@ -366,19 +365,9 @@ public class Master extends Thread {
             {
                 System.out.println("Waiting for request...");
                 Socket serverSocket = serverClient.accept();
+                System.out.println("Request received");
                 Thread t = new Master(serverSocket);
                 t.start();
-
-                if (false)
-                    break;
-            }
-
-            System.out.println("Would you like to exit?");
-            String answer = on.nextLine();
-            System.out.println(answer);
-            if (answer.equals("Yes"))
-            {
-                // stop all connections on threads
             }
         }
         catch (Exception e)
@@ -386,18 +375,5 @@ public class Master extends Thread {
             System.err.println("Couldn't start server: " + e.getMessage() );
             throw new RuntimeException(e);
         }
-
-        try
-        {
-            sleep(15000);
-        }
-        catch (InterruptedException e)
-        {
-            throw new RuntimeException(e);
-        }
-
-//        for (Master server: serversWorkers)
-//            server.stop();
-
     }
 }

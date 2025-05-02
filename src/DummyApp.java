@@ -95,7 +95,7 @@ public class DummyApp
         filter.setFoodCategories(filter.getAvailableFoodCategories());
         filter.setStars(1);
         filter.setPriceCategories(filter.getAvailablePrices());
-        System.out.println("Default filters set: " + filter);
+        System.out.println("Default filters set");
     }
 
     public void displayStores(List<Store> stores)

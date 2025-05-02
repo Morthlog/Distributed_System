@@ -258,10 +258,10 @@ public class ManagerConsoleApp extends Communication {
                 double total = 0.0;
                 for (Map.Entry<String, Double> entry : perStore.entrySet())
                 {
-                    System.out.printf("\"%s\": %.0f,%n", entry.getKey(), entry.getValue());
+                    System.out.printf("\"%s\": %.2f€%n", entry.getKey(), entry.getValue());
                     total += entry.getValue();
                 }
-                System.out.printf("\"total\": %.0f%n%n", total);
+                System.out.printf("Total sales: %.2f€%n", total);
             }
         }
     }
@@ -278,7 +278,7 @@ public class ManagerConsoleApp extends Communication {
         Map<String, Double> salesData = sendRequest(request);
         Double total = salesData.remove("total");
         for (Map.Entry<String, Double> entry : salesData.entrySet()) {
-            System.out.printf("Store: %s - Sales: %.2f€%n", entry.getKey(), entry.getValue());
+            System.out.printf("Product: %s - Sales: %.2f€%n", entry.getKey(), entry.getValue());
         }
         System.out.printf("Total sales: %.2f€%n", total);
     }

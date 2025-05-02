@@ -49,7 +49,6 @@ public abstract class Communication extends Thread {
             in.close();
             out.close();
             socket.close();
-            System.out.println("Connection closed");
         }
         catch (IOException e) {
             System.err.printf("Could not close socket: %s", e.getMessage());
