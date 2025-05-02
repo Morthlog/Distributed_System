@@ -1,11 +1,12 @@
 import java.io.Serializable;
 
 public class Product implements Serializable {
-    private String productName;
-    private ProductType productType;
+    private final String productName;
+    private final ProductType productType;
     private int availableAmount;
-    private double price;
+    private final double price;
     private boolean hidden; // Hidden products when empty from customer but visible to manager
+    private int sellAmount;
 
     public Product(String productName, ProductType productType, int availableAmount, double price) {
         this(productName, productType, availableAmount, price, false);
@@ -17,6 +18,7 @@ public class Product implements Serializable {
         this.availableAmount = availableAmount;
         this.price = price;
         this.hidden = hidden;
+        this.sellAmount = 0;
     }
 
 //    public JSONObject toJSONObject() {
@@ -48,6 +50,17 @@ public class Product implements Serializable {
         return price;
     }
 
+    public double getSales(){
+        return sellAmount * price;
+    }
+
+    public void addPurchase(int amount){
+        sellAmount += amount;
+    }
+
+    private int getSellAmount(){
+        return sellAmount;
+    }
 
     public boolean isHidden() {
         return hidden;

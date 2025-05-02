@@ -48,15 +48,15 @@ public class Reducer {
 
                     for (Map.Entry<String, Map<String, Double>> typeEntry : typeMap.entrySet())
                     {
-                        String productType = typeEntry.getKey();
+                        String categoryType = typeEntry.getKey();
                         Map<String, Double> storeSales = typeEntry.getValue();
 
-                        if (!combinedSales.containsKey(productType))
+                        if (!combinedSales.containsKey(categoryType))
                         {
-                            combinedSales.put(productType, new HashMap<>());
+                            combinedSales.put(categoryType, new HashMap<>());
                         }
 
-                        Map<String, Double> combinedStoreSales = combinedSales.get(productType);
+                        Map<String, Double> combinedStoreSales = combinedSales.get(categoryType);
 
                         for (Map.Entry<String, Double> storeEntry : storeSales.entrySet())
                         {

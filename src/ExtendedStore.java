@@ -6,18 +6,14 @@ import org.json.simple.JSONObject;
 
 public class ExtendedStore extends Store {
     private final Map<String, Product> products;
-    private final Map<String, Double> productSales;
 
     public ExtendedStore(String storeName, double latitude, double longitude, String foodCategory,
                          int stars, int noOfVotes, String storeLogo, Map<String, Product> products) {
         super(storeName, latitude, longitude, foodCategory, stars, noOfVotes, storeLogo);
 
         this.products = products;
-        this.productSales = new HashMap<>();
 
         for (Product product : products.values()) {
-            String productName = product.getProductName();
-            productSales.put(productName, 0.0);
 
             if (!product.isHidden()) {
                 visibleProducts.put(product.getProductName(), product);
@@ -30,7 +26,6 @@ public class ExtendedStore extends Store {
         super(jsonObject);
 
         this.products = new HashMap<>();
-        this.productSales = new HashMap<>();
 
         JSONArray productList = (JSONArray) jsonObject.get("Products");
 
@@ -51,44 +46,61 @@ public class ExtendedStore extends Store {
                     visibleProducts.put(productName, product);
                 }
 
-                productSales.put(productName, 0.0);
             }
         }
         calculatePriceCategory();
     }
 
     public boolean addProduct(Product product, boolean bypassChecks) {
-        if (!bypassChecks && products.containsKey(product.getProductName()))
-            return false;
-        products.put(product.getProductName(), product);
-
-        if (!product.isHidden()) {
-            visibleProducts.put(product.getProductName(), product);
+        synchronized (products) {
+            if (!bypassChecks && products.containsKey(product.getProductName()))
+                return false;
+            products.put(product.getProductName(), product);
         }
 
-        productSales.put(product.getProductName(), 0.0);
+        if (!product.isHidden()) {
+            synchronized (visibleProducts)
+            {
+                visibleProducts.put(product.getProductName(), product);
+            }
+        }
 
         calculatePriceCategory();
         return true;
     }
 
     public boolean removeProduct(String productName) {
-        if (!products.containsKey(productName))
-            return false;
-        Product product = products.get(productName);
-        if (product != null) {
-            product.setHidden(true);
-            visibleProducts.remove(productName);
+        Product product;
+        synchronized (products)
+        {
+            if (!products.containsKey(productName))
+                return false;
+            product = products.get(productName);
+        }
+        if (product != null)
+        {
+            synchronized (product)
+            {
+                product.setHidden(true);
+            }
+            synchronized (visibleProducts)
+            {
+                visibleProducts.remove(productName);
+            }
         }
         calculatePriceCategory();
         return true;
     }
 
     public boolean manageStock(String productName, int amountChange, boolean bypassChecks) {
-        if (products == null) {
+        if (products == null)
             return false;
+
+        Product product;
+        synchronized (products) {
+            product = products.get(productName);
         }
-        Product product = products.get(productName);
+
         if (product == null) {
             return false;
         }
@@ -97,9 +109,9 @@ public class ExtendedStore extends Store {
             int currentAmount = product.getAvailableAmount();
             int newAmount = currentAmount + amountChange;
 
-            if (!bypassChecks && newAmount < 0) {
+            if (!bypassChecks && newAmount < 0)
                 return false;
-            }
+
 
             product.setAvailableAmount(newAmount);
             return true;
@@ -111,11 +123,13 @@ public class ExtendedStore extends Store {
     }
 
     public boolean saveSale(String productName, int quantity, boolean bypassChecks) {
-        if (!products.containsKey(productName)) {
-            return false;
+        Product product;
+        synchronized (products)
+        {
+            if (!products.containsKey(productName))
+                return false;
+            product = products.get(productName);
         }
-
-        Product product = products.get(productName);
         synchronized (product) {
             if (!bypassChecks && product.isHidden())
                 return false;
@@ -126,9 +140,7 @@ public class ExtendedStore extends Store {
             }
             product.setAvailableAmount(currentAmount - quantity);
 
-            double salesIncome = product.getPrice() * quantity;
-            double currentSales = productSales.getOrDefault(productName, 0.0);
-            productSales.put(productName, currentSales + salesIncome);
+            product.addPurchase(quantity);
 
             return true;
         }
@@ -140,15 +152,17 @@ public class ExtendedStore extends Store {
 
     public double getSalesByProductType(ProductType requestedType) {
         double totalSales = 0;
-
-        for (Product product : products.values())
+        Map<String, Product> productsStorage;
+        synchronized (products) {
+            productsStorage = getProducts();
+        }
+        for (Product product : productsStorage.values())
         {
-            if (product.getProductType().equals(requestedType))
+            if (product.getProductType().equals(requestedType)) // product type never changes
             {
-                String name = product.getProductName();
-                synchronized (productSales)
+                synchronized (product)
                 {
-                    totalSales += productSales.getOrDefault(name, 0.0);
+                    totalSales += product.getSales();
                 }
             }
         }
@@ -158,11 +172,9 @@ public class ExtendedStore extends Store {
 
     @Override
     public Map<String, Product> getProducts() {
-        return new HashMap<>(products);
-    }
-
-    public Map<String, Double> getProductSales() {
-        return new HashMap<>(productSales);
+        synchronized (products) {
+            return new HashMap<>(products);
+        }
     }
 
     public Store toCustomerStore() {
@@ -176,8 +188,14 @@ public class ExtendedStore extends Store {
                 this.storeLogo
         );
 
-        for (Product product : this.visibleProducts.values()) {
-            customerStore.visibleProducts.put(product.getProductName(), product);
+        Map<String, Product> productsStorage;
+        synchronized (products) {
+            productsStorage = getProducts();
+        }
+        for (Product product : productsStorage.values()) {
+            synchronized (product) {
+                customerStore.visibleProducts.put(product.getProductName(), product);
+            }
         }
         customerStore.calculatePriceCategory();
         return customerStore;
@@ -208,16 +226,18 @@ public class ExtendedStore extends Store {
 
     private void revertLocalSales(Deque<SaleRecord> queue)
     {
+        Product product;
         while (!queue.isEmpty())
         {
             SaleRecord record = queue.removeLast();
-            Product product = products.get(record.productName);
+            synchronized (products)
+            {
+                product = products.get(record.productName);
+            }
             synchronized (product)
             {
                 product.setAvailableAmount(product.getAvailableAmount() + record.quantity);
-                double productTotalSales = productSales.get(record.productName);
-                double currentProductRevenue=record.quantity*product.getPrice();
-                productSales.put(record.productName, productTotalSales - currentProductRevenue);
+                product.addPurchase(-record.quantity);
             }
         }
     }
