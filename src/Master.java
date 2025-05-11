@@ -21,6 +21,10 @@ public class Master extends Thread {
 
     private TCPServer serverClient = null;
     private static final List<TCPServer> serverWorker = new ArrayList<>();
+    private static TCPServer serverReducer = null;
+
+    private static BroadcastManager broadcastManager = null;
+    private Object reducerReturn = null;
 
     public Master(Socket connection){
         try {
@@ -33,9 +37,11 @@ public class Master extends Thread {
 
     public Master(){}
 
-    private static <T,T1> T1 broadcast(BackendMessage<T> msg) throws SocketTimeoutException{
+    private <T,T1> T1 broadcast(BackendMessage<T> msg) throws SocketTimeoutException{
         List<Thread> threads = new ArrayList<>();
         Holder<Boolean> gotException = new Holder<>(false);
+        msg.setCallReducer(true);
+        broadcastManager.addThread(msg.getId(), this);
         for (int i = 0; i < n_workers; i++){
             if (!activeWorkers[i])
                 continue;
@@ -62,7 +68,18 @@ public class Master extends Thread {
         }
         if (gotException.get())
             throw new SocketTimeoutException();
-        return Reducer.reduce(msg);
+
+        try {
+            synchronized (this){
+                this.wait();
+            }
+        }catch (InterruptedException e){
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+
+        return (T1)getReducerReturn();
     }
 
     private static <T,T1> T1 singleWorker(BackendMessage<T> msg, int worker) throws SocketTimeoutException{
@@ -75,13 +92,10 @@ public class Master extends Thread {
             }
 
             currentConnection.sendMessage(msg);
-            response = currentConnection.receiveMessage();
+            if (msg.isCallReducer()) // only broadcast receives it
+                return null;
 
-            List<Object> list = Reducer.map.get(msg.getId());
-            synchronized (list)
-            {
-                list.add(response.getValue());
-            }
+            response = currentConnection.receiveMessage();
             currentConnection.stopConnection();
 
             if (((BackendMessage<T1>)response).getSaveState() == SaveState.REQUIRES_BACKUP)
@@ -195,8 +209,6 @@ public class Master extends Thread {
                 case MASTER -> null; // should never address himself
             };
         }catch (SocketTimeoutException e){
-            clearMapReduce(msg.getId());
-            initMapReduce(msg.getId());
             return callAppropriateWorker(msg); // retry method after transferring Worker memory
         }
 
@@ -212,30 +224,15 @@ public class Master extends Thread {
         return response;
     }
 
-    private void initMapReduce(int id){
-        synchronized (Reducer.map)
-        {
-            Reducer.map.put(id, new ArrayList<>());
-        }
-    }
-
-    private void clearMapReduce(int id){
-        synchronized (Reducer.map)
-        {
-            Reducer.map.remove(id);
-        }
-    }
 
     private <T> void startForClient() {
         Message<T> response = null;
         try {
             BackendMessage<T> msg = new BackendMessage<>(serverClient.receiveMessage());
             setIdToRequest(msg);
-            initMapReduce(msg.getId());
             response = startForBroker(msg);
             serverClient.sendMessage(response);
 
-            clearMapReduce(msg.getId());
 
             serverClient.stopConnection();
         } catch (Exception e) {
@@ -334,14 +331,33 @@ public class Master extends Thread {
         }
     }
 
+    private static <T> void manageBroadcast(){
+        while (true)
+        {
+            try
+            {
+                System.out.println("Waiting for reducer...");
+                serverReducer.startConnection();
+                Message<T> msg = serverReducer.receiveMessage();
+                broadcastManager.notifyThread((BackendMessage<T>)msg);
+            }catch (IOException e)
+            {
+                System.err.println("Couldn't connect to server reducer: " + e.getMessage());
+                e.printStackTrace();
+                throw new RuntimeException();
+            }
+        }
+    }
 
     public static void main(String[] args){
 
+        broadcastManager = new BroadcastManager();
         n_workers = Integer.parseInt(args[0]);
         final String DATA_PATH = "./src/Data/Stores.json";
         final Scanner on = new Scanner(System.in);
         Process[] workers = new Process[n_workers];
         activeWorkers = new boolean[n_workers];
+        serverReducer = new TCPServer(TCPServer.basePort - 1);
         // a server for each Worker
         Master server = new Master();
         server.connectWorkers(n_workers);
@@ -349,7 +365,17 @@ public class Master extends Thread {
 
         server.initWorkerMemory(DATA_PATH);
 
-        // Loop and wait for TCP call
+        System.out.println("Initializing Reducer");
+        try {
+            serverReducer.startConnection();
+            serverReducer.sendMessage(new BackendMessage<>(n_workers));
+            Thread t = new Thread(Master::manageBroadcast);
+            t.start();
+        }catch (IOException e){
+            e.printStackTrace();
+            System.err.println("Couldn't initialize Reducer: " + e.getMessage());
+        }
+
 
         ServerSocket serverClient;
 
@@ -375,5 +401,13 @@ public class Master extends Thread {
             System.err.println("Couldn't start server: " + e.getMessage() );
             throw new RuntimeException(e);
         }
+    }
+
+    public Object getReducerReturn() {
+        return reducerReturn;
+    }
+
+    public void setReducerReturn(Object reducerReturn) {
+        this.reducerReturn = reducerReturn;
     }
 }

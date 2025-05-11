@@ -3,8 +3,8 @@ import java.util.Objects;
 
 public class Tuples<T1,T2> implements Serializable
 {
-    private final T1 val1;
-    private final T2 val2;
+    private T1 val1;
+    private T2 val2;
 
 
     /**
@@ -24,6 +24,14 @@ public class Tuples<T1,T2> implements Serializable
     public T1 getFirst()
     {
         return val1;
+    }
+
+    public void setFirst(T1 val1) {
+        this.val1 = val1;
+    }
+
+    public void setSecond(T2 val2) {
+        this.val2 = val2;
     }
 
     /**

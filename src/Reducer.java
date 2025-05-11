@@ -1,30 +1,133 @@
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Reducer {
+public class Reducer extends Communication {
 
-    public static Map<Integer, List<Object>> map = new HashMap<>();
+    private static final Map<Integer, Tuples<Integer,List<Object>>> requestData = new HashMap<>();
+    private static String ip;
+    private static final int port = TCPServer.basePort - 1;
+    public static final int serverPort = TCPServer.basePort - 2;
 
-    public static <T,T1> T1 reduce(BackendMessage<T> msg){
+    private TCPServer server;
+    private static Integer workerCount;
+
+    public Reducer(Socket connection) {
+        try {
+            server = new TCPServer(connection);
+        }catch (IOException e){
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Reducer(){};
+
+    public static void main(String[] args) {
+        ServerSocket listener;
+        try
+        {
+            listener = new ServerSocket(serverPort);
+        } catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+
+        Reducer reducer = new Reducer();
+
+        try
+        {
+            ip = InetAddress.getLocalHost().getHostAddress();
+        }
+        catch (UnknownHostException e)
+        {
+            throw new RuntimeException(e);
+        }
+        reducer.startConnection(ip, port);
+        Message<Integer> msg = reducer.receiveMessage();
+        reducer.stopConnection();
+        workerCount = msg.getValue();
+        try
+        {
+            while (true)
+            {
+                Socket serverSocket = listener.accept();
+                Thread t = new Reducer(serverSocket);
+                t.start();
+            }
+        }
+        catch (Exception e)
+        {
+            System.err.println("Couldn't start server: " + e.getMessage() );
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void run(){
+        this.handleRequest();
+    }
+
+    private <T> void handleRequest(){
+        BackendMessage<T> request = (BackendMessage<T>) server.receiveMessage();
+        final Tuples<Integer, List<Object>> counterData;
+        synchronized (requestData){
+            if (!requestData.containsKey(request.getId()))
+            {
+                counterData = new Tuples<>(workerCount,new ArrayList<>());
+                requestData.put(request.getId(), counterData);
+            }
+            else
+                counterData = requestData.get(request.getId());
+        }
+        synchronized (counterData){
+            counterData.setFirst(counterData.getFirst() - 1);
+            counterData.getSecond().add(request.getValue());
+            if (counterData.getFirst() == 0)
+            {
+                System.out.println("Start reducing");
+                synchronized (requestData){ //cleanup
+                    requestData.remove(request.getId());
+                }
+                BackendMessage<List<Object>> msg = new BackendMessage<>(counterData.getSecond());
+                msg.setClient(request.getClient());
+                msg.setRequest(request.getRequest());
+                msg.setId(request.getId());
+                sendToMaster(reduce(msg));
+            }
+        }
+    }
+
+    private <T> void sendToMaster(BackendMessage<T> msg){
+        System.out.println("Notifying Master");
+        startConnection(ip, port);
+        sendMessage(msg);
+        stopConnection();
+    }
+
+
+    private static <T> BackendMessage<T> reduce(BackendMessage<List<Object>> msg){
         Client client = msg.getClient();
         RequestCode code = msg.getRequest();
-        List<Object> list = map.get(msg.getId());
-        return switch (client) { // only add cases where broadcast is being used
+        List<Object> list = msg.getValue();
+        T val = switch (client) { // only add cases where broadcast is being used
             case Customer -> switch (code) {
                 case STUB_TEST_1 -> null;
                 case STUB_TEST_2 -> makeNum(list);
-                case SEARCH -> (T1) getFilteredStores(list);
+                case SEARCH -> (T) getFilteredStores(list);
                 default -> {
                     System.err.println("Unknown customer code: " + code);
                     throw new RuntimeException();
                 }
             };
             case Manager -> switch (code) { // only add cases where broadcast is being used
-                case GET_SALES_BY_STORE_TYPE -> (T1) reducerSalesByStoreType(list);
-                case GET_SALES_BY_PRODUCT_TYPE -> (T1) reducerSalesByProductType(list);
-                case GET_STORES -> (T1) getStores(list);
+                case GET_SALES_BY_STORE_TYPE -> (T) reducerSalesByStoreType(list);
+                case GET_SALES_BY_PRODUCT_TYPE -> (T) reducerSalesByProductType(list);
+                case GET_STORES -> (T) getStores(list);
                 default -> {
                     System.err.println("Unknown manager code: " + code);
                     throw new RuntimeException();
@@ -32,6 +135,11 @@ public class Reducer {
             };
             case MASTER -> null; // MASTER never requires reduce
         };
+        BackendMessage<T> result = new BackendMessage<>(val);
+        result.setClient(client);
+        result.setRequest(code);
+        result.setId(msg.getId());
+        return result;
     }
 
     private static Map<String, Map<String, Double>> reducerSalesByType(List<Object> mappedResults)

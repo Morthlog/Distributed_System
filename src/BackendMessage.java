@@ -1,6 +1,7 @@
 public class BackendMessage <T> extends Message<T> {
     private int id;
     private SaveState saveState;
+    private boolean callReducer = false;
 
     public BackendMessage(T value){
         super(value);
@@ -35,5 +36,13 @@ public class BackendMessage <T> extends Message<T> {
 
     public void setSaveState(SaveState saveState) {
         this.saveState = saveState;
+    }
+
+    public boolean isCallReducer() {
+        return callReducer;
+    }
+
+    public void setCallReducer(boolean callReducer) {
+        this.callReducer = callReducer;
     }
 }

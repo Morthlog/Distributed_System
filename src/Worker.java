@@ -53,6 +53,7 @@ public class Worker extends Communication {
         response.setClient(client);
         response.setRequest(code);
         response.setId(msg.getId());
+        response.setCallReducer(msg.isCallReducer());
         return response;
     }
 
@@ -425,8 +426,16 @@ public class Worker extends Communication {
     {
         try{
             msg = actionTable(msg);
-            //msg.setValue(value);
-
+            if (msg.isCallReducer()) {
+                client.stopConnection();
+                String ip; // Reducer ip
+                try {
+                    ip = InetAddress.getLocalHost().getHostAddress();
+                } catch (UnknownHostException e) {
+                    throw new RuntimeException(e);
+                }
+                client.startConnection(ip, Reducer.serverPort);
+            }
             client.sendMessage(msg);
             client.stopConnection();
         } catch (Exception e) {
@@ -436,7 +445,7 @@ public class Worker extends Communication {
     public static <T> void main(String[] args){
 
         System.out.printf("Worker %s has started\n", args[0]);
-        String ip;
+        String ip; // Master ip
         try
         {
             ip = InetAddress.getLocalHost().getHostAddress();
