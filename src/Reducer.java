@@ -10,13 +10,13 @@ import java.util.Map;
 
 public class Reducer extends Communication {
 
-    private static final Map<Integer, Tuples<Integer,List<Object>>> requestData = new HashMap<>();
+    private static final Map<Integer, ReducerStorage> requestData = new HashMap<>();
     private static String ip;
     private static final int port = TCPServer.basePort - 1;
     public static final int serverPort = TCPServer.basePort - 2;
 
     private TCPServer server;
-    private static Integer workerCount;
+    private static Integer workerCount; // sync on requestData
 
     public Reducer(Socket connection) {
         try {
@@ -75,19 +75,21 @@ public class Reducer extends Communication {
     private <T> void handleRequest(){
         BackendMessage<T> request = (BackendMessage<T>) server.receiveMessage();
         System.out.println("Server received: " + request.getRequest() );
-        final Tuples<Integer, List<Object>> counterData;
+        final ReducerStorage reducerStorage;
         if (request.getClient() == Client.MASTER)
         {
             switch (request.getRequest())
             {
                 case RESET:
                     synchronized (requestData){
-                        requestData.replace(request.getId(), new Tuples<>(workerCount,new ArrayList<>()));
+                        requestData.get(request.getId()).reset(workerCount);
                     }
                     break;
                 case REMOVE_WORKER:
                     synchronized (requestData){
                         workerCount--;
+                        for (var entry : requestData.entrySet())
+                            prepareForReduce(entry.getKey(), entry.getValue());
                     }
                     break;
                 default:
@@ -98,31 +100,23 @@ public class Reducer extends Communication {
             return;
         }
 
-        synchronized (requestData){
+        synchronized (requestData)
+        {
             if (!requestData.containsKey(request.getId()))
             {
-                counterData = new Tuples<>(workerCount,new ArrayList<>());
-                requestData.put(request.getId(), counterData);
+                reducerStorage = new ReducerStorage(workerCount, request.getClient(), request.getRequest());
+                requestData.put(request.getId(), reducerStorage);
             }
             else
-                counterData = requestData.get(request.getId());
+                reducerStorage = requestData.get(request.getId());
         }
-        synchronized (counterData){
-            counterData.setFirst(counterData.getFirst() - 1);
-            counterData.getSecond().add(request.getValue());
-            if (counterData.getFirst() == 0)
-            {
-                System.out.println("Start reducing " + request.getId());
-                synchronized (requestData){ //cleanup
-                    requestData.remove(request.getId());
-                }
-                BackendMessage<List<Object>> msg = new BackendMessage<>(counterData.getSecond());
-                msg.setClient(request.getClient());
-                msg.setRequest(request.getRequest());
-                msg.setId(request.getId());
-                sendToMaster(reduce(msg));
-            }
+
+        synchronized (reducerStorage)
+        {
+            reducerStorage.reduceCounter();
+            reducerStorage.addData(request.getValue());
         }
+        prepareForReduce(request.getId(), reducerStorage);
     }
 
     private <T> void sendToMaster(BackendMessage<T> msg){
@@ -132,6 +126,23 @@ public class Reducer extends Communication {
         stopConnection();
     }
 
+    private void prepareForReduce(Integer id, ReducerStorage counterData)
+    {
+        synchronized (counterData){
+            if (counterData.getCounter() == 0)
+            {
+                System.out.println("Start reducing " + id);
+                synchronized (requestData){ //cleanup
+                    requestData.remove(id);
+                }
+                BackendMessage<List<Object>> msg = new BackendMessage<>(counterData.getData());
+                msg.setId(id);
+                msg.setClient(counterData.getClient());
+                msg.setRequest(counterData.getRequestCode());
+                sendToMaster(reduce(msg));
+            }
+        }
+    }
 
     private static <T> BackendMessage<T> reduce(BackendMessage<List<Object>> msg){
         Client client = msg.getClient();
