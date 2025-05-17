@@ -35,8 +35,8 @@ dependencies {
 
     implementation(libs.appcompat)
     implementation(libs.material)
-    implementation(files("src\\main\\java\\libs\\json-simple-1.1.1.jar"))
     testImplementation(libs.junit)
+    implementation(files("libs/json-simple-1.1.1.jar"))
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }

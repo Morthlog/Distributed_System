@@ -1,50 +1,37 @@
+/.project
+/.project
 # Gradle files
 .gradle/
 build/
 
-# Local configuration files
+# Local configuration file (sdk path, etc)
 local.properties
 
-# Android Studio and IntelliJ IDEA files
-.idea/
-*.iml
-*.iws
-*.ipr
+# Log/OS Files
+*.log
 
-# Android Studio cache
-.idea/caches/
-.idea/libraries/
-.idea/modules.xml
-.idea/workspace.xml
-.idea/gradle.xml
-.idea/usage.statistics.xml
-.idea/dictionaries/
-.idea/httpRequests/
+# Android Studio generated files and folders
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+output.json
+**/.settings/org.eclipse.buildship.core.prefs
+
+# IntelliJ
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
 
 # Keystore files
 *.jks
 *.keystore
 
-# Log files
-*.log
+# Google Services (e.g. APIs or Firebase)
+google-services.json
 
-# OS-specific files
-.DS_Store
-Thumbs.db
+# Android Profiling
+*.hprof
 
-# Build directories
-app/build/
-*/build/
-
-# Proguard configuration files
-proguard-rules.pro
-
-# Miscellaneous
-*.apk
-*.ap_
-*.dex
-*.class
-
-# Android NDK
-ndkBuild/
-local.properties

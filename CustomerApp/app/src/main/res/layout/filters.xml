@@ -7,14 +7,14 @@
     android:orientation="vertical">
 
     <TextView
-        android:id="@+id/welcome_txt"
+        android:id="@+id/filters_txt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="165dp"
         android:layout_marginTop="53dp"
         android:layout_marginEnd="165dp"
         android:layout_marginBottom="157dp"
-        android:text="Welcome"
+        android:text="Filters"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/confirm_button"
@@ -32,42 +32,54 @@
         android:text="Food category"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/welcome_txt" />
+        app:layout_constraintTop_toBottomOf="@+id/filters_txt" />
 
     <Button
-        android:id="@+id/set_location_button"
+        android:id="@+id/food_category_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="158dp"
         android:layout_marginTop="40dp"
         android:layout_marginEnd="158dp"
-        android:text="Set new location"
+        android:text="Food category"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/welcome_txt" />
+        app:layout_constraintTop_toBottomOf="@+id/filters_txt" />
 
     <Button
-        android:id="@+id/set_filters_button"
+        android:id="@+id/price_category_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="158dp"
         android:layout_marginTop="40dp"
         android:layout_marginEnd="158dp"
-        android:text="Set filters"
+        android:text="Price category"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/confirm_button" />
 
     <Button
-        android:id="@+id/continue_defaut_button"
+        android:id="@+id/stars_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="158dp"
-        android:layout_marginTop="149dp"
+        android:layout_marginTop="40dp"
         android:layout_marginEnd="158dp"
-        android:text="continue with defaults"
+        android:text="stars"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/set_filters_button" />
+        app:layout_constraintTop_toBottomOf="@+id/price_category_button" />
+
+    <Button
+        android:id="@+id/continue_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="158dp"
+        android:layout_marginTop="60dp"
+        android:layout_marginEnd="158dp"
+        android:text="continue"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/stars_button" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
