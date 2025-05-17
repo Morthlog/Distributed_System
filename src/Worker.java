@@ -43,7 +43,7 @@ public class Worker extends Communication {
                 }
             };
             case MASTER -> switch (code){
-                case TRANSFER_BACKUP -> (BackendMessage<T>) transferToMemory((String) val);
+                case TRANSFER_BACKUP -> (BackendMessage<T>) transferToMemory((Vector<String>) val);
                 default -> {
                     System.err.println("Unknown MASTER code: " + code);
                     throw new RuntimeException();
@@ -261,10 +261,11 @@ public class Worker extends Communication {
 
     }
 
-    private static BackendMessage<String> transferToMemory(String storeName){
+    private static BackendMessage<String> transferToMemory(Vector<String> storeNames){
         synchronized (memory) {
             synchronized (backup){
-                memory.put(storeName, backup.remove(storeName));
+                for (String storeName : storeNames)
+                    memory.put(storeName, backup.remove(storeName));
             }
         }
         return new BackendMessage<>("OK");

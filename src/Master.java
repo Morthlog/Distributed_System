@@ -172,15 +172,27 @@ public class Master extends Communication {
         activeWorkers[workerId] = false;
         serverWorker.get(workerId).setSocketTOState(false);
         try{
+            Vector<Vector<String>> stores = new Vector<>();
+            for (int i = 0; i < n_workers; i++){
+                stores.add(new Vector<>());
+            }
+
             for (var set : storeToWorkerMemory.entrySet()){
                 if (!set.getValue().equals(workerId))
                     continue;
-                TCPServer server = serverWorker.get(storeToWorkerBackup.get(set.getKey()));
+                int backupId = storeToWorkerBackup.get(set.getKey());
+                stores.get(backupId).add(set.getKey());
+            }
+
+            for (int i = 0; i < n_workers; i++){
+                if (i == workerId)
+                    continue;
+                TCPServer server = serverWorker.get(i);
                 TCPServer currentConnection;
                 synchronized (server){
                     currentConnection = new TCPServer(server.serverSocket.accept());
                 }
-                Message<String> msg = new BackendMessage<>(set.getKey());
+                Message<Vector<String>> msg = new BackendMessage<>(stores.get(i));
                 msg.setClient(Client.MASTER);
                 msg.setRequest(RequestCode.TRANSFER_BACKUP);
                 currentConnection.sendMessage(msg);
