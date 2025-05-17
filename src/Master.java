@@ -17,7 +17,7 @@ public class Master extends Communication {
     private static int n_workers;
     private static final HashMap<String, Integer> storeToWorkerMemory = new HashMap<>();
     private static final HashMap<String, Integer> storeToWorkerBackup = new HashMap<>();
-    private static boolean[] activeWorkers;
+    private static Holder<Boolean>[] activeWorkers;
 
     private TCPServer serverClient = null;
     private static final List<TCPServer> serverWorker = new ArrayList<>();
@@ -43,8 +43,11 @@ public class Master extends Communication {
         msg.setCallReducer(true);
         broadcastManager.addThread(msg.getId(), this);
         for (int i = 0; i < n_workers; i++){
-            if (!activeWorkers[i])
-                continue;
+            synchronized (activeWorkers[i]){
+                if (!activeWorkers[i].get())
+                    continue;
+            }
+
             final int workerId = i;
             Thread thread = new Thread(() -> {
                 try {
@@ -66,11 +69,6 @@ public class Master extends Communication {
                 System.err.println(e.getMessage());
             }
         }
-        if (gotException.get())
-        {
-            messageReducer(RequestCode.RESET, msg.getId());
-            throw new SocketTimeoutException();
-        }
 
         try {
             synchronized (this)
@@ -82,6 +80,13 @@ public class Master extends Communication {
             System.err.println(e.getMessage());
             e.printStackTrace();
             throw new RuntimeException(e);
+        }
+        
+        if (gotException.get())
+        {
+            messageReducer(RequestCode.RESET, msg.getId());
+            setReturnValStorage(null);
+            throw new SocketTimeoutException();
         }
 
         return (T1) getReturnValStorage();
@@ -105,9 +110,10 @@ public class Master extends Communication {
         {
             throw new RuntimeException(e);
         }
-        this.startConnection(ipReducer, Reducer.serverPort);
-        this.sendMessage(msg);
-        this.stopConnection();
+        startConnection(ipReducer, Reducer.serverPort);
+        sendMessage(msg);
+        receiveMessage();
+        stopConnection();
     }
 
     private <T,T1> T1 singleWorker(BackendMessage<T> msg, int worker) throws SocketTimeoutException{
@@ -167,10 +173,11 @@ public class Master extends Communication {
 
     private synchronized void disableWorker(int workerId){
         System.out.println("Disabling worker " + workerId);
-        if (!activeWorkers[workerId])
-            return;
-        activeWorkers[workerId] = false;
-        serverWorker.get(workerId).setSocketTOState(false);
+        synchronized (activeWorkers[workerId]){
+            if (!activeWorkers[workerId].get())
+                return;
+        }
+
         try{
             Vector<Vector<String>> stores = new Vector<>();
             for (int i = 0; i < n_workers; i++){
@@ -207,6 +214,10 @@ public class Master extends Communication {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        synchronized (activeWorkers[workerId]){
+            activeWorkers[workerId].set(false); // Master is free to redirect to other workers
+        }
+        serverWorker.get(workerId).setSocketTOState(false);
     }
 
     /**
@@ -233,8 +244,11 @@ public class Master extends Communication {
                 storeToWorkerBackup.put(storeName, backupWorkerId);
             }
         }
-        if (!activeWorkers[workerId])
-            workerId = storeToWorkerBackup.get(storeName);
+        synchronized (activeWorkers[workerId]){
+            if (!activeWorkers[workerId].get())
+                workerId = storeToWorkerBackup.get(storeName);
+        }
+
 
         return singleWorker(msg, workerId);
     }
@@ -379,7 +393,7 @@ public class Master extends Communication {
                 msg = new Message<>();
                 msg.setRequest(RequestCode.END_INIT_MEMORY);
                 serverWorker.get(i).sendMessage(msg);
-                activeWorkers[i] = true;
+                activeWorkers[i].set(true);
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -413,7 +427,9 @@ public class Master extends Communication {
         final String DATA_PATH = "./src/Data/Stores.json";
         final Scanner on = new Scanner(System.in);
         Process[] workers = new Process[n_workers];
-        activeWorkers = new boolean[n_workers];
+        activeWorkers = new Holder[n_workers];
+        for (int i = 0; i < n_workers; i++)
+            activeWorkers[i] = new Holder<>();
         serverReducer = new TCPServer(TCPServer.basePort - 1);
         // a server for each Worker
         Master server = new Master();

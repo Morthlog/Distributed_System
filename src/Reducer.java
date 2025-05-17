@@ -74,6 +74,7 @@ public class Reducer extends Communication {
 
     private <T> void handleRequest(){
         BackendMessage<T> request = (BackendMessage<T>) server.receiveMessage();
+        System.out.println("Server received: " + request.getRequest() );
         final Tuples<Integer, List<Object>> counterData;
         if (request.getClient() == Client.MASTER)
         {
@@ -93,6 +94,7 @@ public class Reducer extends Communication {
                     System.err.println("Unknown Master request: " + request.getRequest());
                     break;
             }
+            server.sendMessage(new Message<>());
             return;
         }
 
@@ -110,7 +112,7 @@ public class Reducer extends Communication {
             counterData.getSecond().add(request.getValue());
             if (counterData.getFirst() == 0)
             {
-                System.out.println("Start reducing");
+                System.out.println("Start reducing " + request.getId());
                 synchronized (requestData){ //cleanup
                     requestData.remove(request.getId());
                 }
