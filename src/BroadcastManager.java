@@ -17,11 +17,13 @@ public class BroadcastManager {
     public <T> void notifyThread(BackendMessage<T> msg) {
         Master thread;
         int id = msg.getId();
-        synchronized (threads) {
+        synchronized (threads)
+        {
             thread = threads.remove(id);
         }
-        thread.setReducerReturn(msg.getValue());
-        synchronized (thread) {
+        synchronized (thread)
+        {
+            thread.setReturnValStorage(msg.getValue());
             thread.notify();
         }
     }

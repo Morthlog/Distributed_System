@@ -9,7 +9,7 @@ import java.net.*;
 
 import static java.lang.Thread.sleep;
 
-public class Master extends Thread {
+public class Master extends Communication {
     private static Integer id = 0;
     private static Integer nextWorkerId;
     private static int[] hashingVariance;
@@ -24,7 +24,7 @@ public class Master extends Thread {
     private static TCPServer serverReducer = null;
 
     private static BroadcastManager broadcastManager = null;
-    private Object reducerReturn = null;
+    private final Holder<Object> returnValStorage = new Holder<>();
 
     public Master(Socket connection){
         try {
@@ -67,11 +67,16 @@ public class Master extends Thread {
             }
         }
         if (gotException.get())
+        {
+            messageReducer(RequestCode.RESET, msg.getId());
             throw new SocketTimeoutException();
+        }
 
         try {
-            synchronized (this){
-                this.wait();
+            synchronized (this)
+            {
+                if (getReturnValStorage() == null)
+                    this.wait(); // prevent sleep when notification has been sent already
             }
         }catch (InterruptedException e){
             System.err.println(e.getMessage());
@@ -79,51 +84,89 @@ public class Master extends Thread {
             throw new RuntimeException(e);
         }
 
-        return (T1)getReducerReturn();
+        return (T1) getReturnValStorage();
     }
 
-    private static <T,T1> T1 singleWorker(BackendMessage<T> msg, int worker) throws SocketTimeoutException{
+    private void messageReducer(RequestCode code) {
+        messageReducer(code, -1);
+    }
+
+    private void messageReducer(RequestCode code, int requestId) {
+        BackendMessage<Integer> msg = new BackendMessage<>();
+        msg.setId(requestId);
+        msg.setRequest(code);
+        msg.setClient(Client.MASTER);
+        String ipReducer;
+        try
+        {
+            ipReducer = InetAddress.getLocalHost().getHostAddress(); // Reducer ip
+        }
+        catch (UnknownHostException e)
+        {
+            throw new RuntimeException(e);
+        }
+        this.startConnection(ipReducer, Reducer.serverPort);
+        this.sendMessage(msg);
+        this.stopConnection();
+    }
+
+    private <T,T1> T1 singleWorker(BackendMessage<T> msg, int worker) throws SocketTimeoutException{
         Message<T1> response;
-        try{
-            TCPServer server = serverWorker.get(worker);
-            TCPServer currentConnection;
-            synchronized (server){
-                currentConnection = new TCPServer(server.serverSocket.accept());
+        TCPServer server;
+        TCPServer currentConnection;
+        int workerId = -1;
+        if (msg.getSaveState() == SaveState.MEMORY)
+        {
+            try{
+                server = serverWorker.get(worker);
+                synchronized (server){
+                    currentConnection = new TCPServer(server.serverSocket.accept());
+                }
+
+                currentConnection.sendMessage(msg);
+                if (msg.isCallReducer()) // only broadcast receives it
+                    return null;
+
+                response = currentConnection.receiveMessage();
+                setReturnValStorage(response);
+                msg.setSaveState(((BackendMessage<T1>)response).getSaveState());
+                currentConnection.stopConnection();
             }
-
-            currentConnection.sendMessage(msg);
-            if (msg.isCallReducer()) // only broadcast receives it
+            catch(SocketException e){
+                disableWorker(worker);
+                throw new SocketTimeoutException();
+            }
+            catch(IOException e){
+                System.err.println("Couldn't start server: " + e.getMessage());
                 return null;
+            }
+        }
 
-            response = currentConnection.receiveMessage();
-            currentConnection.stopConnection();
-
-            if (((BackendMessage<T1>)response).getSaveState() == SaveState.REQUIRES_BACKUP)
-            {
-                int workerId = storeToWorkerBackup.get(((StoreNameProvider) msg.getValue()).getStoreName());
-                if (workerId !=-1 && workerId != worker){ // no secondary backup location exists
-                    msg.setSaveState(SaveState.BACKUP);
+        if (msg.getSaveState() == SaveState.BACKUP)
+        {
+            try {
+                workerId = storeToWorkerBackup.get(((StoreNameProvider) msg.getValue()).getStoreName());
+                if (workerId != -1 && workerId != worker) { // no secondary backup location exists
                     server = serverWorker.get(workerId);
-                    synchronized (server){
+                    synchronized (server) {
                         currentConnection = new TCPServer(server.serverSocket.accept());
                     }
                     currentConnection.sendMessage(msg);
                 }
-            }
 
-            return response.getValue(); // only used on non-broadcast calls
-        }
-        catch(SocketException e){
-            disableWorker(worker);
-            throw new SocketTimeoutException();
-        }
-        catch(IOException e){
-            System.err.println("Couldn't start server: " + e.getMessage());
+                return ((Message<T1>) getReturnValStorage()).getValue(); // only used on non-broadcast calls
+            } catch (SocketException e) {
+                disableWorker(workerId);
+                throw new SocketTimeoutException();
+            } catch (IOException e) {
+                System.err.println("Couldn't start server: " + e.getMessage());
+            }
         }
         return null;
     }
 
-    private static synchronized void disableWorker(int workerId){
+    private synchronized void disableWorker(int workerId){
+        System.out.println("Disabling worker " + workerId);
         if (!activeWorkers[workerId])
             return;
         activeWorkers[workerId] = false;
@@ -141,12 +184,14 @@ public class Master extends Thread {
                 msg.setClient(Client.MASTER);
                 msg.setRequest(RequestCode.TRANSFER_BACKUP);
                 currentConnection.sendMessage(msg);
+                currentConnection.receiveMessage();
             }
             for (var set : storeToWorkerBackup.entrySet()){
                 if (!set.getValue().equals(workerId))
                     continue;
                 storeToWorkerBackup.replace(set.getKey(), -1);
             }
+            messageReducer(RequestCode.REMOVE_WORKER);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -403,11 +448,15 @@ public class Master extends Thread {
         }
     }
 
-    public Object getReducerReturn() {
-        return reducerReturn;
+    public Object getReturnValStorage() {
+        synchronized (returnValStorage) {
+            return returnValStorage.get();
+        }
     }
 
-    public void setReducerReturn(Object reducerReturn) {
-        this.reducerReturn = reducerReturn;
+    public void setReturnValStorage(Object val) {
+        synchronized (returnValStorage) {
+            returnValStorage.set(val);
+        }
     }
 }

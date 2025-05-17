@@ -75,6 +75,27 @@ public class Reducer extends Communication {
     private <T> void handleRequest(){
         BackendMessage<T> request = (BackendMessage<T>) server.receiveMessage();
         final Tuples<Integer, List<Object>> counterData;
+        if (request.getClient() == Client.MASTER)
+        {
+            switch (request.getRequest())
+            {
+                case RESET:
+                    synchronized (requestData){
+                        requestData.replace(request.getId(), new Tuples<>(workerCount,new ArrayList<>()));
+                    }
+                    break;
+                case REMOVE_WORKER:
+                    synchronized (requestData){
+                        workerCount--;
+                    }
+                    break;
+                default:
+                    System.err.println("Unknown Master request: " + request.getRequest());
+                    break;
+            }
+            return;
+        }
+
         synchronized (requestData){
             if (!requestData.containsKey(request.getId()))
             {

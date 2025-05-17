@@ -1,6 +1,7 @@
 public class Holder<T> {
-    T val;
+    T val = null;
 
+    public Holder() {}
     public Holder(T val) {
         set(val);
     }

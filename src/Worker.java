@@ -415,7 +415,7 @@ public class Worker extends Communication {
 
     private static void setupForBackup(BackendMessage<String> msg, SaveState saveState) {
         if (saveState == SaveState.MEMORY)
-            msg.setSaveState(SaveState.REQUIRES_BACKUP);
+            msg.setSaveState(SaveState.BACKUP);
     }
 
     /**

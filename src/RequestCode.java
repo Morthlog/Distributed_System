@@ -5,12 +5,16 @@ public enum RequestCode
     BUY,
     SEARCH,
     RATE_STORE,
+
     INIT_MEMORY,
     INIT_BACKUP,
     END_INIT_MEMORY,
     TRANSFER_BACKUP,
     STUB_TEST_1,
     STUB_TEST_2,
+    RESET,
+    REMOVE_WORKER,
+    ADD_WORKER,
 
     GET_STORES,
     ADD_PRODUCT,
