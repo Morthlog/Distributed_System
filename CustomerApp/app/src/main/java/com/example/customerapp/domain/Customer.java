@@ -22,20 +22,26 @@ public class Customer extends stubUser
     public Customer(String name)
     {
         super(name);
-        try
-        {
-            setIp();
-        }
-        catch (UnknownHostException e)
-        {
-            throw new RuntimeException(e);
-        }
+        setIp();
     }
 
-    public void setIp() throws UnknownHostException
+    //ip should be set in different thread in android
+    public void setIp()
     {
-        ip = InetAddress.getLocalHost().getHostAddress();
+        new Thread(() ->
+        {
+            try
+            {
+                ip = InetAddress.getLocalHost().getHostAddress();
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+
+        }).start();
     }
+
 
     public void search(Filter filter, Callback<List<Store>> callback)
     {
@@ -91,8 +97,8 @@ public class Customer extends stubUser
         storeRatings.put(storeName, rating);
     }
 
-    public void clearShoppingCart(){
+    public void clearShoppingCart()
+    {
         shoppingCart.clear();
     }
-
 }

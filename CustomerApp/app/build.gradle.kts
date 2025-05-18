@@ -35,6 +35,8 @@ dependencies {
 
     implementation(libs.appcompat)
     implementation(libs.material)
+    implementation(libs.activity)
+    implementation(libs.constraintlayout)
     testImplementation(libs.junit)
     implementation(files("libs/json-simple-1.1.1.jar"))
     androidTestImplementation(libs.ext.junit)
