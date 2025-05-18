@@ -82,7 +82,8 @@ public class Reducer extends Communication {
             {
                 case RESET:
                     synchronized (requestData){
-                        requestData.get(request.getId()).reset(workerCount);
+                        if (requestData.containsKey(request.getId()))   // REMOVE_WORKER race condition
+                            requestData.get(request.getId()).reset(workerCount);
                     }
                     break;
                 case REMOVE_WORKER:
@@ -90,6 +91,11 @@ public class Reducer extends Communication {
                         workerCount--;
                         for (var entry : requestData.entrySet())
                             prepareForReduce(entry.getKey(), entry.getValue());
+                    }
+                    break;
+                case ADD_WORKER:
+                    synchronized (requestData){
+                        workerCount++;
                     }
                     break;
                 default:

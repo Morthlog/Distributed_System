@@ -18,12 +18,14 @@ public class Master extends Communication {
     private static final HashMap<String, Integer> storeToWorkerMemory = new HashMap<>();
     private static final HashMap<String, Integer> storeToWorkerBackup = new HashMap<>();
     private static Holder<Boolean>[] activeWorkers;
+    private static final Holder<Integer> activeRequests = new Holder<>(0);
 
     private TCPServer serverClient = null;
     private static final List<TCPServer> serverWorker = new ArrayList<>();
     private static TCPServer serverReducer = null;
 
-    private static BroadcastManager broadcastManager = null;
+    private static final ThreadManager broadcastManager = new ThreadManager();
+    private static final ThreadManager reestablishWorkerManager = new ThreadManager();
     private final Holder<Object> returnValStorage = new Holder<>();
 
     public Master(Socket connection){
@@ -159,8 +161,6 @@ public class Master extends Communication {
                     }
                     currentConnection.sendMessage(msg);
                 }
-
-                return ((Message<T1>) getReturnValStorage()).getValue(); // only used on non-broadcast calls
             } catch (SocketException e) {
                 disableWorker(workerId);
                 throw new SocketTimeoutException();
@@ -168,7 +168,7 @@ public class Master extends Communication {
                 System.err.println("Couldn't start server: " + e.getMessage());
             }
         }
-        return null;
+        return ((Message<T1>) getReturnValStorage()).getValue(); // only used on non-broadcast calls
     }
 
     private synchronized void disableWorker(int workerId){
@@ -201,7 +201,7 @@ public class Master extends Communication {
                 }
                 Message<Vector<String>> msg = new BackendMessage<>(stores.get(i));
                 msg.setClient(Client.MASTER);
-                msg.setRequest(RequestCode.TRANSFER_BACKUP);
+                msg.setRequest(RequestCode.TRANSFER_TO_MEMORY);
                 currentConnection.sendMessage(msg);
                 currentConnection.receiveMessage();
             }
@@ -217,7 +217,114 @@ public class Master extends Communication {
         synchronized (activeWorkers[workerId]){
             activeWorkers[workerId].set(false); // Master is free to redirect to other workers
         }
-        serverWorker.get(workerId).setSocketTOState(false);
+        Thread t = new Thread(() -> reestablishWorker(workerId));
+        t.start();
+    }
+
+    private void reestablishWorker(int workerId){
+        TCPServer server = serverWorker.get(workerId);
+        Vector<Store> dataMemory = new Vector<>();
+        Vector<Store> dataBackup = new Vector<>();
+        while(true)
+        {
+            try {
+                server.startConnection(); // simple ping
+                break;
+            } catch (Exception e) {} // times out after a while
+        }
+
+        reestablishWorkerManager.setLocked(true);
+        while(activeRequests.get() != 0)
+        {
+            onSpinWait();
+        }
+
+        Vector<Vector<String>> storesMemory = new Vector<>();
+        Vector<Vector<String>> storesBackup = new Vector<>();
+        for (int i = 0; i < n_workers; i++){
+            storesMemory.add(new Vector<>());
+            storesBackup.add(new Vector<>());
+        }
+        for (var set : storeToWorkerMemory.entrySet()){
+            if (!set.getValue().equals(workerId))
+                continue;
+            int backupId = storeToWorkerBackup.get(set.getKey());
+            storesMemory.get(backupId).add(set.getKey());
+        }
+        for (var set : storeToWorkerBackup.entrySet()){
+            if (!set.getValue().equals(-1))
+                continue;
+            int memoryId = storeToWorkerMemory.get(set.getKey());
+            storesBackup.get(memoryId).add(set.getKey());
+        }
+
+        for (int i = 0; i < n_workers; i++){
+            if (i == workerId)
+                continue;
+            TCPServer serverB = serverWorker.get(i);
+
+            try {
+                serverB.startConnection();
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+
+            Message<Vector<String>> msg = new BackendMessage<>(storesMemory.get(i));
+            msg.setClient(Client.MASTER);
+            msg.setRequest(RequestCode.TRANSFER_TO_BACKUP);
+            serverB.sendMessage(msg);
+            dataMemory.addAll((Vector<Store>)serverB.receiveMessage().getValue());
+
+            try {
+                serverB.startConnection();
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+
+            msg = new BackendMessage<>(storesBackup.get(i));
+            msg.setClient(Client.MASTER);
+            msg.setRequest(RequestCode.GET_STORES);
+            serverB.sendMessage(msg);
+            dataBackup.addAll((Vector<Store>)serverB.receiveMessage().getValue());
+
+        }
+        try
+        {
+            for (Store store : dataMemory){
+                server.startConnection();
+                Message<Store> msg = new BackendMessage<>(store);
+                msg.setRequest(RequestCode.INIT_MEMORY);
+                server.sendMessage(msg);
+            }
+
+            for (Store store : dataBackup){
+                server.startConnection();
+                Message<Store> msg = new BackendMessage<>(store);
+                msg.setRequest(RequestCode.INIT_BACKUP);
+                server.sendMessage(msg);
+            }
+
+            Message<Store> msg = new Message<>();
+            msg.setRequest(RequestCode.END_INIT_MEMORY);
+            server.startConnection();
+            server.sendMessage(msg);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        for (var set : storeToWorkerBackup.entrySet()){
+            if (!set.getValue().equals(workerId))
+                continue;
+            storeToWorkerBackup.replace(set.getKey(), workerId);
+        }
+
+        synchronized (activeWorkers[workerId]){
+            activeWorkers[workerId].set(true);
+        }
+        messageReducer(RequestCode.ADD_WORKER, -1);
+        reestablishWorkerManager.notifyAllThreads();
     }
 
     /**
@@ -301,9 +408,26 @@ public class Master extends Communication {
         try {
             BackendMessage<T> msg = new BackendMessage<>(serverClient.receiveMessage());
             setIdToRequest(msg);
+            if (reestablishWorkerManager.isLocked())
+            {
+                reestablishWorkerManager.addThread(msg.getId(), this);
+                synchronized (this)
+                {
+                    wait();
+                }
+            }
+            synchronized (activeRequests)
+            {
+                activeRequests.set(activeRequests.get() + 1);
+            }
+
             response = startForBroker(msg);
             serverClient.sendMessage(response);
 
+            synchronized (activeRequests)
+            {
+                activeRequests.set(activeRequests.get() - 1);
+            }
 
             serverClient.stopConnection();
         } catch (Exception e) {
@@ -422,7 +546,6 @@ public class Master extends Communication {
 
     public static void main(String[] args){
 
-        broadcastManager = new BroadcastManager();
         n_workers = Integer.parseInt(args[0]);
         final String DATA_PATH = "./src/Data/Stores.json";
         final Scanner on = new Scanner(System.in);

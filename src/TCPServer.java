@@ -24,7 +24,7 @@ public class TCPServer extends Communication {
         try{
             serverSocket = new ServerSocket(port);
         }catch(IOException e){
-
+            e.printStackTrace();
         }
     }
 
@@ -54,7 +54,7 @@ public class TCPServer extends Communication {
     public void setSocketTOState(boolean state) {
         try{
             if (state)
-                serverSocket.setSoTimeout(10000);
+                serverSocket.setSoTimeout(5000);
             else
                 serverSocket.setSoTimeout(0);
         }catch(IOException e){

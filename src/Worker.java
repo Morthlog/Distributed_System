@@ -43,7 +43,9 @@ public class Worker extends Communication {
                 }
             };
             case MASTER -> switch (code){
-                case TRANSFER_BACKUP -> (BackendMessage<T>) transferToMemory((Vector<String>) val);
+                case TRANSFER_TO_MEMORY -> (BackendMessage<T>) transferToMemory((Vector<String>) val);
+                case TRANSFER_TO_BACKUP -> (BackendMessage<T>) transferToBackup((Vector<String>) val);
+                case GET_STORES -> (BackendMessage<T>) getStores((Vector<String>) val);
                 default -> {
                     System.err.println("Unknown MASTER code: " + code);
                     throw new RuntimeException();
@@ -57,9 +59,10 @@ public class Worker extends Communication {
         return response;
     }
 
+
+
     private static BackendMessage<String> addStore(ExtendedStore store, SaveState saveState) {
         String storeName = store.getStoreName();
-
         BackendMessage<String> msg = new BackendMessage<>();
         Map<String, ExtendedStore> database = getDatabaseFor(saveState);
         synchronized (database) {
@@ -265,7 +268,12 @@ public class Worker extends Communication {
         synchronized (memory) {
             synchronized (backup){
                 for (String storeName : storeNames)
-                    memory.put(storeName, backup.remove(storeName));
+                {
+                    ExtendedStore store = backup.remove(storeName);
+                    if (store != null) // Race condition, was added to Master mapping, but not to Workers
+                        memory.put(storeName, store);
+                }
+
             }
         }
         return new BackendMessage<>("OK");
@@ -401,10 +409,20 @@ public class Worker extends Communication {
     }
 
     private static BackendMessage<String> sendString(String val){
+        try {
+            sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         return new BackendMessage<> ((val + " changed"));
     }
 
     private static BackendMessage<Integer> sendNum(Integer val){
+        try {
+            sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         return new BackendMessage<>(val + 100);
     }
 
@@ -419,6 +437,25 @@ public class Worker extends Communication {
             msg.setSaveState(SaveState.BACKUP);
     }
 
+    private static BackendMessage<Vector<Store>> transferToBackup(Vector<String> storeNames) {
+        Vector<Store> result = new Vector<>();
+        for (String storeName : storeNames) // no sync needed, activity paused from Master
+        {
+            ExtendedStore store = memory.remove(storeName);
+            result.add(store);
+            backup.put(storeName, store);
+        }
+
+        return new BackendMessage<>(result);
+    }
+
+    private static BackendMessage<Vector<Store>> getStores(Vector<String> storeNames){
+        Vector<Store> result = new Vector<>();
+        for (String storeName : storeNames) // no sync needed, activity paused from Master
+            result.add(memory.get(storeName));
+        return new BackendMessage<>(result);
+    }
+
     /**
      * Take the appropriate action based on the msg's value's type
      * @param msg {@link Message} containing client's request
@@ -427,7 +464,8 @@ public class Worker extends Communication {
     {
         try{
             msg = actionTable(msg);
-            if (msg.isCallReducer()) {
+            if (msg.isCallReducer()) 
+            {
                 client.stopConnection();
                 String ip; // Reducer ip
                 try {
