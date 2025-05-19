@@ -1,3 +1,5 @@
+import lib.shared.*;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;

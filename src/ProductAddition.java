@@ -1,3 +1,5 @@
+import lib.shared.Product;
+
 import java.io.Serializable;
 
 class ProductAddition implements StoreNameProvider, Serializable {

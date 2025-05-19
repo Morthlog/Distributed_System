@@ -1,3 +1,5 @@
+package lib.shared;
+
 import java.io.Serializable;
 
 public class Message <T> implements Serializable {

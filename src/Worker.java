@@ -1,10 +1,12 @@
+import lib.shared.*;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 
 public class Worker extends Communication {
 
-    // Hashmap<String, Store> for memory and backup
+    // Hashmap<String, lib.shared.Store> for memory and backup
     private static final Map<String, ExtendedStore> memory = new HashMap<>(); // should be extendedStore
     private static final Map<String, ExtendedStore> backup = new HashMap<>(); // should be extendedStore
     /**
@@ -67,11 +69,11 @@ public class Worker extends Communication {
         Map<String, ExtendedStore> database = getDatabaseFor(saveState);
         synchronized (database) {
             if (database.containsKey(storeName)) {
-                msg.setValue("Store already exists");
+                msg.setValue("lib.shared.Store already exists");
             }
             else
             {
-                msg.setValue("Store added successfully");
+                msg.setValue("lib.shared.Store added successfully");
                 database.put(storeName, store);
             }
         }
@@ -91,11 +93,11 @@ public class Worker extends Communication {
         result = store.addProduct(data.getProduct(), saveState == SaveState.BACKUP);
         if (result)
         {
-            msg.setValue("Product added successfully");
+            msg.setValue("lib.shared.Product added successfully");
         }
         else
         {
-            msg.setValue("Product already exists");
+            msg.setValue("lib.shared.Product already exists");
         }
 
         setupForBackup(msg, saveState);
@@ -112,11 +114,11 @@ public class Worker extends Communication {
         boolean result = store.removeProduct(data.getProductName());
         if (result)
         {
-            msg.setValue("Product removed successfully");
+            msg.setValue("lib.shared.Product removed successfully");
         }
         else
         {
-            msg.setValue("Product does not exist");
+            msg.setValue("lib.shared.Product does not exist");
         }
 
         setupForBackup(msg, saveState);

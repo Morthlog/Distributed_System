@@ -1,3 +1,7 @@
+import lib.shared.Filter;
+import lib.shared.Product;
+import lib.shared.Store;
+
 import java.util.*;
 
 public class DummyApp

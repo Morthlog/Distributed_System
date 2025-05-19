@@ -1,10 +1,14 @@
+package lib.shared;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-public class Store implements Serializable, StoreNameProvider{
+public class Store implements Serializable, StoreNameProvider
+{
     protected String storeName;
     protected double latitude;
     protected double longitude;
@@ -49,7 +53,7 @@ public class Store implements Serializable, StoreNameProvider{
                 JSONObject productJson = (JSONObject) productObj;
 
                 String productName = (String) productJson.get("ProductName");
-                ProductType productType =ProductType.fromString((String) productJson.get("ProductType")) ;
+                ProductType productType = ProductType.fromString((String) productJson.get("ProductType")) ;
                 int availableAmount = ((Number) productJson.get("Available Amount")).intValue();
                 double price = ((Number) productJson.get("Price")).doubleValue();
 

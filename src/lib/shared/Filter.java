@@ -1,3 +1,4 @@
+package lib.shared;
 
 import java.io.Serial;
 import java.io.Serializable;

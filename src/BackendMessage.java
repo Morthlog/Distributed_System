@@ -1,4 +1,7 @@
-public class BackendMessage <T> extends Message<T> {
+import lib.shared.Message;
+
+public class BackendMessage <T> extends Message<T>
+{
     private int id;
     private SaveState saveState;
     private boolean callReducer = false;

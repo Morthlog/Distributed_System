@@ -2,6 +2,8 @@ import java.io.*;
 import java.util.*;
 
 // import json-simple in project structure
+import lib.shared.Message;
+import lib.shared.Store;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.*;

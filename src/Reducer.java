@@ -1,3 +1,6 @@
+import lib.shared.Message;
+import lib.shared.Store;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;

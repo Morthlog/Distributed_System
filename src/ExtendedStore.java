@@ -1,5 +1,8 @@
 import java.util.*;
 
+import lib.shared.Product;
+import lib.shared.ShoppingCart;
+import lib.shared.Store;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 

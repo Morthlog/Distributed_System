@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Map;
+
+import lib.shared.Message;
+import lib.shared.Product;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.*;
 import java.net.InetAddress;
@@ -270,7 +273,7 @@ public class ManagerConsoleApp extends Communication {
     private void displaySalesByStore() {
         Map<String, ExtendedStore> stores = getStores();
         String storeName = chooseStore(stores);
-        System.out.println("Sales for Store: " + storeName);
+        System.out.println("Sales for lib.shared.Store: " + storeName);
 
         Message<ExtendedStore> request = new Message<>(stores.get(storeName));
         
@@ -279,7 +282,7 @@ public class ManagerConsoleApp extends Communication {
         Map<String, Double> salesData = sendRequest(request);
         Double total = salesData.remove("total");
         for (Map.Entry<String, Double> entry : salesData.entrySet()) {
-            System.out.printf("Product: %s - Sales: %.2f€%n", entry.getKey(), entry.getValue());
+            System.out.printf("lib.shared.Product: %s - Sales: %.2f€%n", entry.getKey(), entry.getValue());
         }
         System.out.printf("Total sales: %.2f€%n", total);
     }

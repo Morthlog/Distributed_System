@@ -1,3 +1,5 @@
+package lib.shared;
+
 import java.io.Serializable;
 
 public class RatingChange implements Serializable, StoreNameProvider

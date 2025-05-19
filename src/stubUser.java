@@ -1,6 +1,6 @@
-import java.io.*;
+import lib.shared.Message;
+
 import java.net.InetAddress;
-import java.net.Socket;
 
 import static java.lang.Thread.sleep;
 
