@@ -1,3 +1,5 @@
+package lib.shared;
+
 public enum RequestCode
 {
     ADD_STORE,

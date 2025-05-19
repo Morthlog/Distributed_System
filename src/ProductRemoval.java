@@ -1,3 +1,5 @@
+import lib.shared.StoreNameProvider;
+
 import java.io.Serializable;
 
 class ProductRemoval implements StoreNameProvider, Serializable {

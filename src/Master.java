@@ -2,8 +2,7 @@ import java.io.*;
 import java.util.*;
 
 // import json-simple in project structure
-import lib.shared.Message;
-import lib.shared.Store;
+import lib.shared.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.*;
@@ -11,7 +10,8 @@ import java.net.*;
 
 import static java.lang.Thread.sleep;
 
-public class Master extends Communication {
+public class Master extends Communication
+{
     private static Integer id = 0;
     private static Integer nextWorkerId;
     private static int[] hashingVariance;

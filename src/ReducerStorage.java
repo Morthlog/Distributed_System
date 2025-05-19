@@ -1,3 +1,6 @@
+import lib.shared.Client;
+import lib.shared.RequestCode;
+
 import java.util.ArrayList;
 import java.util.List;
 

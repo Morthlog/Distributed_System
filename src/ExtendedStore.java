@@ -1,6 +1,7 @@
 import java.util.*;
 
 import lib.shared.Product;
+import lib.shared.ProductType;
 import lib.shared.ShoppingCart;
 import lib.shared.Store;
 import org.json.simple.JSONArray;
@@ -197,7 +198,7 @@ public class ExtendedStore extends Store {
         }
         for (Product product : productsStorage.values()) {
             synchronized (product) {
-                customerStore.visibleProducts.put(product.getProductName(), product);
+                customerStore.getVisibleProducts().put(product.getProductName(), product);
             }
         }
         customerStore.calculatePriceCategory();

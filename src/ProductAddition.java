@@ -1,4 +1,5 @@
 import lib.shared.Product;
+import lib.shared.StoreNameProvider;
 
 import java.io.Serializable;
 

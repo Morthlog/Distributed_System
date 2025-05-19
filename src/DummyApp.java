@@ -1,4 +1,5 @@
 import lib.shared.Filter;
+import lib.shared.FoodCategory;
 import lib.shared.Product;
 import lib.shared.Store;
 

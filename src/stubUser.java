@@ -1,4 +1,4 @@
-import lib.shared.Message;
+import lib.shared.*;
 
 import java.net.InetAddress;
 

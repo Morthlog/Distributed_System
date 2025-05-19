@@ -1,4 +1,4 @@
-
+package lib.shared;
 
 public enum ProductType
 {

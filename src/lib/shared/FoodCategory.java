@@ -1,3 +1,5 @@
+package lib.shared;
+
 public enum FoodCategory
 {
 	COFFEE, SOUVLAKIA, PIZZA, BURGERS, PASTRY;

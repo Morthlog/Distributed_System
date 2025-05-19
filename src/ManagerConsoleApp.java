@@ -5,14 +5,14 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Map;
 
-import lib.shared.Message;
-import lib.shared.Product;
+import lib.shared.*;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.*;
 import java.net.InetAddress;
 
 
-public class ManagerConsoleApp extends Communication {
+public class ManagerConsoleApp extends Communication
+{
     private static final Scanner scanner = new Scanner(System.in);
 
     public ManagerConsoleApp() {

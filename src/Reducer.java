@@ -1,5 +1,4 @@
-import lib.shared.Message;
-import lib.shared.Store;
+import lib.shared.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -11,7 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Reducer extends Communication {
+public class Reducer extends Communication
+{
 
     private static final Map<Integer, ReducerStorage> requestData = new HashMap<>();
     private static String ip;

@@ -1,3 +1,5 @@
+package lib.shared;
+
 import lib.shared.Message;
 
 import java.io.IOException;

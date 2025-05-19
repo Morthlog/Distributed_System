@@ -67,7 +67,7 @@ public class Store implements Serializable, StoreNameProvider
         calculatePriceCategory();
     }
 
-    protected void calculatePriceCategory() {
+    public void calculatePriceCategory() {
         double sum = 0.0;
         double averagePrice;
         synchronized (visibleProducts)
@@ -143,5 +143,10 @@ public class Store implements Serializable, StoreNameProvider
 
     private class SerializableLock implements Serializable{
         SerializableLock() {}
+    }
+
+    public Map<String, Product> getVisibleProducts()
+    {
+        return visibleProducts;
     }
 }
