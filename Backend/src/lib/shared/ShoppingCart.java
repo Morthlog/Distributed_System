@@ -23,7 +23,21 @@ public class ShoppingCart implements Serializable, StoreNameProvider
 
     public void addProduct(String name, int count)
     {
-        products.put(name, count);
+        int currentCount = 0;
+        if (this.products.containsKey(name))
+        {
+            currentCount = this.products.get(name);
+        }
+        int newCount = currentCount + count;
+
+        if (newCount > 0)
+        {
+            this.products.put(name, newCount);
+        }
+        else
+        {
+            this.products.remove(name);
+        }
     }
 
     public Map<String, Integer> getProducts()
