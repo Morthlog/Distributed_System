@@ -7,7 +7,7 @@
       "FoodCategory": "burgers",
       "Stars": 2,
       "NoOfVotes": 10,
-      "StoreLogo": "/usr/bin/images/storeLogo1.png",
+      "StoreLogo": "/icons/storeLogo1.jpg",
       "Products": [
         {
           "ProductName": "fried chicken burger",
@@ -36,7 +36,7 @@
       "FoodCategory": "burgers",
       "Stars": 4,
       "NoOfVotes": 42,
-      "StoreLogo": "/usr/bin/images/storeLogo2.png",
+      "StoreLogo": "/icons/storeLogo2.jpg",
       "Products": [
         {
           "ProductName": "green Bite",
@@ -65,7 +65,7 @@
       "FoodCategory": "pastry",
       "Stars": 1,
       "NoOfVotes": 51,
-      "StoreLogo": "/usr/bin/images/storeLogo3.png",
+      "StoreLogo": "/icons/storeLogo3.jpg",
       "Products": [
         {
           "ProductName": "spinach pie",
@@ -88,7 +88,7 @@
       "FoodCategory": "pastry",
       "Stars": 3,
       "NoOfVotes": 41,
-      "StoreLogo": "/usr/bin/images/storeLogo4.png",
+      "StoreLogo": "/icons/storeLogo4.jpg",
       "Products": [
         {
           "ProductName": "baklava",
@@ -111,7 +111,7 @@
       "FoodCategory": "coffee",
       "Stars": 2,
       "NoOfVotes": 38,
-      "StoreLogo": "/usr/bin/images/storeLogo5.png",
+      "StoreLogo": "/icons/storeLogo5.jpg",
       "Products": [
         {
           "ProductName": "frappe large",
@@ -134,7 +134,7 @@
       "FoodCategory": "coffee",
       "Stars": 4,
       "NoOfVotes": 99,
-      "StoreLogo": "/usr/bin/images/storeLogo6.png",
+      "StoreLogo": "/icons/storeLogo6.jpg",
       "Products": [
         {
           "ProductName": "espresso double",
@@ -157,7 +157,7 @@
       "FoodCategory": "pizza",
       "Stars": 5,
       "NoOfVotes": 150,
-      "StoreLogo": "/usr/bin/images/storeLogo7.png",
+      "StoreLogo": "/icons/storeLogo7.jpg",
       "Products": [
         {
           "ProductName": "margarita",
@@ -180,7 +180,7 @@
       "FoodCategory": "pizza",
       "Stars": 4,
       "NoOfVotes": 99,
-      "StoreLogo": "/usr/bin/images/storeLogo8.png",
+      "StoreLogo": "/icons/storeLogo8.jpg",
       "Products": [
         {
           "ProductName": "pepperoni",
@@ -203,7 +203,7 @@
       "FoodCategory": "souvlakia",
       "Stars": 3,
       "NoOfVotes": 18,
-      "StoreLogo": "/usr/bin/images/storeLogo9.png",
+      "StoreLogo": "/icons/storeLogo9.jpg",
       "Products": [
         {
           "ProductName": "pita with chicken souvlaki",
@@ -226,7 +226,7 @@
       "FoodCategory": "souvlakia",
       "Stars": 4,
       "NoOfVotes": 99,
-      "StoreLogo": "/usr/bin/images/storeLogo10.png",
+      "StoreLogo": "/icons/storeLogo10.jpg",
       "Products": [
         {
           "ProductName": "pita with pork souvlaki",
@@ -238,7 +238,7 @@
           "ProductName": "pork souvlaki",
           "ProductType": "piece",
           "Available Amount": 150,
-          "Price":1.8
+          "Price": 1.8
         }
       ]
     }
