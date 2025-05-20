@@ -38,7 +38,8 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     testImplementation(libs.junit)
-    implementation(files("libs/json-simple-1.1.1.jar"))
+    implementation(files("..\\libs\\json-simple-1.1.1.jar"))
+    implementation(files("..\\libs\\lib.jar"))
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }

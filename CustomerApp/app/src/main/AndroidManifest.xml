@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
+
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -11,7 +15,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.CustomerApp"
+
         tools:targetApi="31">
+
         <activity
             android:name='.view.welcome.WelcomeActivity'
             android:exported="true">
@@ -22,11 +28,11 @@
         </activity>
         <activity
             android:name=".view.filters.FiltersActivity"
-            android:label="Budget"
+            android:label="Bites"
             android:exported="true"/>
         <activity
-            android:name=".view.res"
-            android:label="Budget"
+            android:name=".view.results.ResultsActivity"
+            android:label="Bites"
             android:exported="true"/>
 
     </application>
