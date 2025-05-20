@@ -49,10 +49,10 @@ public class DummyApp
     public void chooseFoodCategories()
     {
         System.out.println("Choose from the available food categories by typing the category's number separated by space (e.g., 1 5 2):");
-        FoodCategory[] categories = filter.getAvailableFoodCategories();
-        for (int i = 0; i < categories.length; i++)
+        List<FoodCategory> categories = filter.getAvailableFoodCategories();
+        for (int i = 0; i < categories.size(); i++)
         {
-            System.out.println(i + ": " + categories[i]);
+            System.out.println(i + ": " + categories.get(i));
         }
 
         String chosenCategories = keyboard.nextLine();
@@ -62,9 +62,9 @@ public class DummyApp
         for (String indexString : categoryIndexes)
         {
             int index = Integer.parseInt(indexString);
-            selectedCategories.add(categories[index]);
+            selectedCategories.add(categories.get(index));
         }
-        filter.setFoodCategories(selectedCategories.toArray(new FoodCategory[0]));
+        filter.setFoodCategories(selectedCategories);
     }
 
     public void chooseLeastStars()
@@ -77,10 +77,10 @@ public class DummyApp
     public void choosePriceCategories()
     {
         System.out.println("Choose price categories by typing the price's number separated by space (e.g., 0 1 2)::");
-        String[] prices = filter.getAvailablePrices();
-        for (int i = 0; i < prices.length; i++)
+        List<String> prices = filter.getAvailablePrices();
+        for (int i = 0; i < prices.size(); i++)
         {
-            System.out.println(i + ": " + prices[i]);
+            System.out.println(i + ": " + prices.get(i));
         }
 
         String choices = keyboard.nextLine();
@@ -90,9 +90,9 @@ public class DummyApp
         for (String indexString : categoryIndexes)
         {
             int index = Integer.parseInt(indexString);
-            selectedCategories.add(prices[index]);
+            selectedCategories.add(prices.get(index));
         }
-        filter.setPriceCategories(selectedCategories.toArray(new String[0]));
+        filter.setPriceCategories(selectedCategories);
     }
 
     public void setDefaultFilters()

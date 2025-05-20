@@ -2,6 +2,8 @@ package lib.shared;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Filter implements Serializable
 {
@@ -11,19 +13,19 @@ public class Filter implements Serializable
     double latitude;
     double longitude;
     private int stars;
-    private String [] priceCategories;
-    private FoodCategory[] foodCategories;
+    private List<String> priceCategories;
+    private List<FoodCategory> foodCategories;
     String[] availablePrices = {"$", "$$", "$$$"};
     int[] availableStars = {1, 2, 3, 4, 5};
 
-    public FoodCategory[] getAvailableFoodCategories()
+    public  List<FoodCategory> getAvailableFoodCategories()
     {
-        return FoodCategory.values();
+        return List.of(FoodCategory.values());
     }
 
-    public String[] getAvailablePrices()
+    public List<String> getAvailablePrices()
     {
-        return availablePrices.clone();
+        return new ArrayList<>(List.of(availablePrices));
     }
 
     public int[] getAvailableStars()
@@ -36,12 +38,12 @@ public class Filter implements Serializable
         this.stars = stars;
     }
 
-    public void setPriceCategories(String[] priceCategories)
+    public void setPriceCategories(List<String> priceCategories)
     {
         this.priceCategories = priceCategories;
     }
 
-    public void setFoodCategories(FoodCategory[] foodCategories)
+    public void setFoodCategories(List<FoodCategory> foodCategories)
     {
         this.foodCategories = foodCategories;
     }
@@ -51,14 +53,14 @@ public class Filter implements Serializable
         return stars;
     }
 
-    public String[] getPriceCategories()
+    public List<String> getPriceCategories()
     {
-        return priceCategories.clone();
+        return new ArrayList<> (priceCategories);
     }
 
-    public FoodCategory[] getFoodCategories()
+    public List<FoodCategory>  getFoodCategories()
     {
-        return foodCategories.clone();
+        return new ArrayList<> (foodCategories);
     }
 
 

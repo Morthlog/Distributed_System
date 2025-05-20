@@ -368,7 +368,7 @@ public class Worker extends Communication {
         return true;
     }
 
-    private static<T> boolean matchesCategory(String storeCategory, T[] filterCategories)
+    private static<T> boolean matchesCategory(String storeCategory, List<T> filterCategories)
     {
         for (T category : filterCategories)
         {
