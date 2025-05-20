@@ -1,5 +1,4 @@
 /.project
-/.project
 # Gradle files
 .gradle/
 build/
@@ -20,7 +19,6 @@ output.json
 
 # IntelliJ
 *.iml
-.idea/
 misc.xml
 deploymentTargetDropDown.xml
 render.experimental.xml
@@ -35,3 +33,9 @@ google-services.json
 # Android Profiling
 *.hprof
 
+# Android Studio
+.idea/*
+!.idea/misc.xml
+!.idea/modules.xml
+!.idea/vcs.xml
+!.idea/runConfigurations/
