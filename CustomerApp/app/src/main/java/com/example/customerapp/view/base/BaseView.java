@@ -8,5 +8,5 @@ public interface BaseView
      * @param title   The title of the error.
      * @param message The message of the error.
      */
-    void showErrorMessage(String title, String message);
+    void showMessage(String title, String message);
 }

@@ -10,6 +10,7 @@ public class CustomerDAOMemory implements CustomerDAO
 {
     public static String currentUserName;
     protected static Set<Customer> customers = new HashSet<>();
+
     @Override
     public void delete(Customer user)
     {

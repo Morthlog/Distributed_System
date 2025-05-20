@@ -34,7 +34,10 @@
             android:name=".view.results.ResultsActivity"
             android:label="Bites"
             android:exported="true"/>
-
+        <activity
+            android:name=".view.shoppingCart.ShoppingCartActivity"
+            android:label="Bites"
+            android:exported="true"/>
     </application>
 
 </manifest>

@@ -21,7 +21,7 @@ public abstract class BaseActivity<V extends ViewModel> extends AppCompatActivit
     }
 
     @Override
-    public void showErrorMessage(String title, String message)
+    public void showMessage(String title, String message)
     {
         new AlertDialog.Builder(this)
                 .setCancelable(true)

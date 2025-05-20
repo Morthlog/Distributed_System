@@ -1,6 +1,8 @@
 package com.example.customerapp.view.memorydao;
 
 
+import com.example.customerapp.domain.Customer;
+
 import lib.shared.Filter;
 
 public class FilterDAOMemory
@@ -16,4 +18,5 @@ public class FilterDAOMemory
     {
         currentFilter = filter;
     }
+
 }
