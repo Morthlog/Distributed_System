@@ -1,0 +1,30 @@
+package lib.shared;
+
+public enum RequestCode
+{
+    ADD_STORE,
+    REMOVE_PRODUCT,
+    BUY,
+    SEARCH,
+    RATE_STORE,
+
+    INIT_MEMORY,
+    INIT_BACKUP,
+    END_INIT_MEMORY,
+    TRANSFER_TO_MEMORY,
+    TRANSFER_TO_BACKUP,
+    STUB_TEST_1,
+    STUB_TEST_2,
+
+    RESET,
+    REMOVE_WORKER,
+    ADD_WORKER,
+
+    GET_STORES,
+    ADD_PRODUCT,
+    MANAGE_STOCK,
+    RECORD_SALE,
+    GET_SALES_BY_STORE_TYPE,
+    GET_SALES_BY_PRODUCT_TYPE,
+    GET_SALES_BY_STORE
+    }
