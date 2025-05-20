@@ -1,11 +1,14 @@
 package lib.shared;
 
-import java.io.Serializable;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import javax.imageio.ImageIO;
 
 public class Store implements Serializable, StoreNameProvider
 {
@@ -15,14 +18,14 @@ public class Store implements Serializable, StoreNameProvider
     protected String foodCategory;
     protected float stars;
     protected int noOfVotes;
-    protected String storeLogo;
+    protected byte[] storeLogo;
     protected String priceCategory;
     private final SerializableLock priceCategoryLock = new SerializableLock();
 
     protected final Map<String, Product> visibleProducts;
 
     public Store(String storeName, double latitude, double longitude, String foodCategory,
-                 float stars, int noOfVotes, String storeLogo) {
+                 float stars, int noOfVotes, byte[] storeLogo) {
         this.storeName = storeName;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -42,7 +45,7 @@ public class Store implements Serializable, StoreNameProvider
         this.foodCategory = (String) jsonObject.get("FoodCategory");
         this.stars = ((Number) jsonObject.get("Stars")).floatValue();
         this.noOfVotes = ((Number) jsonObject.get("NoOfVotes")).intValue();
-        this.storeLogo = (String) jsonObject.get("StoreLogo");
+        this.storeLogo = loadImageBytesFromResources((String) jsonObject.get("StoreLogo")) ;
 
         this.visibleProducts = new HashMap<>();
 
@@ -65,6 +68,31 @@ public class Store implements Serializable, StoreNameProvider
             }
         }
         calculatePriceCategory();
+    }
+
+
+    public byte[] loadImageBytesFromResources(String path)
+    {
+        try (InputStream inputStream = getClass().getResourceAsStream(path))
+        {
+            if (inputStream == null)
+            {
+                throw new FileNotFoundException("Resource not found: " + path);
+            }
+
+            return inputStream.readAllBytes();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+    public byte[] getImage()
+    {
+        return storeLogo;
     }
 
     public void calculatePriceCategory() {

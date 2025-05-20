@@ -12,7 +12,7 @@ public class ExtendedStore extends Store {
     private final Map<String, Product> products;
 
     public ExtendedStore(String storeName, double latitude, double longitude, String foodCategory,
-                         int stars, int noOfVotes, String storeLogo, Map<String, Product> products) {
+                         int stars, int noOfVotes, byte[] storeLogo, Map<String, Product> products) {
         super(storeName, latitude, longitude, foodCategory, stars, noOfVotes, storeLogo);
 
         this.products = products;
