@@ -2,6 +2,7 @@ package com.example.customerapp.view.shoppingCart;
 
 import static com.example.customerapp.view.results.ResultsActivity.STORE_NAME_EXTRA;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
@@ -25,7 +26,7 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
 {
     private TextView listName;
     GenericRecyclerViewAdapter<Product, ViewHolderQuantityControlItem> recyclerViewAdapter;
-
+    Button buyButton;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -43,15 +44,24 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
         listName = findViewById(R.id.list_title);
         listName.setText("Products");
 
-        Button buyButton = findViewById(R.id.filter_btn);
+        buyButton = findViewById(R.id.filter_btn);
         buyButton.setText("buy");
         buyButton.setOnClickListener(v -> buyButtonClicked());
+    }
 
-
+    private void showVerificationDialog(String title, String message)
+    {
+        new AlertDialog.Builder(this)
+                .setCancelable(false)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(R.string.ok, (dialog, which) -> goToResultsActivity())
+                .show();
     }
 
     private void buyButtonClicked()
     {
+        buyButton.setClickable(false);
         viewModel.getPresenter().onBuyClicked();
     }
 
@@ -105,6 +115,14 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
         viewModel.getPresenter().onQuantityDecrease(productName);
     }
 
+    @Override
+    public void showMessageAsync(String title, String message)
+    {
+        runOnUiThread(() ->
+        {
+            showVerificationDialog(title,message);
+        });
+    }
     @Override
     protected ShoppingCartViewModel createViewModel()
     {

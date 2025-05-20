@@ -26,11 +26,12 @@ public class ResultsPresenter extends BasePresenter<ResultsView>
             {
                 List<Store> results = customerServices.searchStores(FilterDAOMemory.getFilter());
                 StoreDAOMemory.setStores(results);
-                view.runOnUiThread(() -> view.populateStoresRecyclerView(results));
+                view.populateStoresRecyclerViewAsync(results);
+
             }
             catch (Exception e)
             {
-                view.runOnUiThread(() -> view.showMessage("Error", "Search failed"));
+                view.showMessageAsync("Error", "Search failed");
             }
         }, "SearchThread");
         thread.start();

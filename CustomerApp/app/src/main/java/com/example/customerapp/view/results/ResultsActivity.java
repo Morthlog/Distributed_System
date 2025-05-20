@@ -70,7 +70,14 @@ public class ResultsActivity extends BaseActivity<ResultsViewModel> implements R
         goToShoppingCartActivity(store.getStoreName());
     }
 
-
+    @Override
+    public void populateStoresRecyclerViewAsync(List<Store> stores)
+    {
+        runOnUiThread(() ->
+        {
+            populateStoresRecyclerView( stores);
+        });
+    }
     @Override
     protected ResultsViewModel createViewModel()
     {
@@ -93,5 +100,13 @@ public class ResultsActivity extends BaseActivity<ResultsViewModel> implements R
 
         startActivity(intent);
         finish();
+    }
+    @Override
+    public void showMessageAsync(String title, String message)
+    {
+        runOnUiThread(() ->
+        {
+            super.showMessage(title,message);
+        });
     }
 }

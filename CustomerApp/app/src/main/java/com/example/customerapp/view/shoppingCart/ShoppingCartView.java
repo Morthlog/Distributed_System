@@ -14,5 +14,5 @@ public interface ShoppingCartView extends BaseView
 
     void updateCartUI(int idx);
 
-    void runOnUiThread(Runnable r);
+    void showMessageAsync(String title, String message);
 }

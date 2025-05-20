@@ -14,5 +14,7 @@ public interface ResultsView extends BaseView
 
     void populateStoresRecyclerView(List<Store> results);
 
-    void runOnUiThread(Runnable r);
+    void showMessageAsync(String title, String message);
+
+    void populateStoresRecyclerViewAsync(List<Store> stores);
 }
