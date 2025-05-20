@@ -9,7 +9,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.customerapp.R;
 import com.example.customerapp.view.base.BaseActivity;
-import com.example.customerapp.view.filters.FiltersActivity;
+import com.example.customerapp.view.results.ResultsActivity;
 
 public class WelcomeActivity extends BaseActivity<WelcomeViewModel> implements WelcomeView
 {
@@ -21,7 +21,7 @@ public class WelcomeActivity extends BaseActivity<WelcomeViewModel> implements W
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_welcome);
         viewModel.getPresenter().setView(this);
-        viewModel.getPresenter().initializeDefaultFilters();
+
 
         nameInput = findViewById(R.id.name_input);
         Button continueButton = findViewById(R.id.continue_button);
@@ -40,9 +40,9 @@ public class WelcomeActivity extends BaseActivity<WelcomeViewModel> implements W
     }
 
     @Override
-    public void goToFiltersActivity()
+    public void goToResultsActivity()
     {
-        Intent intent = new Intent(this, FiltersActivity.class);
+        Intent intent = new Intent(this, ResultsActivity.class);
 
         startActivity(intent);
         finish();

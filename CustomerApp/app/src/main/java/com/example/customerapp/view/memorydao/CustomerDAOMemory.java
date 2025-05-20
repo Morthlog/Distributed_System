@@ -8,6 +8,7 @@ import java.util.Set;
 
 public class CustomerDAOMemory implements CustomerDAO
 {
+    public static String currentUserName;
     protected static Set<Customer> customers = new HashSet<>();
     @Override
     public void delete(Customer user)
@@ -30,11 +31,11 @@ public class CustomerDAOMemory implements CustomerDAO
 
     public Customer findByUsername(String username)
     {
-        for (Customer user : customers)
+        for (Customer customer : customers)
         {
-            if (user.getName().equalsIgnoreCase(username))
+            if (customer.getName().equalsIgnoreCase(username))
             {
-                return user;
+                return customer;
             }
         }
         return null;
