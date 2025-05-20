@@ -5,7 +5,7 @@
       "FoodCategory": "burgers",
       "Stars": 2,
       "NoOfVotes": 10,
-      "StoreLogo": "/usr/bin/images/storeLogoTESTER.png",
+      "StoreLogo": "/icons/storeLogoTESTER.png",
       "Products": [
         {
           "ProductName": "crazy burger",
