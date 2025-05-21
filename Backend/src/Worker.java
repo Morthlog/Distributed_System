@@ -69,11 +69,11 @@ public class Worker extends Communication {
         Map<String, ExtendedStore> database = getDatabaseFor(saveState);
         synchronized (database) {
             if (database.containsKey(storeName)) {
-                msg.setValue("lib.shared.Store already exists");
+                msg.setValue("Store already exists");
             }
             else
             {
-                msg.setValue("lib.shared.Store added successfully");
+                msg.setValue("Store added successfully");
                 database.put(storeName, store);
             }
         }
@@ -93,11 +93,11 @@ public class Worker extends Communication {
         result = store.addProduct(data.getProduct(), saveState == SaveState.BACKUP);
         if (result)
         {
-            msg.setValue("lib.shared.Product added successfully");
+            msg.setValue("Product added successfully");
         }
         else
         {
-            msg.setValue("lib.shared.Product already exists");
+            msg.setValue("Product already exists");
         }
 
         setupForBackup(msg, saveState);
@@ -114,11 +114,11 @@ public class Worker extends Communication {
         boolean result = store.removeProduct(data.getProductName());
         if (result)
         {
-            msg.setValue("lib.shared.Product removed successfully");
+            msg.setValue("Product removed successfully");
         }
         else
         {
-            msg.setValue("lib.shared.Product does not exist");
+            msg.setValue("Product does not exist");
         }
 
         setupForBackup(msg, saveState);
@@ -283,15 +283,6 @@ public class Worker extends Communication {
 
     private static BackendMessage<String> buy(ShoppingCart shoppingCart, SaveState saveState)
     {
-        try
-        {
-            // Simulate a delay so that the animation in DummyApp has time to play
-            sleep(1000);
-        }
-        catch (InterruptedException e)
-        {
-            throw new RuntimeException(e);
-        }
         Map<String, ExtendedStore> database = getDatabaseFor(saveState);
         ExtendedStore store;
         synchronized (database) {
@@ -315,15 +306,6 @@ public class Worker extends Communication {
 
     private static BackendMessage<List<Store>> mapSearch(Filter filter)
     {
-        try
-        {
-            // Simulate a delay so that the animation in DummyApp has time to play
-            sleep(1000);
-        }
-        catch (InterruptedException e)
-        {
-            throw new RuntimeException(e);
-        }
         List<Store> result = new ArrayList<>();
         Map<String, ExtendedStore> database = getDatabaseFor(SaveState.MEMORY);
         Collection<ExtendedStore> stores;
