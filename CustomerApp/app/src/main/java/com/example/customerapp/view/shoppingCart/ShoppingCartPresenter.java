@@ -82,7 +82,6 @@ public class ShoppingCartPresenter extends BasePresenter<ShoppingCartView>
     public void onRateStore(String storeName, int rating)
     {
         int oldRating = customer.getOldRating(storeName);
-//        view.showLoading();
         new Thread(() ->
         {
             try
@@ -110,11 +109,36 @@ public class ShoppingCartPresenter extends BasePresenter<ShoppingCartView>
     {
         customer.addToCart(product.getProductName(), 1);
         view.updateCartUI(products.indexOf(product));
+        updateTotal();
     }
 
     public void onQuantityDecrease(Product product)
     {
         customer.addToCart(product.getProductName(), -1);
         view.updateCartUI(products.indexOf(product));
+        updateTotal();
     }
+
+    private void updateTotal()
+    {
+        double total = 0;
+        Map<String, Integer> cartItems = customer.getShoppingCart().getProducts();
+
+        for (Map.Entry<String, Integer> entry : cartItems.entrySet())
+        {
+            String productName = entry.getKey();
+            int quantity = entry.getValue();
+            for (Product p : products)
+            {
+                if (p.getProductName().equals(productName))
+                {
+                    total += p.getPrice() * quantity;
+                    break;
+                }
+            }
+        }
+
+        view.updateTotal(total);
+    }
+
 }

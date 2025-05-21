@@ -15,4 +15,6 @@ public interface ShoppingCartView extends BaseView
 
     void showBuyMessageAsync(String title, String message);
     void showRatingMessageAsync(String title, String message);
+
+    void updateTotal(double total);
 }

@@ -22,6 +22,7 @@ import com.example.customerapp.view.results.ResultsActivity;
 import com.example.customerapp.view.viewHolders.ViewHolderQuantityControlItem;
 
 import java.util.List;
+import java.util.Locale;
 
 import lib.shared.Product;
 
@@ -31,11 +32,13 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
     Button buyButton;
     String storeName;
 
+    TextView totalTxt;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_store_product_list);
+        setContentView(R.layout.activity_product_list);
         viewModel.getPresenter().setView(this);
         if (savedInstanceState == null)
         {
@@ -45,9 +48,10 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
             viewModel.getPresenter().onSetStoreForCart(storeName);
         }
         TextView listName = findViewById(R.id.list_title);
-        listName.setText(String.format("%s¨: Products", storeName));
+        listName.setText(String.format("%s", storeName));
 
-        findViewById(R.id.location_btn).setVisibility(View.GONE);
+        totalTxt = findViewById(R.id.price_value_txt);
+
         buyButton = findViewById(R.id.filter_btn);
         buyButton.setText("buy");
         buyButton.setOnClickListener(v -> buyButtonClicked());
@@ -66,8 +70,6 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
             }
         });
     }
-
-
 
     private void buyButtonClicked()
     {
@@ -95,7 +97,8 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
                 products,
                 (product, viewHolder) ->
                 {
-                    viewHolder.txtItem.setText(product.getProductName());
+                    String productInfo = String.format(Locale.US, "%s: %.2f€", product.getProductName(), product.getPrice());
+                    viewHolder.txtItem.setText(productInfo);
                     int quantity = viewModel.getPresenter().getQuantity(product.getProductName());
                     viewHolder.txtQuantity.setText(String.valueOf(quantity));
                     viewHolder.btnIncrease.setOnClickListener(v -> increaseQuantity(product));
@@ -124,7 +127,9 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
     {
         viewModel.getPresenter().onQuantityDecrease(productName);
     }
-    private void showRatingDialog() {
+
+    private void showRatingDialog()
+    {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.rating_bar, null);
@@ -134,7 +139,7 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
 
         builder.setTitle("Rate your experience")
                 .setNegativeButton("Skip",
-                        (dialog, which) ->goToResultsActivity())
+                        (dialog, which) -> goToResultsActivity())
                 .setPositiveButton("Rate",
                         (dialog, which) ->
                         {
@@ -161,7 +166,7 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
     {
         runOnUiThread(() ->
         {
-            showBuyVerificationDialog(title,message);
+            showBuyVerificationDialog(title, message);
         });
     }
 
@@ -170,8 +175,15 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
     {
         runOnUiThread(() ->
         {
-            showRateVerificationDialog(title,message);
+            showRateVerificationDialog(title, message);
         });
+    }
+
+    @Override
+    public void updateTotal(double total)
+    {
+        String totalStr = String.valueOf(total);
+        totalTxt.setText(totalStr);
     }
 
     private void showRateVerificationDialog(String title, String message)

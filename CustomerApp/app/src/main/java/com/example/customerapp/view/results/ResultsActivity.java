@@ -32,7 +32,7 @@ public class ResultsActivity extends BaseActivity<ResultsViewModel> implements R
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_store_product_list);
+        setContentView(R.layout.activity_store_list);
         viewModel.getPresenter().setView(this);
 
         TextView listTitle = findViewById(R.id.list_title);
@@ -63,7 +63,6 @@ public class ResultsActivity extends BaseActivity<ResultsViewModel> implements R
                             store.getPriceCategory());
 
                     viewHolder.txtItem.setText(storeInfo);
-
                     viewHolder.txtItem.setOnClickListener(v -> selectStore(store));
 
                     Bitmap bitmap = BitmapFactory.decodeByteArray(store.getImage(), 0, store.getImage().length);
@@ -75,7 +74,6 @@ public class ResultsActivity extends BaseActivity<ResultsViewModel> implements R
 
         recyclerViewMembers.setAdapter(recyclerViewAdapter);
     }
-
 
     private void selectStore(Store store)
     {
@@ -90,12 +88,12 @@ public class ResultsActivity extends BaseActivity<ResultsViewModel> implements R
             populateStoresRecyclerView( stores);
         });
     }
+
     @Override
     protected ResultsViewModel createViewModel()
     {
         return new ViewModelProvider(this).get(ResultsViewModel.class);
     }
-
 
     public void goToShoppingCartActivity(String storeName)
     {
@@ -113,7 +111,6 @@ public class ResultsActivity extends BaseActivity<ResultsViewModel> implements R
         finish();
     }
 
-
     public void goToLocationActivity()
     {
         Intent intent = new Intent(this, LocationActivity.class);
@@ -121,6 +118,7 @@ public class ResultsActivity extends BaseActivity<ResultsViewModel> implements R
         startActivity(intent);
         finish();
     }
+
     @Override
     public void showMessageAsync(String title, String message)
     {
