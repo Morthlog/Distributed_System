@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
@@ -26,16 +27,16 @@ import lib.shared.Product;
 
 public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> implements ShoppingCartView
 {
-    private TextView listName;
     GenericRecyclerViewAdapter<Product, ViewHolderQuantityControlItem> recyclerViewAdapter;
     Button buyButton;
+    String storeName;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_store_product_list);
         viewModel.getPresenter().setView(this);
-        String storeName = "";
         if (savedInstanceState == null)
         {
             Intent intent = getIntent();
@@ -43,10 +44,10 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
             viewModel.getPresenter().getStoreItems(storeName);
             viewModel.getPresenter().onSetStoreForCart(storeName);
         }
-        listName = findViewById(R.id.list_title);
+        TextView listName = findViewById(R.id.list_title);
         listName.setText(String.format("%s¨: Products", storeName));
 
-        findViewById(R.id.location_btn).setVisibility(View. GONE);
+        findViewById(R.id.location_btn).setVisibility(View.GONE);
         buyButton = findViewById(R.id.filter_btn);
         buyButton.setText("buy");
         buyButton.setOnClickListener(v -> buyButtonClicked());
@@ -66,15 +67,7 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
         });
     }
 
-    private void showVerificationDialog(String title, String message)
-    {
-        new AlertDialog.Builder(this)
-                .setCancelable(false)
-                .setTitle(title)
-                .setMessage(message)
-                .setPositiveButton(R.string.ok, (dialog, which) -> goToResultsActivity())
-                .show();
-    }
+
 
     private void buyButtonClicked()
     {
@@ -131,15 +124,66 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
     {
         viewModel.getPresenter().onQuantityDecrease(productName);
     }
+    private void showRatingDialog() {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.rating_bar, null);
+        builder.setView(dialogView);
+
+        RatingBar ratingBar = dialogView.findViewById(R.id.ratingBar);
+
+        builder.setTitle("Rate your experience")
+                .setNegativeButton("Skip",
+                        (dialog, which) ->goToResultsActivity())
+                .setPositiveButton("Rate",
+                        (dialog, which) ->
+                        {
+                            int rating = (int) ratingBar.getRating();
+                            viewModel.getPresenter().onRateStore(storeName, rating);
+                        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void showBuyVerificationDialog(String title, String message)
+    {
+        new AlertDialog.Builder(this)
+                .setCancelable(false)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(R.string.ok, (dialog, which) -> showRatingDialog())
+                .show();
+    }
 
     @Override
-    public void showMessageAsync(String title, String message)
+    public void showBuyMessageAsync(String title, String message)
     {
         runOnUiThread(() ->
         {
-            showVerificationDialog(title,message);
+            showBuyVerificationDialog(title,message);
         });
     }
+
+    @Override
+    public void showRatingMessageAsync(String title, String message)
+    {
+        runOnUiThread(() ->
+        {
+            showRateVerificationDialog(title,message);
+        });
+    }
+
+    private void showRateVerificationDialog(String title, String message)
+    {
+        new AlertDialog.Builder(this)
+                .setCancelable(false)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(R.string.ok, (dialog, which) -> goToResultsActivity())
+                .show();
+    }
+
     @Override
     protected ShoppingCartViewModel createViewModel()
     {

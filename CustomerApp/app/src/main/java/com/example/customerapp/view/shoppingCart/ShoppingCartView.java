@@ -3,7 +3,6 @@ package com.example.customerapp.view.shoppingCart;
 import com.example.customerapp.view.base.BaseView;
 
 import java.util.List;
-import java.util.Map;
 
 import lib.shared.Product;
 
@@ -14,5 +13,6 @@ public interface ShoppingCartView extends BaseView
 
     void updateCartUI(int idx);
 
-    void showMessageAsync(String title, String message);
+    void showBuyMessageAsync(String title, String message);
+    void showRatingMessageAsync(String title, String message);
 }

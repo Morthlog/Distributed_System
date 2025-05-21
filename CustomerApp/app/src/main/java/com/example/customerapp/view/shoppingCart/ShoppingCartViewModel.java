@@ -5,7 +5,6 @@ import com.example.customerapp.view.base.BaseViewModel;
 import com.example.customerapp.view.memorydao.CustomerDAOMemory;
 import com.example.customerapp.view.memorydao.StoreDAOMemory;
 
-
 public class ShoppingCartViewModel extends BaseViewModel<ShoppingCartPresenter>
 {
     @Override

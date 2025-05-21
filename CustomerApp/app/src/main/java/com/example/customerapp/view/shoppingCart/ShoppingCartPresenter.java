@@ -1,7 +1,5 @@
 package com.example.customerapp.view.shoppingCart;
 
-import android.app.Activity;
-
 import com.example.customerapp.domain.Customer;
 import com.example.customerapp.network.CustomerServices;
 import com.example.customerapp.view.base.BasePresenter;
@@ -66,12 +64,12 @@ public class ShoppingCartPresenter extends BasePresenter<ShoppingCartView>
             try
             {
                 String response = customerServices.placeOrder(cart);
-                view.showMessageAsync("Order state", response);
+                view.showBuyMessageAsync("Order state", response);
                 customer.clearShoppingCart();
             }
             catch (Exception e)
             {
-                view.showMessageAsync("Error", "Purchase failed");
+                view.showBuyMessageAsync("Error", "Purchase failed");
             }
         }).start();
     }
@@ -87,11 +85,11 @@ public class ShoppingCartPresenter extends BasePresenter<ShoppingCartView>
             {
                 String result = customerServices.rateStore(storeName, oldRating, rating);
                 customer.saveRating(storeName, rating);
-                view.showMessage("Rate state",result);
+                view.showRatingMessageAsync("Rate state",result);
             }
             catch (Exception e)
             {
-                view.showMessage("Error", "Rating failed");
+                view.showRatingMessageAsync("Error", "Rating failed");
             }
         }).start();
     }
