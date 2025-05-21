@@ -15,6 +15,7 @@ import com.example.customerapp.R;
 import com.example.customerapp.view.GenericRecyclerViewAdapter;
 import com.example.customerapp.view.base.BaseActivity;
 import com.example.customerapp.view.filters.FiltersActivity;
+import com.example.customerapp.view.location.LocationActivity;
 import com.example.customerapp.view.shoppingCart.ShoppingCartActivity;
 import com.example.customerapp.view.viewHolders.ViewHolderSingleTextViewImage;
 
@@ -30,7 +31,7 @@ public class ResultsActivity extends BaseActivity<ResultsViewModel> implements R
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_store_list);
+        setContentView(R.layout.activity_store_product_list);
         viewModel.getPresenter().setView(this);
 
         TextView listTitle = findViewById(R.id.list_title);
@@ -39,6 +40,9 @@ public class ResultsActivity extends BaseActivity<ResultsViewModel> implements R
         viewModel.getPresenter().searchStores();
         Button filterBtn = findViewById(R.id.filter_btn);
         filterBtn.setOnClickListener(v -> goToFiltersActivity());
+
+        Button locationBtn = findViewById(R.id.location_btn);
+        locationBtn.setOnClickListener(v -> goToLocationActivity());
     }
 
     @Override
@@ -90,13 +94,22 @@ public class ResultsActivity extends BaseActivity<ResultsViewModel> implements R
         Intent intent = new Intent(this, ShoppingCartActivity.class);
         intent.putExtra(STORE_NAME_EXTRA, storeName);
         startActivity(intent);
-        finish();
+//        finish();
     }
 
     @Override
     public void goToFiltersActivity()
     {
         Intent intent = new Intent(this, FiltersActivity.class);
+
+        startActivity(intent);
+        finish();
+    }
+
+
+    public void goToLocationActivity()
+    {
+        Intent intent = new Intent(this, LocationActivity.class);
 
         startActivity(intent);
         finish();
