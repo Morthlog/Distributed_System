@@ -5,9 +5,11 @@ import static com.example.customerapp.view.results.ResultsActivity.STORE_NAME_EX
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -33,20 +35,35 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_store_product_list);
         viewModel.getPresenter().setView(this);
-
+        String storeName = "";
         if (savedInstanceState == null)
         {
             Intent intent = getIntent();
-            String storeName = intent.getStringExtra(STORE_NAME_EXTRA);
+            storeName = intent.getStringExtra(STORE_NAME_EXTRA);
             viewModel.getPresenter().getStoreItems(storeName);
             viewModel.getPresenter().onSetStoreForCart(storeName);
         }
         listName = findViewById(R.id.list_title);
-        listName.setText("Products");
+        listName.setText(String.format("%s¨: Products", storeName));
 
+        findViewById(R.id.location_btn).setVisibility(View. GONE);
         buyButton = findViewById(R.id.filter_btn);
         buyButton.setText("buy");
         buyButton.setOnClickListener(v -> buyButtonClicked());
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true)
+        {
+            @Override
+            public void handleOnBackPressed()
+            {
+                new AlertDialog.Builder(ShoppingCartActivity.this)
+                        .setTitle("Cancel order")
+                        .setMessage("Are you sure you want to cancel your order?")
+                        .setPositiveButton("Yes", (dialog, which) -> finish())
+                        .setNegativeButton("No", null)
+                        .show();
+            }
+        });
     }
 
     private void showVerificationDialog(String title, String message)
