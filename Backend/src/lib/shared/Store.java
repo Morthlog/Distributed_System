@@ -38,7 +38,7 @@ public class Store implements Serializable, StoreNameProvider
         calculatePriceCategory();
     }
 
-    public Store(JSONObject jsonObject) {
+    public Store(JSONObject jsonObject) throws FileNotFoundException {
         this.storeName = (String) jsonObject.get("StoreName");
         this.latitude = ((Number) jsonObject.get("Latitude")).doubleValue();
         this.longitude = ((Number) jsonObject.get("Longitude")).doubleValue();
@@ -71,7 +71,7 @@ public class Store implements Serializable, StoreNameProvider
     }
 
 
-    public byte[] loadImageBytesFromResources(String path)
+    public byte[] loadImageBytesFromResources(String path) throws FileNotFoundException
     {
         try (InputStream inputStream = getClass().getResourceAsStream(path))
         {
@@ -85,7 +85,7 @@ public class Store implements Serializable, StoreNameProvider
         catch (IOException e)
         {
             e.printStackTrace();
-            return null;
+            throw new FileNotFoundException("Could not load image from resources: " + path);
         }
     }
 
