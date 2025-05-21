@@ -9,4 +9,8 @@ public interface BaseView
      * @param message The message of the error.
      */
     void showMessage(String title, String message);
+
+    void showLoadingAsync();
+
+    void hideLoadingAsync();
 }

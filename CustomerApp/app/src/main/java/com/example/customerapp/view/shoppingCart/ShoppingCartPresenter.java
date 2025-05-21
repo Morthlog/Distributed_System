@@ -63,12 +63,16 @@ public class ShoppingCartPresenter extends BasePresenter<ShoppingCartView>
         {
             try
             {
+                view.showLoadingAsync();
                 String response = customerServices.placeOrder(cart);
+                view.hideLoadingAsync();
                 view.showBuyMessageAsync("Order state", response);
                 customer.clearShoppingCart();
+
             }
             catch (Exception e)
             {
+                view.hideLoadingAsync();
                 view.showBuyMessageAsync("Error", "Purchase failed");
             }
         }).start();
@@ -83,12 +87,15 @@ public class ShoppingCartPresenter extends BasePresenter<ShoppingCartView>
         {
             try
             {
+                view.showLoadingAsync();
                 String result = customerServices.rateStore(storeName, oldRating, rating);
                 customer.saveRating(storeName, rating);
+                view.hideLoadingAsync();
                 view.showRatingMessageAsync("Rate state",result);
             }
             catch (Exception e)
             {
+                view.hideLoadingAsync();
                 view.showRatingMessageAsync("Error", "Rating failed");
             }
         }).start();

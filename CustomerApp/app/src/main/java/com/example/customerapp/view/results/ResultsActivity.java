@@ -94,7 +94,6 @@ public class ResultsActivity extends BaseActivity<ResultsViewModel> implements R
         Intent intent = new Intent(this, ShoppingCartActivity.class);
         intent.putExtra(STORE_NAME_EXTRA, storeName);
         startActivity(intent);
-//        finish();
     }
 
     @Override
