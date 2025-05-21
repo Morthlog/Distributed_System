@@ -1,3 +1,4 @@
+import java.io.FileNotFoundException;
 import java.util.*;
 
 import lib.shared.Product;
@@ -26,7 +27,7 @@ public class ExtendedStore extends Store {
         calculatePriceCategory();
     }
 
-    public ExtendedStore(JSONObject jsonObject) {
+    public ExtendedStore(JSONObject jsonObject) throws FileNotFoundException {
         super(jsonObject);
 
         this.products = new HashMap<>();
