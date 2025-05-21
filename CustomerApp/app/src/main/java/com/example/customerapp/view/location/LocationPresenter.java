@@ -9,9 +9,12 @@ public class LocationPresenter extends BasePresenter<LocationView>
 {
     public void setLocation(Double longitude, Double latitude)
     {
-        Filter filter = FilterDAOMemory.getFilter();
-        filter.setLatitude(latitude);
-        filter.setLongitude(longitude);
+        if (longitude!=0 && latitude!=0)
+        {
+            Filter filter = FilterDAOMemory.getFilter();
+            filter.setLatitude(latitude);
+            filter.setLongitude(longitude);
+        }
         view.goToResultsActivity();
     }
 }

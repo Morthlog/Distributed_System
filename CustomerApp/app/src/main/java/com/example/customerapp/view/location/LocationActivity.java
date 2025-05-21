@@ -39,13 +39,13 @@ public class LocationActivity extends BaseActivity<LocationViewModel> implements
     private Double getLongitude()
     {
         String longitudeTxt = longitudeInput.getText().toString().trim();
-        return Double.parseDouble(longitudeTxt);
+        return longitudeTxt.isEmpty() ? 0 : Double.parseDouble(longitudeTxt);
     }
 
     private Double getLatitude()
     {
         String latitudeTxt = latitudeInput.getText().toString().trim();
-        return Double.parseDouble(latitudeTxt);
+        return latitudeTxt.isEmpty() ? 0 : Double.parseDouble(latitudeTxt);
     }
 
     @Override
