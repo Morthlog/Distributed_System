@@ -20,6 +20,7 @@ import com.example.customerapp.view.shoppingCart.ShoppingCartActivity;
 import com.example.customerapp.view.viewHolders.ViewHolderSingleTextViewImage;
 
 import java.util.List;
+import java.util.Locale;
 
 import lib.shared.Store;
 
@@ -55,7 +56,14 @@ public class ResultsActivity extends BaseActivity<ResultsViewModel> implements R
                 stores,
                 (store, viewHolder) ->
                 {
-                    viewHolder.txtItem.setText(store.getStoreName());
+                    String storeInfo = String.format(Locale.US, "%s\n%s \nstars: %.1f \n%s",
+                            store.getStoreName(),
+                            store.getFoodCategory(),
+                            store.getStars(),
+                            store.getPriceCategory());
+
+                    viewHolder.txtItem.setText(storeInfo);
+
                     viewHolder.txtItem.setOnClickListener(v -> selectStore(store));
 
                     Bitmap bitmap = BitmapFactory.decodeByteArray(store.getImage(), 0, store.getImage().length);
