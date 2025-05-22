@@ -2,12 +2,7 @@ package com.example.customerapp.view.filters;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.LinearLayout;
-
 import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -82,24 +77,16 @@ public class FiltersActivity extends BaseActivity<FiltersViewModel> implements F
     @Override
     public void showFoodCategoryDialog(List<FoodCategory> availableCategories, boolean[] checkedItems)
     {
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_checkboxes, null);
-        LinearLayout checkboxContainer = dialogView.findViewById(R.id.checkboxContainer);
-
+        String[] categoryNames = new String[availableCategories.size()];
         for (int i = 0; i < availableCategories.size(); i++)
         {
-            FoodCategory category = availableCategories.get(i);
-            CheckBox checkBox = new CheckBox(this);
-            checkBox.setText(category.name());
-            checkBox.setChecked(checkedItems[i]);
-            int index = i;
-            checkBox.setOnCheckedChangeListener(
-                    (buttonView, isChecked) -> viewModel.getPresenter().onFoodCategorySelected(index, isChecked));
-            checkboxContainer.addView(checkBox);
+            categoryNames[i] = availableCategories.get(i).toString();
         }
 
         new AlertDialog.Builder(this)
                 .setTitle("Select Categories")
-                .setView(dialogView)
+                .setMultiChoiceItems(categoryNames, checkedItems,
+                        (dialog, which, isChecked) ->  viewModel.getPresenter().onFoodCategorySelected(which, isChecked))
                 .setPositiveButton("OK",
                         (dialog, which) -> viewModel.getPresenter().onConfirmFoodCategorySelection())
                 .show();
