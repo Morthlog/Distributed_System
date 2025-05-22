@@ -16,6 +16,7 @@ public abstract class BaseActivity<V extends ViewModel> extends AppCompatActivit
     protected V viewModel;
     private Dialog loadingDialog;
     private AlertDialog messageDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -26,15 +27,15 @@ public abstract class BaseActivity<V extends ViewModel> extends AppCompatActivit
     @Override
     public void showMessage(String title, String message)
     {
-        if(messageDialog==null)
+        if (messageDialog == null)
         {
-            new AlertDialog.Builder(this)
+            messageDialog = new AlertDialog.Builder(this)
                     .setCancelable(true)
                     .setTitle(title)
                     .setMessage(message)
                     .setPositiveButton(R.string.ok, null)
-                    .create()
-                    .show();
+                    .create();
+            messageDialog.show();
         }
 
         if (!messageDialog.isShowing())
