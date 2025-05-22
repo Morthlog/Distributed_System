@@ -55,7 +55,11 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
         buyButton = findViewById(R.id.filter_btn);
         buyButton.setText("buy");
         buyButton.setOnClickListener(v -> buyButtonClicked());
+        setupBackPressed();
+    }
 
+    void setupBackPressed()
+    {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true)
         {
             @Override
@@ -130,7 +134,6 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
 
     private void showRatingDialog()
     {
-
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.rating_bar, null);
         builder.setView(dialogView);
