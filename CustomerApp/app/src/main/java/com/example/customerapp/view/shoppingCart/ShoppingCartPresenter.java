@@ -64,7 +64,7 @@ public class ShoppingCartPresenter extends BasePresenter<ShoppingCartView>
             try
             {
                 view.showLoadingAsync();
-                String response = customerServices.placeOrder(cart);
+                String response = customerServices.buy(cart);
                 view.hideLoadingAsync();
                 view.showBuyMessageAsync("Order state", response);
                 customer.clearShoppingCart();

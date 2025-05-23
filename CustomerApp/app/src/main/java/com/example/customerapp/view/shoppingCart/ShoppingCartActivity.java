@@ -94,8 +94,8 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
     @Override
     public void populateProductsRecyclerView(List<Product> products)
     {
-        RecyclerView recyclerViewMembers = findViewById(R.id.recyclerView_List);
-        recyclerViewMembers.setLayoutManager(new LinearLayoutManager(this));
+        RecyclerView recyclerViewProducts = findViewById(R.id.recyclerView_List);
+        recyclerViewProducts.setLayoutManager(new LinearLayoutManager(this));
 
         recyclerViewAdapter = new GenericRecyclerViewAdapter<>(
                 products,
@@ -113,7 +113,7 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
                 R.layout.list_item_quantity_control
         );
 
-        recyclerViewMembers.setAdapter(recyclerViewAdapter);
+        recyclerViewProducts.setAdapter(recyclerViewAdapter);
     }
 
     @Override

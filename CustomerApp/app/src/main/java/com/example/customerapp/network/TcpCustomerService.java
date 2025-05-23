@@ -52,7 +52,7 @@ public class TcpCustomerService extends Communication implements CustomerService
     }
 
     @Override
-    public String placeOrder(ShoppingCart cart) throws Exception
+    public String buy(ShoppingCart cart) throws Exception
     {
         startConnection(ip, TCPServer.basePort);
         Message<ShoppingCart> msg = new Message<>(cart, Client.Customer, RequestCode.BUY);
