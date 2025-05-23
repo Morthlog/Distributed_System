@@ -9,7 +9,7 @@ public interface CustomerServices
 {
     List<Store>  searchStores(Filter filter) throws Exception;
 
-    String placeOrder(ShoppingCart cart) throws Exception;
+    String buy(ShoppingCart cart) throws Exception;
 
     String rateStore(String storeName, int oldRating, int newRating) throws Exception;
 }

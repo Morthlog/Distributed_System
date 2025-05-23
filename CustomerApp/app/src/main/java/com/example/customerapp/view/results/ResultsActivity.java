@@ -49,8 +49,8 @@ public class ResultsActivity extends BaseActivity<ResultsViewModel> implements R
     @Override
     public void populateStoresRecyclerView(List<Store> stores)
     {
-        RecyclerView recyclerViewMembers = findViewById(R.id.recyclerView_List);
-        recyclerViewMembers.setLayoutManager(new LinearLayoutManager(this));
+        RecyclerView recyclerViewStores = findViewById(R.id.recyclerView_List);
+        recyclerViewStores.setLayoutManager(new LinearLayoutManager(this));
 
         GenericRecyclerViewAdapter<Store, ViewHolderSingleTextViewImage> recyclerViewAdapter = new GenericRecyclerViewAdapter<>(
                 stores,
@@ -72,7 +72,7 @@ public class ResultsActivity extends BaseActivity<ResultsViewModel> implements R
                 R.layout.list_item_image_and_text
         );
 
-        recyclerViewMembers.setAdapter(recyclerViewAdapter);
+        recyclerViewStores.setAdapter(recyclerViewAdapter);
     }
 
     private void selectStore(Store store)
