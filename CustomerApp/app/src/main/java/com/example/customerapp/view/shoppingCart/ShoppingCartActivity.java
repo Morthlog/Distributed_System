@@ -185,7 +185,7 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
     @Override
     public void updateTotal(double total)
     {
-        String totalStr = String.valueOf(total);
+        String totalStr = String.format(Locale.US, "%.2f€", total);
         totalTxt.setText(totalStr);
     }
 
