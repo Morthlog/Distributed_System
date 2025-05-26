@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.customerapp.R;
 import com.example.customerapp.view.base.BaseActivity;
 import com.example.customerapp.view.results.ResultsActivity;
+import com.google.android.material.card.MaterialCardView;
 
 import java.util.List;
 
@@ -29,14 +30,14 @@ public class FiltersActivity extends BaseActivity<FiltersViewModel> implements F
 
     private void setupButtons()
     {
-        Button foodCategoryButton = findViewById(R.id.food_category_button);
-        Button priceCategoryButton = findViewById(R.id.price_category_button);
-        Button starsButton = findViewById(R.id.stars_button);
+        MaterialCardView foodCard    = findViewById(R.id.card_food);
+        MaterialCardView priceCard   = findViewById(R.id.card_price);
+        MaterialCardView starsCard   = findViewById(R.id.card_stars);
         Button continueButton = findViewById(R.id.continue_button);
 
-        foodCategoryButton.setOnClickListener(v -> viewModel.getPresenter().onShowFoodCategoryDialog());
-        priceCategoryButton.setOnClickListener(v -> viewModel.getPresenter().onShowPriceDialog());
-        starsButton.setOnClickListener(v -> viewModel.getPresenter().onShowStarsDialog());
+        foodCard.setOnClickListener(v -> viewModel.getPresenter().onShowFoodCategoryDialog());
+        priceCard.setOnClickListener(v -> viewModel.getPresenter().onShowPriceDialog());
+        starsCard.setOnClickListener(v -> viewModel.getPresenter().onShowStarsDialog());
         continueButton.setOnClickListener(v -> continueClicked());
     }
 
