@@ -59,11 +59,11 @@ public class ShoppingCartPresenter extends BasePresenter<ShoppingCartView>
     public void onBuyClicked()
     {
         ShoppingCart cart = customer.getShoppingCart();
+        view.showLoading();
         new Thread(() ->
         {
             try
             {
-                view.showLoadingAsync();
                 String response = customerServices.buy(cart);
                 view.hideLoadingAsync();
                 view.showBuyMessageAsync("Order state", response);
@@ -82,11 +82,11 @@ public class ShoppingCartPresenter extends BasePresenter<ShoppingCartView>
     public void onRateStore(String storeName, int rating)
     {
         int oldRating = customer.getOldRating(storeName);
+        view.showLoading();
         new Thread(() ->
         {
             try
             {
-                view.showLoadingAsync();
                 String result = customerServices.rateStore(storeName, oldRating, rating);
                 customer.saveRating(storeName, rating);
                 view.hideLoadingAsync();

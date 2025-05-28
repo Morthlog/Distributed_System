@@ -44,7 +44,8 @@ public abstract class BaseActivity<V extends ViewModel> extends AppCompatActivit
         }
     }
 
-    protected void showLoading()
+    @Override
+    public void showLoading()
     {
         if (loadingDialog == null)
         {
