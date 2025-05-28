@@ -56,6 +56,7 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
         buyButton.setText("buy");
         buyButton.setOnClickListener(v -> buyButtonClicked());
         setupBackPressed();
+        updateTotal(0);
     }
 
     void setupBackPressed()
