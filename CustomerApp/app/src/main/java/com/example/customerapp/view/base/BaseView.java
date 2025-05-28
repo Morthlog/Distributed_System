@@ -12,7 +12,5 @@ public interface BaseView
 
     void showLoadingAsync();
 
-    void showLoading();
-
     void hideLoadingAsync();
 }

@@ -44,7 +44,6 @@ public abstract class BaseActivity<V extends ViewModel> extends AppCompatActivit
         }
     }
 
-    @Override
     public void showLoading()
     {
         if (loadingDialog == null)
@@ -63,6 +62,16 @@ public abstract class BaseActivity<V extends ViewModel> extends AppCompatActivit
     protected void hideLoading()
     {
         if (loadingDialog != null && loadingDialog.isShowing())
+        {
+            loadingDialog.hide();
+        }
+    }
+
+    @Override
+    protected void onStop()
+    {
+        super.onStop();
+        if (loadingDialog != null)
         {
             loadingDialog.dismiss();
         }

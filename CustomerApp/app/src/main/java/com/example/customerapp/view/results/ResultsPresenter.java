@@ -20,11 +20,12 @@ public class ResultsPresenter extends BasePresenter<ResultsView>
 
     public void searchStores()
     {
-        view.showLoading();
+
         Thread thread = new Thread(() ->
         {
             try
             {
+                view.showLoadingAsync();
                 List<Store> results = customerServices.searchStores(FilterDAOMemory.getFilter());
                 StoreDAOMemory.setStores(results);
                 view.hideLoadingAsync();
