@@ -6,7 +6,7 @@
       "Longitude": 23.7575112,
       "FoodCategory": "souvlakia",
       "Stars": 5,
-      "NoOfVotes": 68,
+      "NoOfVotes": 28,
       "StoreLogo": "/icons/storeLogo1.jpg",
       "Products": [
         {
@@ -29,7 +29,7 @@
       "Longitude": 23.7507594,
       "FoodCategory": "souvlakia",
       "Stars": 5,
-      "NoOfVotes": 143,
+      "NoOfVotes": 43,
       "StoreLogo": "/icons/storeLogo2.jpg",
       "Products": [
         {
@@ -52,7 +52,7 @@
       "Longitude": 23.7198898,
       "FoodCategory": "souvlakia",
       "Stars": 5,
-      "NoOfVotes": 107,
+      "NoOfVotes": 7,
       "StoreLogo": "/icons/storeLogo3.jpg",
       "Products": [
         {
@@ -75,7 +75,7 @@
       "Longitude": 23.7339146,
       "FoodCategory": "pizza",
       "Stars": 1,
-      "NoOfVotes": 47,
+      "NoOfVotes": 17,
       "StoreLogo": "/icons/storeLogo4.jpg",
       "Products": [
         {
@@ -98,7 +98,7 @@
       "Longitude": 23.7669507,
       "FoodCategory": "souvlakia",
       "Stars": 2,
-      "NoOfVotes": 125,
+      "NoOfVotes": 25,
       "StoreLogo": "/icons/storeLogo5.jpg",
       "Products": [
         {
@@ -144,7 +144,7 @@
       "Longitude": 23.7692214,
       "FoodCategory": "pizza",
       "Stars": 2,
-      "NoOfVotes": 116,
+      "NoOfVotes": 16,
       "StoreLogo": "/icons/storeLogo7.jpg",
       "Products": [
         {
@@ -219,7 +219,7 @@
       "Longitude": 23.7554921,
       "FoodCategory": "pastry",
       "Stars": 4,
-      "NoOfVotes": 149,
+      "NoOfVotes": 29,
       "StoreLogo": "/icons/storeLogo10.jpg",
       "Products": [
         {
@@ -242,7 +242,7 @@
       "Longitude": 23.7207036,
       "FoodCategory": "coffee",
       "Stars": 3,
-      "NoOfVotes": 48,
+      "NoOfVotes": 18,
       "StoreLogo": "/icons/storeLogo11.jpg",
       "Products": [
         {
@@ -265,7 +265,7 @@
       "Longitude": 23.7490106,
       "FoodCategory": "pastry",
       "Stars": 5,
-      "NoOfVotes": 109,
+      "NoOfVotes": 9,
       "StoreLogo": "/icons/storeLogo12.jpg",
       "Products": [
         {
@@ -288,7 +288,7 @@
       "Longitude": 23.7230365,
       "FoodCategory": "pastry",
       "Stars": 4,
-      "NoOfVotes": 149,
+      "NoOfVotes": 22,
       "StoreLogo": "/icons/storeLogo13.jpg",
       "Products": [
         {
@@ -311,7 +311,7 @@
       "Longitude": 23.7492758,
       "FoodCategory": "souvlakia",
       "Stars": 3,
-      "NoOfVotes": 107,
+      "NoOfVotes": 12,
       "StoreLogo": "/icons/storeLogo14.jpg",
       "Products": [
         {
@@ -334,7 +334,7 @@
       "Longitude": 23.783519,
       "FoodCategory": "coffee",
       "Stars": 3,
-      "NoOfVotes": 81,
+      "NoOfVotes": 5,
       "StoreLogo": "/icons/storeLogo15.jpg",
       "Products": [
         {
@@ -357,7 +357,7 @@
       "Longitude": 23.7413837,
       "FoodCategory": "burgers",
       "Stars": 2,
-      "NoOfVotes": 50,
+      "NoOfVotes": 2,
       "StoreLogo": "/icons/storeLogo16.jpg",
       "Products": [
         {
@@ -386,7 +386,7 @@
       "Longitude": 23.7984566,
       "FoodCategory": "souvlakia",
       "Stars": 1,
-      "NoOfVotes": 31,
+      "NoOfVotes": 6,
       "StoreLogo": "/icons/storeLogo17.jpg",
       "Products": [
         {
@@ -409,7 +409,7 @@
       "Longitude": 23.7561525,
       "FoodCategory": "burgers",
       "Stars": 5,
-      "NoOfVotes": 113,
+      "NoOfVotes": 13,
       "StoreLogo": "/icons/storeLogo18.jpg",
       "Products": [
         {
@@ -438,7 +438,7 @@
       "Longitude": 23.711776,
       "FoodCategory": "coffee",
       "Stars": 5,
-      "NoOfVotes": 63,
+      "NoOfVotes": 33,
       "StoreLogo": "/icons/storeLogo19.jpg",
       "Products": [
         {
@@ -461,7 +461,7 @@
       "Longitude": 23.7936279,
       "FoodCategory": "coffee",
       "Stars": 4,
-      "NoOfVotes": 105,
+      "NoOfVotes": 25,
       "StoreLogo": "/icons/storeLogo20.jpg",
       "Products": [
         {
@@ -501,7 +501,7 @@
       "Longitude": 23.7588246,
       "FoodCategory": "pastry",
       "Stars": 3,
-      "NoOfVotes": 101,
+      "NoOfVotes": 14,
       "StoreLogo": "/icons/storeLogo22.jpg",
       "Products": [
         {
@@ -524,7 +524,7 @@
       "Longitude": 23.7658476,
       "FoodCategory": "souvlakia",
       "Stars": 2,
-      "NoOfVotes": 112,
+      "NoOfVotes": 12,
       "StoreLogo": "/icons/storeLogo23.jpg",
       "Products": [
         {
@@ -570,7 +570,7 @@
       "Longitude": 23.7668421,
       "FoodCategory": "coffee",
       "Stars": 1,
-      "NoOfVotes": 97,
+      "NoOfVotes": 37,
       "StoreLogo": "/icons/storeLogo25.jpg",
       "Products": [
         {
@@ -593,7 +593,7 @@
       "Longitude": 23.7137578,
       "FoodCategory": "burgers",
       "Stars": 2,
-      "NoOfVotes": 127,
+      "NoOfVotes": 27,
       "StoreLogo": "/icons/storeLogo26.jpg",
       "Products": [
         {
@@ -622,7 +622,7 @@
       "Longitude": 23.7750915,
       "FoodCategory": "pizza",
       "Stars": 4,
-      "NoOfVotes": 65,
+      "NoOfVotes": 15,
       "StoreLogo": "/icons/storeLogo27.jpg",
       "Products": [
         {
@@ -645,7 +645,7 @@
       "Longitude": 23.7174288,
       "FoodCategory": "pastry",
       "Stars": 2,
-      "NoOfVotes": 131,
+      "NoOfVotes": 31,
       "StoreLogo": "/icons/storeLogo28.jpg",
       "Products": [
         {
@@ -697,7 +697,7 @@
       "Longitude": 23.7969631,
       "FoodCategory": "souvlakia",
       "Stars": 2,
-      "NoOfVotes": 80,
+      "NoOfVotes": 30,
       "StoreLogo": "/icons/storeLogo30.jpg",
       "Products": [
         {
