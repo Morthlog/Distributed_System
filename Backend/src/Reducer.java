@@ -93,7 +93,10 @@ public class Reducer extends Communication
                     synchronized (requestData){
                         workerCount--;
                         for (var entry : requestData.entrySet())
+                        {
+                            entry.getValue().reduceCounter();
                             prepareForReduce(entry.getKey(), entry.getValue());
+                        }
                     }
                     break;
                 case ADD_WORKER:
@@ -138,6 +141,7 @@ public class Reducer extends Communication
     private void prepareForReduce(Integer id, ReducerStorage counterData)
     {
         synchronized (counterData){
+            System.out.printf("Request: %d Counter: %d\n", id, counterData.getCounter());
             if (counterData.getCounter() == 0)
             {
                 System.out.println("Start reducing " + id);

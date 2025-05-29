@@ -156,7 +156,12 @@ public class Master extends Communication
         {
             try {
                 workerId = storeToWorkerBackup.get(((StoreNameProvider) msg.getValue()).getStoreName());
-                if (workerId != -1 && workerId != worker) { // no secondary backup location exists
+                boolean canBackup;
+                synchronized (activeWorkers[workerId])
+                {
+                    canBackup = activeWorkers[workerId].get() && workerId != worker;
+                }
+                if (canBackup) { // no secondary backup location exists
                     server = serverWorker.get(workerId);
                     synchronized (server) {
                         currentConnection = new TCPServer(server.serverSocket.accept());
@@ -207,11 +212,7 @@ public class Master extends Communication
                 currentConnection.sendMessage(msg);
                 currentConnection.receiveMessage();
             }
-            for (var set : storeToWorkerBackup.entrySet()){
-                if (!set.getValue().equals(workerId))
-                    continue;
-                storeToWorkerBackup.replace(set.getKey(), -1);
-            }
+            
             messageReducer(RequestCode.REMOVE_WORKER);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -254,7 +255,7 @@ public class Master extends Communication
             storesMemory.get(backupId).add(set.getKey());
         }
         for (var set : storeToWorkerBackup.entrySet()){
-            if (!set.getValue().equals(-1))
+            if (!set.getValue().equals(workerId))
                 continue;
             int memoryId = storeToWorkerMemory.get(set.getKey());
             storesBackup.get(memoryId).add(set.getKey());

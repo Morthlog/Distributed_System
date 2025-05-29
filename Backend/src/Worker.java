@@ -18,6 +18,7 @@ public class Worker extends Communication {
         RequestCode code = msg.getRequest();
         SaveState saveState = msg.getSaveState();
         T val = msg.getValue();
+        System.out.printf("Request: %s SaveState: %s\n", code, saveState);
         BackendMessage<T> response = switch (client) {
             case Customer -> switch (code) {
                 case STUB_TEST_1-> (BackendMessage<T>) sendString((String) val);
