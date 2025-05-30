@@ -24,6 +24,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
         android:drawableStart="@drawable/filter"
+        android:textColor="?android:textColorPrimary"
         android:drawablePadding="8dp"
         android:text="filters"
         android:textSize="20sp"
@@ -62,8 +63,10 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
+                android:textColor="?android:textColorPrimary"
                 android:layout_weight="1"
                 android:text="food category"
+
                 android:textSize="16sp" />
 
             <ImageView
@@ -103,6 +106,7 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:textColor="?android:textColorPrimary"
                 android:layout_marginStart="12dp"
                 android:layout_weight="1"
                 android:text="price category"
@@ -144,6 +148,7 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:textColor="?android:textColorPrimary"
                 android:layout_marginStart="12dp"
                 android:layout_weight="1"
                 android:text="stars"

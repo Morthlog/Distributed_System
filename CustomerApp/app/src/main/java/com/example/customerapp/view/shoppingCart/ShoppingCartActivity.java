@@ -155,12 +155,20 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
         dialog.show();
     }
 
-    private void showBuyVerificationDialog(String title, String message)
-    {
+    private void showBuyVerificationDialog(String title, String message) {
+        String[] parts = message.split("products");
+        String storePart=parts[0];
+        storePart = storePart.replace("and", "").trim();
+        String productsPart = parts[1].replace("=", ": ").replace("{", "").replace("}", "").replace(",", "\n").trim();
+        String totalPrice = totalTxt.getText().toString();
+
+        String customMessage = storePart + "\n\nΠροϊόντα:\n" + productsPart +
+                "\n\nΣυνολική τιμή: " + totalPrice +
+                "\n\nΣ' ευχαριστούμε που μας προτίμησες!";
         new AlertDialog.Builder(this)
                 .setCancelable(false)
                 .setTitle(title)
-                .setMessage(message)
+                .setMessage(customMessage)
                 .setPositiveButton(R.string.ok, (dialog, which) -> showRatingDialog())
                 .show();
     }

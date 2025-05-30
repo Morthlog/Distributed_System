@@ -13,9 +13,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Product Name"
+        android:textColor="?android:textColorPrimary"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="#333333"
         android:layout_gravity="center_horizontal" />
 
 
@@ -48,7 +48,7 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:background="#E0E0E0"
-            android:textColor="#333333"
+            android:textColor="?android:textColorPrimary"
             android:elevation="2dp"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp" />
