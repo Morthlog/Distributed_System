@@ -394,20 +394,10 @@ public class Worker extends Communication {
     }
 
     private static BackendMessage<String> sendString(String val){
-        try {
-            sleep(1000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
         return new BackendMessage<> ((val + " changed"));
     }
 
     private static BackendMessage<Integer> sendNum(Integer val){
-        try {
-            sleep(2000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
         return new BackendMessage<>(val + 100);
     }
 
@@ -486,6 +476,7 @@ public class Worker extends Communication {
             client.stopConnection(); // simple ping
             System.out.println("Ping successful");
         }catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
         client.init(ip, Integer.parseInt(args[0]));
@@ -508,14 +499,6 @@ public class Worker extends Communication {
             Worker finalClient = client;
             Thread t = new Thread(() -> ManageRequest((BackendMessage<T>) request, finalClient));
             t.start();
-            try
-            {
-                sleep(0);
-            }
-            catch (InterruptedException e)
-            {
-                throw new RuntimeException(e);
-            }
         }
     }
 

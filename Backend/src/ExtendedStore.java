@@ -123,10 +123,6 @@ public class ExtendedStore extends Store {
         }
     }
 
-    public boolean manageStock(String productName, int amountChange) {
-        return manageStock(productName,amountChange,false);
-    }
-
     public boolean saveSale(String productName, int quantity, boolean bypassChecks) {
         Product product;
         synchronized (products)
@@ -149,10 +145,6 @@ public class ExtendedStore extends Store {
 
             return true;
         }
-    }
-
-    public boolean saveSale(String productName, int quantity) {
-        return saveSale(productName,quantity,false);
     }
 
     public double getSalesByProductType(ProductType requestedType) {

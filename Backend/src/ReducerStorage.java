@@ -14,7 +14,7 @@ public class ReducerStorage {
         this.counter = counter;
         this.client = client;
         this.requestCode = requestCode;
-        data = new ArrayList<Object>();
+        data = new ArrayList<>();
     }
 
     public Client getClient() {

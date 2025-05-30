@@ -8,8 +8,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.*;
 import java.net.*;
 
-import static java.lang.Thread.sleep;
-
 public class Master extends Communication
 {
     private static Integer id = 0;
@@ -326,7 +324,7 @@ public class Master extends Communication
         synchronized (activeWorkers[workerId]){
             activeWorkers[workerId].set(true);
         }
-        messageReducer(RequestCode.ADD_WORKER, -1);
+        messageReducer(RequestCode.ADD_WORKER);
         reestablishWorkerManager.notifyAllThreads();
     }
 
@@ -407,7 +405,7 @@ public class Master extends Communication
 
 
     private <T> void startForClient() {
-        Message<T> response = null;
+        Message<T> response;
         try {
             BackendMessage<T> msg = new BackendMessage<>(serverClient.receiveMessage());
             setIdToRequest(msg);
@@ -551,8 +549,6 @@ public class Master extends Communication
 
         n_workers = Integer.parseInt(args[0]);
         final String DATA_PATH = "./src/Data/Stores.json";
-        final Scanner on = new Scanner(System.in);
-        Process[] workers = new Process[n_workers];
         activeWorkers = new Holder[n_workers];
         for (int i = 0; i < n_workers; i++)
             activeWorkers[i] = new Holder<>();

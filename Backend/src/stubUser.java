@@ -2,8 +2,6 @@ import lib.shared.*;
 
 import java.net.InetAddress;
 
-import static java.lang.Thread.sleep;
-
 public class stubUser extends Communication{
     private String name;
 
