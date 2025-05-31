@@ -159,7 +159,9 @@ public class ShoppingCartActivity extends BaseActivity<ShoppingCartViewModel> im
         String[] parts = message.split("products");
         String storePart=parts[0];
         storePart = storePart.replace("and", "").trim();
-        String productsPart = parts[1].replace("=", ": ").replace("{", "").replace("}", "").replace(",", "\n").trim();
+        String productsPart = parts[1].replace("=", ": ")
+                .replace("{", "").replace("}", "")
+                .replace(", ", "\n").trim();
         String totalPrice = totalTxt.getText().toString();
 
         String customMessage = storePart + "\n\nΠροϊόντα:\n" + productsPart +
