@@ -16,7 +16,7 @@ We were tasked with implementing the following:
 
 ## Architecture
 
-* The [Master](Backend\src\Master.java) runs on a dedicated serverSocket and handles incoming connections from multiple Clients. It also:
+* The [Master](Backend/src/Master.java) runs on a dedicated serverSocket and handles incoming connections from multiple Clients. It also:
 
 	* Maintains a separate serverSocket to communicate with the Reducer.
 
@@ -25,9 +25,9 @@ We were tasked with implementing the following:
 	* Coordinates the flow of data between components.
 
 
-* Clients (either [Customers](Backend\src\Customer.java) or [Managers](Backend\src\ManagerConsoleApp.java)) connect to the Master to send requests. Based on the request type, the Master either forwards it to a specific Broker or broadcasts it to all Brokers.
+* Clients (either [Customers](Backend/src/Customer.java) or [Managers](Backend/src/ManagerConsoleApp.java)) connect to the Master to send requests. Based on the request type, the Master either forwards it to a specific Broker or broadcasts it to all Brokers.
 
-* [Brokers](Backend\src\Worker.java):
+* [Brokers](Backend/src/Worker.java):
 
     * Maintains its own data as well as redundant data from other Brokers for fault tolerance.
 
@@ -37,7 +37,7 @@ We were tasked with implementing the following:
 
     * Notifies the Master to update redundant copies when its own memory state changes.
 
-* [Reducer](Backend\src\Reducer.java):
+* [Reducer](Backend/src/Reducer.java):
 
     * Accepts data from all Brokers during broadcast operations on its own serverSocket.
         * Master uses the port to update the number of active Brokers 
