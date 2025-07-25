@@ -65,7 +65,7 @@ We were tasked with implementing the following:
 ## How to run
 
 1. Download the repository with
-` git clone https://github.com/Morthlog/Distributed_System/tree/main `
+` git clone https://github.com/Morthlog/Distributed_System `
 
 2. Open the backend folder using IntelliJ IDEA.
 
