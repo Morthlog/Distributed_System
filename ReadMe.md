@@ -117,3 +117,6 @@ The Backend system is up and running. You can now run any number of Managers or 
 <a href="https://github.com/Morthlog/Distributed_System/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=Morthlog/Distributed_System"/>
 </a>
+
+- [Babis Drosatos](https://github.com/BabisDros)
+- [Iosif Petroulakis](https://github.com/Morthlog)
