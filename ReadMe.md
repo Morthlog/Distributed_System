@@ -1,5 +1,5 @@
 # Food delivery app
-The objective of this project was to design and implement a **multithreaded distributed system** for a food delivery application, utilizing the **MapReduce** framework. Due to constraints prohibiting the use of the *java.util.concurrent* package, synchronization was handled manually using Java’s built in locking mechanisms, specifically the *synchronized* keyword in combination with *wait* and *notify* methods. It was developed during the 5th semester as part of the Artificial Intelligence course at AUEB.
+The objective of this project was to design and implement a **multithreaded distributed system** for a food delivery application, utilizing the **MapReduce** framework. Due to constraints prohibiting the use of the *java.util.concurrent* package, synchronization was handled manually using Java’s built in locking mechanisms, specifically the *synchronized* keyword in combination with *wait* and *notify* methods. It was developed during the 5th semester as part of the Distributed Systems course at AUEB.
 
 
 ## Tasks
